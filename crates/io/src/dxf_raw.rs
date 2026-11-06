@@ -16,7 +16,7 @@ use std::borrow::Cow;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::sync::Arc;
 
-use cadcraft_doc::foreign::{Foreign, ForeignExtra, ForeignKey, ForeignObject};
+use cadcraft_doc::foreign::{Foreign, ForeignExtra, ForeignKey, ForeignObject, class_group, class_index, class_number};
 use cadcraft_doc::{Drawing, Entity, EntityKind, Handle, RawTag, Unknown};
 use cadcraft_dxf::{Section, Tag};
 
@@ -452,8 +452,19 @@ pub(crate) fn read(secs: &[Section], d: &mut Drawing) {
         f.data_store = ds.tags.iter().take(MAX_DATA_STORE_GROUPS).map(raw).collect();
     }
     if !f.is_empty() {
+        f.version = file_version(secs);
         d.foreign = Arc::new(f);
     }
+}
+
+/// The `$ACADVER` the file's own HEADER section declares, if it does. Not the drawing's: a new
+/// drawing starts as AC1032, and a file without the variable would leave that default there.
+fn file_version(secs: &[Section]) -> Option<String> {
+    let header = secs.iter().find(|s| s.name.eq_ignore_ascii_case("HEADER"))?;
+    let at = header.tags.iter().position(|t| t.code == 9 && t.str().trim().eq_ignore_ascii_case("$ACADVER"))?;
+    let value = header.tags.get(at + 1).filter(|t| t.code != 9)?.str();
+    let value = value.trim();
+    (!value.is_empty()).then(|| value.to_string())
 }
 
 fn entity_types(drawing: &Drawing) -> HashMap<String, bool> {
@@ -502,6 +513,10 @@ fn retained_objects(
     let modelled_entry = |tags: &[Tag], handle: &str| {
         entries(tags).iter().any(|(key, entry_handle)| entry_handle == handle && MODELLED_XDICT_KEYS.contains(&up(key).as_str()))
     };
+    // is_xdict reads the whole record; a dictionary that owns many objects (ACAD_GROUP with
+    // hundreds of thousands of groups) would be read once per child (#862).
+    let mut xdict_memo: HashMap<usize, bool> = HashMap::new();
+    let mut is_xdict = |index: usize| *xdict_memo.entry(index).or_insert_with(|| is_xdict(index));
     let mut retained = HashMap::new();
     for index in 0..objects.len() {
         let mut path = Vec::new();
@@ -548,32 +563,6 @@ fn is_proxy(kind: &str) -> bool {
     matches!(up(kind).as_str(), "ACAD_PROXY_OBJECT" | "ACAD_PROXY_ENTITY")
 }
 
-/// Where a proxy's class number is: its first group 91 outside the `102 {NAME` … `102 }` groups
-/// (an application's can hold a 91 of its own) and before any xdata.
-fn class_group<S: AsRef<str>>(groups: impl IntoIterator<Item = (i32, S)>) -> Option<usize> {
-    let mut in_group = false;
-    for (i, (code, value)) in groups.into_iter().enumerate() {
-        match code {
-            1000.. => return None,
-            102 => in_group = value.as_ref().trim().starts_with('{'),
-            91 if !in_group => return Some(i),
-            _ => {}
-        }
-    }
-    None
-}
-
-/// A proxy's class number (see [`class_group`]).
-fn class_number<S: AsRef<str>>(groups: impl IntoIterator<Item = (i32, S)> + Clone) -> Option<i64> {
-    let i = class_group(groups.clone())?;
-    groups.into_iter().nth(i).and_then(|(_, v)| v.as_ref().trim().parse().ok())
-}
-
-/// The place in CLASSES a class number names (500 is the first class).
-fn class_index(number: Option<i64>) -> Option<usize> {
-    usize::try_from(number?.checked_sub(500)?).ok()
-}
-
 /// Set a proxy's class number (see [`class_group`]).
 fn set_class_number(tags: &mut [Tag], n: i64) {
     if let Some(t) = class_group(tags.iter().map(|t| (t.code, t.str()))).and_then(|i| tags.get_mut(i)) {
@@ -599,17 +588,13 @@ pub(crate) fn data_store(tags: &mut Vec<Tag>, d: &Drawing, modern: bool) {
     let first = ds.iter().position(|t| t.code == 0).unwrap_or(ds.len());
     out.extend(ds.iter().take(first).map(tag));
     let mut records = 0usize;
-    let mut i = first;
-    while i < ds.len() {
-        let end = ds.iter().skip(i + 1).position(|t| t.code == 0).map_or(ds.len(), |k| i + 1 + k);
-        let rec = ds.get(i..end).unwrap_or(&[]);
+    for rec in cadcraft_doc::foreign::data_store_records(ds) {
         let is_record = rec.first().is_some_and(|t| t.value.trim().eq_ignore_ascii_case("ACDSRECORD"));
-        let owner = rec.iter().find(|t| t.code == 320).map(|t| norm(&t.value));
+        let owner = cadcraft_doc::foreign::data_store_owner(rec).map(|t| norm(&t.value));
         if !is_record || owner.as_ref().is_some_and(|h| written.contains(h)) {
             records += usize::from(is_record);
             out.extend(rec.iter().map(tag));
         }
-        i = end;
     }
     if records == 0 {
         return;
@@ -846,7 +831,7 @@ fn unknown_handles(d: &Drawing) -> HashSet<String> {
 }
 
 /// Put the drawing's foreign data back into a written file's tags (see the module comment).
-pub(crate) fn finish(tags: &mut Vec<Tag>, d: &Drawing, reactors: &HashMap<Handle, Vec<String>>) {
+pub(crate) fn finish(tags: &mut Vec<Tag>, d: &Drawing, reactors: &HashMap<Handle, Vec<String>>, modern: bool) {
     let f = d.foreign.as_ref();
     let unknown = unknown_handles(d);
     let xd: XdataOf = all_entities(d).filter(|e| !e.common.xdata.is_empty()).map(|e| (e.handle, e.common.xdata.as_slice())).collect();
@@ -875,7 +860,7 @@ pub(crate) fn finish(tags: &mut Vec<Tag>, d: &Drawing, reactors: &HashMap<Handle
     }
     let renumber = |old: Option<i64>| class_index(old).and_then(|i| f.class_order.get(i)).and_then(|n| numbers.get(n).copied());
     // Entities of types CADCraft doesn't model, placed among the written ones.
-    let mut planned = plan_unknown(d, &recs, tags, &roles);
+    let mut planned = plan_unknown(d, &recs, tags, &roles, modern);
     for list in planned.values_mut() {
         list.retain_mut(|(_, t)| {
             if !t.first().is_some_and(|z| is_proxy(&z.str())) {
@@ -1019,7 +1004,14 @@ pub(crate) fn finish(tags: &mut Vec<Tag>, d: &Drawing, reactors: &HashMap<Handle
 /// Where the entities of types CADCraft doesn't model go: each before the next written entity of
 /// its space or block (else at the end of it), as `(section, record)` lists by the index of the
 /// record they precede. Owners come from the written block records.
-fn plan_unknown(d: &Drawing, recs: &[Rec], tags: &[Tag], roles: &HashMap<ForeignKey, String>) -> HashMap<usize, Vec<(String, Vec<Tag>)>> {
+fn plan_unknown(
+    d: &Drawing,
+    recs: &[Rec],
+    tags: &[Tag],
+    roles: &HashMap<ForeignKey, String>,
+    modern: bool,
+) -> HashMap<usize, Vec<(String, Vec<Tag>)>> {
+    let stored = d.foreign.data_store_entities();
     let mut out: HashMap<usize, Vec<(String, Vec<Tag>)>> = HashMap::new();
     let body = |r: &Rec| tags.get(r.start + 1..r.end).unwrap_or(&[]);
     let mut at: HashMap<String, usize> = HashMap::new();
@@ -1057,6 +1049,9 @@ fn plan_unknown(d: &Drawing, recs: &[Rec], tags: &[Tag], roles: &HashMap<Foreign
         for e in store.iter() {
             match &e.kind {
                 EntityKind::Unknown(u) => {
+                    if modern && cadcraft_doc::foreign::sat_text_acis(u, e.handle, &stored) {
+                        continue;
+                    }
                     let t = unknown_entity(u, e, &owner, paper);
                     if !t.is_empty() {
                         pending.push((sec.to_string(), t));
