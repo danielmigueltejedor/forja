@@ -6,7 +6,7 @@
     </picture>
   </a>
   <br><br>
-  <img src="https://raw.githubusercontent.com/danielmigueltejedor/forja/main/assets/app-icon/hicolor/512x512/apps/ai.storyteller.cadcraft.png" width="176" height="176" alt="Forja">
+  <img src="https://raw.githubusercontent.com/danielmigueltejedor/forja/main/assets/app-icon/hicolor/512x512/apps/ai.storyteller.cadcraft.png" width="160" alt="Forja">
   <h1>Forja</h1>
   <p><strong>A CAD application for 2D drafting and DWG/DXF work for the Nodalia suite, built on the CadCraft engine.</strong></p>
 
