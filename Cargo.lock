@@ -763,7 +763,7 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror 2.0.21",
- "tiny-skia",
+ "tiny-skia 0.12.0",
 ]
 
 [[package]]
@@ -777,7 +777,7 @@ dependencies = [
  "getrandom 0.4.3",
  "log",
  "serde_json",
- "tiny-skia",
+ "tiny-skia 0.12.0",
 ]
 
 [[package]]
@@ -791,7 +791,7 @@ dependencies = [
  "lyon_tessellation",
  "rayon",
  "serde_json",
- "tiny-skia",
+ "tiny-skia 0.12.0",
 ]
 
 [[package]]
@@ -2771,7 +2771,7 @@ dependencies = [
  "skrifa 0.42.1",
  "smallvec",
  "subsetter",
- "tiny-skia-path",
+ "tiny-skia-path 0.12.0",
  "xmp-writer",
  "yoke",
  "zune-jpeg",
@@ -4254,7 +4254,7 @@ checksum = "b6277f0217056f77f1d8f49f2950ac6c278c0d607c45f5ee99328d792ede24ec"
 dependencies = [
  "log",
  "smithay-client-toolkit 0.19.2",
- "tiny-skia",
+ "tiny-skia 0.11.4",
 ]
 
 [[package]]
@@ -4771,6 +4771,20 @@ dependencies = [
 
 [[package]]
 name = "tiny-skia"
+version = "0.11.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "83d13394d44dae3207b52a326c0c85a8bf87f1541f23b0d143811088497b09ab"
+dependencies = [
+ "arrayref",
+ "arrayvec",
+ "bytemuck",
+ "cfg-if",
+ "log",
+ "tiny-skia-path 0.11.4",
+]
+
+[[package]]
+name = "tiny-skia"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "47ffee5eaaf5527f630fb0e356b90ebdec84d5d18d937c5e440350f88c5a91ea"
@@ -4781,7 +4795,18 @@ dependencies = [
  "cfg-if",
  "log",
  "png",
- "tiny-skia-path",
+ "tiny-skia-path 0.12.0",
+]
+
+[[package]]
+name = "tiny-skia-path"
+version = "0.11.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9c9e7fc0c2e86a30b117d0462aa261b72b7a99b7ebd7deb3a14ceda95c5bdc93"
+dependencies = [
+ "arrayref",
+ "bytemuck",
+ "strict-num",
 ]
 
 [[package]]
