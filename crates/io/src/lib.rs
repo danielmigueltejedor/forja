@@ -84,7 +84,6 @@ pub(crate) fn read_source(bytes: &[u8], name: &Path) -> Result<(Drawing, Option<
     if cadcraft_dwg::is_dwg(bytes) {
         let (dxf, notes) = cadcraft_dwg::decode(bytes, cadcraft_dwg::Limits::DEFAULT).map_err(IoError::Format)?;
         let tags = cadcraft_dxf::parse(&dxf).map_err(|e| IoError::Format(format!("{e} (in the DXF converted from this DWG)")))?;
-        drop(dxf);
         let mut d = dxf_read::read_tags(&tags).map_err(|e| IoError::Format(format!("{e} (in the DXF converted from this DWG)")))?;
         d.read_notes = notes;
         return Ok((d, Some(dxf)));
