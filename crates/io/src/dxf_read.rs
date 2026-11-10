@@ -80,12 +80,21 @@ type BlockDef = (String, Vec3, String, Vec<(Option<String>, bool, Entity)>, i64)
 
 /// A layout read from OBJECTS: name, tab order, paper block handle and page setup.
 /// A LAYOUT object: name, tab order, block record, page setup and its limits (groups 10/11).
-type LayoutDef = (String, u32, String, PageSetup, Option<(Vec2, Vec2)>);
+type LayoutDef = (String, u32, String, PageSetup, Option<(Vec2, Vec2)>, bool);
 
 /// Import DXF sections while sharing one materialized-table-cell budget across blocks and entity sections.
-fn read_budgeted(bytes: &[u8], mut table_cells_left: usize) -> Result<Drawing> {
+fn read_budgeted(bytes: &[u8], table_cells_left: usize) -> Result<Drawing> {
     let tags = cadcraft_dxf::parse(bytes).map_err(|e| IoError::Format(e.to_string()))?;
-    let secs = sections(&tags);
+    read_tags_budgeted(&tags, table_cells_left)
+}
+
+/// Parse already-decoded DXF tags; DWG import can release its large intermediate DXF first.
+pub(crate) fn read_tags(tags: &[Tag]) -> Result<Drawing> {
+    read_tags_budgeted(tags, 4_000_000)
+}
+
+fn read_tags_budgeted(tags: &[Tag], mut table_cells_left: usize) -> Result<Drawing> {
+    let secs = sections(tags);
     if secs.is_empty() {
         return Err(IoError::Format("no sections found".into()));
     }
@@ -110,7 +119,7 @@ fn read_budgeted(bytes: &[u8], mut table_cells_left: usize) -> Result<Drawing> {
         }
     }
     let mut skipped = std::collections::BTreeMap::new();
-    count_skipped(&mut skipped, "(no section)", outside_sections(&tags));
+    count_skipped(&mut skipped, "(no section)", outside_sections(tags));
     for s in &secs {
         match s.name.as_str() {
             "HEADER" => header(&s.tags, &mut d),
@@ -133,6 +142,10 @@ fn read_budgeted(bytes: &[u8], mut table_cells_left: usize) -> Result<Drawing> {
     place_blocks(&mut d, blocks, &mut rx, &paper_block_for, &first_layout);
     place_entities(&mut d, entities, &rx, &paper_block_for, &first_layout);
     number_unknown_viewport_ids(&mut d, &dropped_paper_views(&rx, &paper_block_for, &first_layout));
+    // An unvisited layout with entities has already been initialized.
+    for l in &mut d.layouts {
+        l.needs_initialization &= l.entities.is_empty();
+    }
     apply_sortents(&mut d, &objs.sortents, &rx.brs, &paper_block_for, &first_layout);
     objs.apply(&mut d, &rx);
     crate::dxf_image::resolve(&secs, &mut d);

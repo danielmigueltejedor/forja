@@ -50,6 +50,7 @@ pub(super) fn paper_view(w: &mut W, d: &Drawing, e: &Entity, owner: &str, cx: &C
     let size = paper / sheet_scale(l);
     let center = size * 0.5;
     let h = w.h();
+    w.paper_viewports.insert(owner.to_owned(), h.clone());
     w.s(0, "VIEWPORT");
     w.s(5, h);
     w.s(330, owner);

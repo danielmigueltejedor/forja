@@ -104,7 +104,7 @@ fn png(d: &Drawing, space: &Space, opts: &Value) -> Result<Vec<u8>> {
         // A window is placed like model space, whatever the space (as in PDF).
         pdf::placement(if window.is_some() { &Space::Model } else { space }, &b, fit, &sheet, &o)
     } else {
-        (Vec2::ZERO, Vec2::ZERO)
+        (Sheet::for_layout(&page, sheet.unit_mm).origin, Vec2::ZERO)
     };
     // The world point at the image centre, mapped through the same paper origin as PDF.
     let center = from + (half - to) / s;
@@ -124,7 +124,8 @@ fn svg(d: &Drawing, space: &Space, opts: &Value) -> Result<Vec<u8>> {
     let Space::Model = space else {
         let (sheet, page) = sheet(d, space, &o)?;
         let transparency = o.plot_transparency.unwrap_or(page.plot_transparency);
-        return Ok(crate::svg::export_window_with(d, space, Some(sheet.bounds()), transparency).into_bytes());
+        let bounds = Sheet::for_layout(&page, sheet.unit_mm).bounds();
+        return Ok(crate::svg::export_window_with(d, space, Some(bounds), transparency).into_bytes());
     };
     // Model space as plotted: the plot style table, lineweights, and the table's ends, joins and
     // fills at the scale that fits the window (or the extents) on the device's paper.

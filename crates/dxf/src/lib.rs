@@ -358,15 +358,16 @@ fn parse_ascii_counted(text: &str, max_tags: usize, expected: usize) -> Result<V
         }
         let code: i32 = ct.parse().map_err(|_| DxfError::BadCode { line: ln + 1, text: ct.chars().take(40).collect() })?;
         let Some((_, val)) = lines.next() else { return Err(DxfError::Eof) };
+        // Reject before push can grow the buffer beyond the tag budget.
+        if tags.len() == max_tags {
+            return Err(DxfError::TooLarge { tags: tags.len().saturating_add(1), limit: max_tags });
+        }
         let v = typed(code, val);
         let v = match v {
             Value::Str(s) => Value::Str(unescape_unicode(&s)),
             o => o,
         };
         tags.push(Tag { code, value: v });
-        if tags.len() > max_tags {
-            return Err(DxfError::TooLarge { tags: tags.len(), limit: max_tags });
-        }
         if code == 0 && tags.last().is_some_and(|t| t.str().trim_end() == "EOF") {
             break;
         }
@@ -765,6 +766,13 @@ pub fn records(tags: &[Tag]) -> Vec<(String, Vec<Tag>)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn ascii_parser_enforces_the_tag_limit_before_growing_the_buffer() {
+        let src = "1\nA\n70\n1\n0\nEOF\n";
+        assert!(matches!(parse_ascii_with_limit(src, 2), Err(DxfError::TooLarge { tags: 3, limit: 2 })));
+        assert_eq!(parse_ascii_with_limit(src, 3).unwrap().len(), 3);
+    }
 
     #[test]
     fn literal_escape_text_roundtrips() {

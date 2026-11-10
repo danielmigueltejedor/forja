@@ -779,6 +779,8 @@ pub struct PageSetup {
     pub width_mm: f64,
     pub height_mm: f64,
     pub margins_mm: [f64; 4],
+    /// Plot offset from the printable-area origin, in millimetres.
+    pub offset_mm: [f64; 2],
     pub landscape: bool,
     /// "layout" | "extents" | "display" | "window" | "limits".
     pub plot_area: String,
@@ -820,6 +822,7 @@ impl Default for PageSetup {
             width_mm: 215.9,
             height_mm: 279.4,
             margins_mm: [6.35, 6.35, 6.35, 6.35],
+            offset_mm: [0.0; 2],
             landscape: true,
             plot_area: "layout".into(),
             plot_window: [0.0; 4],
@@ -852,11 +855,14 @@ pub struct Layout {
     /// them; `None` for a layout CADCraft made, written as 0,0 to 12,9 (#2109).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub limits: Option<(Vec2, Vec2)>,
+    /// Native unconfigured layout which gets a default viewport only on first activation.
+    #[serde(default)]
+    pub needs_initialization: bool,
 }
 
 impl Layout {
     pub fn new(name: &str, tab_order: u32) -> Self {
-        Layout { name: name.into(), tab_order, page: PageSetup::default(), entities: EntityStore::new(), view: None, limits: None }
+        Layout { name: name.into(), tab_order, page: PageSetup::default(), entities: EntityStore::new(), view: None, limits: None, needs_initialization: false }
     }
 }
 

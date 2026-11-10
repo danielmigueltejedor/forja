@@ -47,6 +47,7 @@ mod mtext_columns_roundtrip;
 mod mtext_embedded_object;
 mod mtext_line_spacing;
 mod multiline_attributes;
+mod native_cad_layout;
 #[cfg(not(target_arch = "wasm32"))]
 mod ole2frame_roundtrip;
 #[cfg(not(target_arch = "wasm32"))]
@@ -83,3 +84,5 @@ mod view_target;
 mod viewport_clip_roundtrip;
 mod xclip_roundtrip;
 mod xref_roundtrip;
+
+mod unvisited_layout;

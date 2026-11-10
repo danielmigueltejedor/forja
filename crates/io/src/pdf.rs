@@ -577,7 +577,7 @@ fn sheet(d: &Drawing, space: &Space, o: &PdfOptions, links_to: &[(Handle, String
         let (from, to) = placement(by, &b, fit, &sheet, o);
         Map { from, s, to, k }
     } else {
-        Map { from: Vec2::ZERO, s, to: Vec2::ZERO, k }
+        Map { from: Sheet::for_layout(&page, unit_mm).origin, s, to: Vec2::ZERO, k }
     };
     // Plot style ends, joins and fill patterns at the plot scale (a layout's are already drawn).
     let mut list = list;
@@ -990,13 +990,14 @@ fn glyph(s: &mut Surface<'_>, font: kr::text::Font, t: &cadcraft_render::PlotTex
     if !det.is_finite() || det == 0.0 {
         return;
     }
-    let text = g.ch.to_string();
+    let single = g.ch.to_string();
+    let text = g.cluster.as_deref().unwrap_or(&single);
     let glyphs = [KrillaGlyph::new(GlyphId::new(u32::from(g.gid)), 0.0, 0.0, 0.0, 0.0, 0..text.len(), None)];
     // The writer sets glyphs upright on a y-down surface: flip the em's y axis back.
     s.push_transform(&Transform::from_row(a, b, -c, -d, e, f));
     s.set_stroke(None);
     s.set_fill(Some(Fill { paint: paint(rgb), opacity: opacity(transparency), rule: FillRule::NonZero }));
-    s.draw_glyphs(Point::from_xy(0.0, 0.0), &glyphs, font, &text, 1.0, false);
+    s.draw_glyphs(Point::from_xy(0.0, 0.0), &glyphs, font, text, 1.0, false);
     s.pop();
 }
 

@@ -121,6 +121,7 @@ fn shape_chars(primary: Option<&Face>, chars: &[(char, bool, bool)], height: f64
                     // Right-to-left runs stay outlines only: their glyphs come in display order
                     // and include ligatures (lam-alef) that stand for several characters.
                     let shows = if rtl { Vec::new() } else { glyph_chars(face, &cs, &glyphs, r.end) };
+                    let clusters = if rtl { Vec::new() } else { collapsed_clusters(&cs, &glyphs, r.end) };
                     for (n, g) in glyphs.iter().enumerate() {
                         let outline = ttf::glyph_by_id(face, g.gid);
                         let k = h / outline.cap * wf;
@@ -135,7 +136,12 @@ fn shape_chars(primary: Option<&Face>, chars: &[(char, bool, bool)], height: f64
                                 .copied()
                                 .flatten()
                                 .filter(|c| !c.is_whitespace())
+                                .filter(|_| !matches!(clusters.get(n), Some(Some(None))))
                                 .and_then(|c| ttf::text_glyph_at(&outline, c, origin, h / outline.cap, wf, shear));
+                            let text = text.map(|mut t| {
+                                t.cluster = clusters.get(n).and_then(|c| c.as_ref()).and_then(Clone::clone);
+                                t
+                            });
                             out.push_glyph(contours, text);
                         }
                         let adv = g.advance * k;
@@ -276,6 +282,28 @@ fn glyph_chars(face: &Face, cs: &[char], glyphs: &[Glyph], end: usize) -> Vec<Op
         let mut rest = free.into_iter().flatten();
         for o in out.iter_mut().take(j).skip(i).filter(|o| o.is_none()) {
             *o = rest.next();
+        }
+        i = j;
+    }
+    out
+}
+
+/// Preserve the full source of a ligature instead of dropping its unassigned characters.
+/// The outer option distinguishes a normal glyph from an outline-only part of a cluster.
+fn collapsed_clusters(cs: &[char], glyphs: &[Glyph], end: usize) -> Vec<Option<Option<std::sync::Arc<str>>>> {
+    let mut out = vec![None; glyphs.len()];
+    let mut i = 0;
+    while let Some(cluster) = glyphs.get(i).map(|g| g.cluster) {
+        let j = glyphs.iter().skip(i).position(|g| g.cluster != cluster).map_or(glyphs.len(), |n| i + n);
+        let to = glyphs.get(j).map_or(end, |g| g.cluster).clamp(cluster, end.max(cluster));
+        let chars = cs.get(cluster..to).unwrap_or_default();
+        if chars.len() > j - i {
+            if let Some(first) = out.get_mut(i) {
+                *first = Some(Some(chars.iter().collect::<String>().into()));
+            }
+            for extra in out.iter_mut().take(j).skip(i + 1) {
+                *extra = Some(None);
+            }
         }
         i = j;
     }
@@ -476,10 +504,22 @@ mod tests {
         ttf::fallback_for('\u{0E01}').filter(|f| ['\u{0E14}', '\u{0E34}', '\u{0E4C}', '\u{0E33}', '\u{0E10}'].iter().all(|c| f.has_glyph(*c)))
     }
 
-    /// Lowest point of the glyph that shows `c`.
-    fn bottom_of(sh: &Shaped, c: char) -> Option<f64> {
-        let t = sh.text.iter().find(|t| t.ch == c)?;
-        sh.glyphs.get(t.outline)?.iter().flatten().map(|p| p.y).reduce(f64::min)
+    /// The top of the complete shaped cluster, including fonts that precompose its marks.
+    fn top_of(sh: &Shaped) -> Option<f64> {
+        sh.glyphs.iter().flatten().flatten().map(|p| p.y).reduce(f64::max)
+    }
+
+    #[test]
+    fn ligature_metadata_keeps_every_source_character_once() {
+        let cs: Vec<char> = "ดิ์AB".chars().collect();
+        let gs = [glyph(0), glyph(3), glyph(4)];
+        let clusters = collapsed_clusters(&cs, &gs, cs.len());
+        assert_eq!(clusters[0].as_ref().unwrap().as_deref(), Some("ดิ์"));
+        assert!(clusters[1..].iter().all(Option::is_none));
+        let gs = [glyph(0), glyph(0), glyph(3), glyph(4)];
+        let clusters = collapsed_clusters(&cs, &gs, cs.len());
+        assert_eq!(clusters[0].as_ref().unwrap().as_deref(), Some("ดิ์"));
+        assert_eq!(clusters[1], Some(None));
     }
 
     #[test]
@@ -491,14 +531,15 @@ mod tests {
         // the same height, on top of each other.
         let stacked = shape("ดิ์");
         let alone = shape("ด์");
-        let (Some(over_vowel), Some(over_letter)) = (bottom_of(&stacked, '\u{0E4C}'), bottom_of(&alone, '\u{0E4C}')) else {
+        let (Some(over_vowel), Some(over_letter)) = (top_of(&stacked), top_of(&alone)) else {
             panic!("thanthakhat drawn as text: {:?}", stacked.text.iter().map(|t| t.ch).collect::<String>())
         };
         assert!(over_vowel > over_letter + 0.05, "stacked {over_vowel} vs alone {over_letter}");
         // Every character is written as text exactly once, however the shaper reorders, splits
         // (sara am) or substitutes (ฐ without its tail under sara u) the glyphs.
         for s in ["ดิ์", "น้ำ", "ฐุ", "ปั้น", "จีรศักดิ์"] {
-            let mut shown: Vec<char> = shape(s).text.iter().map(|t| t.ch).collect();
+            let mut shown: Vec<char> =
+                shape(s).text.iter().flat_map(|t| t.cluster.as_deref().map_or_else(|| vec![t.ch], |s| s.chars().collect())).collect();
             let mut typed: Vec<char> = s.chars().collect();
             shown.sort_unstable();
             typed.sort_unstable();
@@ -512,7 +553,7 @@ mod tests {
         // missing-glyph boxes, and the Latin stays in the stroke font.
         let sh = crate::shape_stroke("ระดับดินเดิม +0.00", 1.0, 1.0, 0.0);
         assert!(!sh.strokes.iter().any(|s| s.len() == 5 && s.first() == s.last()), "no missing-glyph boxes");
-        assert_eq!(sh.text.len(), "ระดับดินเดิม".chars().count());
+        assert_eq!(sh.text.iter().map(|t| t.cluster.as_deref().map_or(1, |s| s.chars().count())).sum::<usize>(), "ระดับดินเดิม".chars().count());
         assert!(!sh.strokes.is_empty(), "\"+0.00\" in the stroke font");
     }
 

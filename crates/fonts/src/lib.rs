@@ -351,7 +351,10 @@ impl TextFont {
         if builtin {
             return TextFont::Stroke;
         }
-        ttf::find(alt_main).map(TextFont::Outline).unwrap_or(TextFont::Stroke)
+        ttf::find(alt_main)
+            .or_else(|| iso_substitutes(n).iter().find_map(|sub| ttf::find(sub)))
+            .map(TextFont::Outline)
+            .unwrap_or(TextFont::Stroke)
     }
     pub fn is_outline(&self) -> bool {
         matches!(self, TextFont::Outline(_))
@@ -359,6 +362,18 @@ impl TextFont {
     /// Whether the text is drawn with SHX fonts.
     pub fn is_shx(&self) -> bool {
         matches!(self, TextFont::Shx(_))
+    }
+}
+
+fn iso_substitutes(name: &str) -> &'static [&'static str] {
+    match name.trim().to_ascii_lowercase().as_str() {
+        "isocpeur bold italic" => &["Arial Narrow Bold Italic", "Liberation Sans Narrow Bold Italic", "Noto Sans Condensed Bold Italic"],
+        "isocpeur bold" => &["Arial Narrow Bold", "Liberation Sans Narrow Bold", "Noto Sans Condensed Bold"],
+        "isocpeui.ttf" | "isocp2i.ttf" | "isocpi.ttf" | "isocpeur italic" => {
+            &["Arial Narrow Italic", "Liberation Sans Narrow Italic", "Noto Sans Condensed Italic"]
+        }
+        "isocpeur.ttf" | "isocp2.ttf" | "isocp.ttf" | "isocpeur" => &["Arial Narrow", "Liberation Sans Narrow", "Noto Sans Condensed"],
+        _ => &[],
     }
 }
 
@@ -385,6 +400,9 @@ pub struct TextGlyph {
     pub gid: u16,
     /// The character it shows.
     pub ch: char,
+    /// Original characters when a shaped cluster has fewer glyphs than characters.
+    /// Stored once on its first glyph; the remaining glyphs are outlines only.
+    pub cluster: Option<std::sync::Arc<str>>,
     /// Index of its outline in [`Shaped::glyphs`].
     pub outline: usize,
     /// The glyph origin (on the baseline).

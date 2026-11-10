@@ -387,6 +387,7 @@ mod native {
     fn post_process(doc: &mut acadrust::CadDocument) -> usize {
         super::fail_in_test("post_process");
         current_style_names(doc);
+        viewport_ids(doc);
         table_merges(doc);
         table_cell_heights(doc);
         table_style_rows(doc, false);
@@ -878,6 +879,11 @@ mod native {
         dxf_to_dwg_noted(dxf, version).map(|(dwg, _)| dwg)
     }
 
+    /// Accept an owned intermediate DXF while keeping the conversion API's borrowed path.
+    pub fn dxf_to_dwg_owned_as(dxf: Vec<u8>, version: &str) -> Result<Vec<u8>, String> {
+        dxf_to_dwg_as(&dxf, version)
+    }
+
     /// [`dxf_to_dwg_as`], also returning what the DWG writer left out: how many records of each
     /// DXF type it can't write (other programs' custom entities and objects that the DWG reader
     /// didn't read from a DWG of this version), empty when the DWG keeps everything.
@@ -981,6 +987,29 @@ mod native {
             }
         }
         None
+    }
+
+    /// Recreate each paper-space viewport's sequential ID before exporting DWG as DXF.
+    /// Some acadrust versions number only the active layout, leaving inactive IDs at zero.
+    fn viewport_ids(doc: &mut acadrust::CadDocument) {
+        use acadrust::tables::TableEntry;
+        let blocks: Vec<_> = doc
+            .block_records
+            .iter()
+            .filter(|b| b.name().to_ascii_uppercase().starts_with("*PAPER_SPACE"))
+            .map(|b| b.entity_handles.clone())
+            .collect();
+        for handles in blocks {
+            let mut id = 0i16;
+            for handle in handles {
+                if let Some(acadrust::entities::EntityType::Viewport(v)) = doc.get_entity_mut(handle) {
+                    id = id.saturating_add(1);
+                    if v.id == 0 {
+                        v.id = id;
+                    }
+                }
+            }
+        }
     }
 
     /// The current dimension and text styles' names from their handles: a DWG stores the
@@ -1172,19 +1201,13 @@ mod native {
         }
     }
 
-    /// `kept`: the version the DXF's carried-over groups were read from ([`dxf_to_dwg_kept_as`]).
-    fn convert(dxf: &[u8], version: Option<acadrust::DxfVersion>, kept: Option<acadrust::DxfVersion>) -> Result<(Vec<u8>, super::Unwritten), String> {
+    /// Check borrowed inputs before allocating their owned conversion buffer.
+    fn check_dxf_size(len: usize) -> Result<(), String> {
         // Reject a pathologically large DXF before handing it to the third-party decoder, which
         // allocates tables and section buffers from the input's declared sizes and cannot be
         // interrupted once it starts (CWE-789). This bounds the large-input variant; the decoder
         // runs inside `catch_unwind` so a decode failure is reported rather than crashing.
-        if dxf.len() > Limits::DEFAULT.max_dxf_bytes {
-            return Err(format!(
-                "DXF: the input is {}, larger than the {} CADCraft converts to DWG",
-                mb(dxf.len() as u64),
-                mb(Limits::DEFAULT.max_dxf_bytes as u64)
-            ));
-        }
+        check_dxf_size(dxf.len())?;
         // Decoding a code page to UTF-8 can grow the text, so the limit applies again.
         let data = match kept.and_then(|k| declare_version(dxf, k)) {
             Some(d) if d.len() > Limits::DEFAULT.max_dxf_bytes => {
@@ -1348,6 +1371,14 @@ mod native {
             let mut doc = acadrust::CadDocument::new();
             assert!(doc.add_entity(EntityType::Table(Box::new(t))).is_ok());
             doc
+        }
+
+        #[test]
+        fn conversion_size_limit_is_checked_without_allocating_the_input() {
+            let limit = Limits::DEFAULT.max_dxf_bytes;
+            assert!(check_dxf_size(limit).is_ok());
+            assert!(check_dxf_size(limit + 1).is_err());
+            assert!(check_dxf_size(usize::MAX).is_err());
         }
 
         /// Overlapping whole-table ranges can't make the merge pass visit more than its budget (#1934).
@@ -1520,7 +1551,7 @@ mod native {
 
 #[cfg(not(no_dwg_bridge))]
 pub use native::{
-    dwg_to_dxf, dwg_to_dxf_noted, dwg_to_dxf_with, dxf_to_dwg, dxf_to_dwg_as, dxf_to_dwg_kept_as, dxf_to_dwg_kept_noted, dxf_to_dwg_noted,
+    dwg_to_dxf, dwg_to_dxf_noted, dwg_to_dxf_with, dxf_to_dwg, dxf_to_dwg_as, dxf_to_dwg_owned_as, dxf_to_dwg_kept_as, dxf_to_dwg_kept_noted, dxf_to_dwg_noted,
 };
 
 /// What saving as DWG left out: how many records of each DXF type (upper case) the DWG writer
@@ -1599,6 +1630,10 @@ pub fn dwg_to_dxf_with(_bytes: &[u8], _limits: Limits) -> Result<Vec<u8>, String
 #[cfg(no_dwg_bridge)]
 pub fn dxf_to_dwg(_dxf: &[u8]) -> Result<Vec<u8>, String> {
     Err(format!("DWG files can't be written in the {NO_BRIDGE_BUILD} build yet; save as DXF"))
+}
+#[cfg(no_dwg_bridge)]
+pub fn dxf_to_dwg_owned_as(dxf: Vec<u8>, version: &str) -> Result<Vec<u8>, String> {
+    dxf_to_dwg_as(&dxf, version)
 }
 #[cfg(no_dwg_bridge)]
 pub fn dxf_to_dwg_as(_dxf: &[u8], _version: &str) -> Result<Vec<u8>, String> {

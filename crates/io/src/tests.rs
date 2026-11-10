@@ -549,8 +549,8 @@ fn pdf_layout_one_to_one_with_viewport() {
     let content = check_pdf(&bytes);
     // ANSI A landscape (inches → points).
     assert_eq!(media_box(&bytes), (792.0, 612.0));
-    // Viewport border at 1:1: x from 1in to 9in = 72pt..648pt.
-    let corner = |o: &pdf_read::Op| matches!(o.op.as_str(), "m" | "l") && (o.nums[0] - 72.0).abs() < 1e-6 && (o.nums[1] - 72.0).abs() < 1e-6;
+    // Viewport border at 1:1: 1in from the printable origin, plus the 0.25in margin.
+    let corner = |o: &pdf_read::Op| matches!(o.op.as_str(), "m" | "l") && (o.nums[0] - 90.0).abs() < 1e-6 && (o.nums[1] - 90.0).abs() < 1e-6;
     assert!(pdf_read::drawn(&content).iter().any(corner), "{content}");
     // Lineweights on: default 0.25 mm = 0.709 pt.
     assert!(widths(&content).iter().any(|w| (w - 0.709).abs() < 0.001), "{content}");
