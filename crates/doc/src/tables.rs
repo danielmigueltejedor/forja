@@ -862,7 +862,15 @@ pub struct Layout {
 
 impl Layout {
     pub fn new(name: &str, tab_order: u32) -> Self {
-        Layout { name: name.into(), tab_order, page: PageSetup::default(), entities: EntityStore::new(), view: None, limits: None, needs_initialization: false }
+        Layout {
+            name: name.into(),
+            tab_order,
+            page: PageSetup::default(),
+            entities: EntityStore::new(),
+            view: None,
+            limits: None,
+            needs_initialization: false,
+        }
     }
 }
 
