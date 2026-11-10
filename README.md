@@ -1,4 +1,11 @@
 <div align="center">
+  <a href="https://getnodalia.com">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/danielmigueltejedor/nodalia-web/main/assets/brand/nodalia-wordmark-white.svg">
+      <img src="https://raw.githubusercontent.com/danielmigueltejedor/nodalia-web/main/assets/brand/nodalia-wordmark-black.svg" width="150" alt="Nodalia">
+    </picture>
+  </a>
+  <br><br>
   <img src="https://raw.githubusercontent.com/danielmigueltejedor/forja/main/assets/app-icon/hicolor/512x512/apps/ai.storyteller.cadcraft.png" width="176" height="176" alt="Forja">
   <h1>Forja</h1>
   <p><strong>A CAD application for 2D drafting and DWG/DXF work for the Nodalia suite, built on the CadCraft engine.</strong></p>
