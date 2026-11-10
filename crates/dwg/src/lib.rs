@@ -1551,7 +1551,8 @@ mod native {
 
 #[cfg(not(no_dwg_bridge))]
 pub use native::{
-    dwg_to_dxf, dwg_to_dxf_noted, dwg_to_dxf_with, dxf_to_dwg, dxf_to_dwg_as, dxf_to_dwg_owned_as, dxf_to_dwg_kept_as, dxf_to_dwg_kept_noted, dxf_to_dwg_noted,
+    dwg_to_dxf, dwg_to_dxf_noted, dwg_to_dxf_with, dxf_to_dwg, dxf_to_dwg_as, dxf_to_dwg_kept_as, dxf_to_dwg_kept_noted, dxf_to_dwg_noted,
+    dxf_to_dwg_owned_as,
 };
 
 /// What saving as DWG left out: how many records of each DXF type (upper case) the DWG writer

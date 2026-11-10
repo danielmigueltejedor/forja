@@ -351,10 +351,7 @@ impl TextFont {
         if builtin {
             return TextFont::Stroke;
         }
-        ttf::find(alt_main)
-            .or_else(|| iso_substitutes(n).iter().find_map(|sub| ttf::find(sub)))
-            .map(TextFont::Outline)
-            .unwrap_or(TextFont::Stroke)
+        ttf::find(alt_main).or_else(|| iso_substitutes(n).iter().find_map(|sub| ttf::find(sub))).map(TextFont::Outline).unwrap_or(TextFont::Stroke)
     }
     pub fn is_outline(&self) -> bool {
         matches!(self, TextFont::Outline(_))

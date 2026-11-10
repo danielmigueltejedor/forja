@@ -148,7 +148,14 @@ pub(super) fn read_objects(tags: &[Tag], objs: &mut Objects, layout_objs: &mut V
                 && plot.fd(45, 0.0) == 0.0
                 && plot.s(4).is_none_or(|n| n.is_empty())
                 && t.s(331).is_none_or(|h| Handle::parse_hex(&h).is_none_or(|h| h.0 == 0));
-            layout_objs.push((t.s(1).unwrap_or_default(), t.i(71).unwrap_or(0) as u32, br.to_ascii_uppercase(), page_setup(&plot), limits(&t), pending));
+            layout_objs.push((
+                t.s(1).unwrap_or_default(),
+                t.i(71).unwrap_or(0) as u32,
+                br.to_ascii_uppercase(),
+                page_setup(&plot),
+                limits(&t),
+                pending,
+            ));
         }
     }
 }
