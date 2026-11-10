@@ -1,44 +1,30 @@
-name: Tests
+name: CI
 
-# Until now nothing ran the test suite on a change: the release workflows
-# build the app, web-check.yml type-checks the wasm target, and pull requests
-# reported their own local runs. Run the workspace tests on every push to
-# main and on every pull request. There is deliberately no formatter check:
-# the tree is not rustfmt-clean and is not going to be reformatted.
-
+# Quality gates for every push to main and every pull request (`cargo xtask ci`), through the
+# suite's shared gate workflow in craft-common-actions.
 on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+# A newer push to a PR branch cancels its older run; every push to main runs to the end.
 concurrency:
-  group: tests-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  test:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
-
-      # The same libraries the Linux release build needs (windowing, GL,
-      # fonts); the packaging tools are left out.
-      - name: System libraries
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libgl1-mesa-dev libx11-dev libxcursor-dev libxi-dev libxrandr-dev \
-            libxkbcommon-dev libwayland-dev libfontconfig1-dev libfreetype6-dev
-
-      - uses: dtolnay/rust-toolchain@stable
-
-      - uses: Swatinem/rust-cache@v2
-
-      # LC_ALL=C: a few tests compare English message text.
-      - name: cargo test
-        env:
-          LC_ALL: C
-        run: cargo test --workspace --locked
+  gate:
+    # Tracks @main so suite-wide CI fixes reach every app without a PR in each repository.
+    uses: storytold/craft-common-actions/.github/workflows/gate.yml@main
+    with:
+      # Same craft-fonts commit as release.yml.
+      craft-fonts-ref: b076417b5880bd4154bd22f00695b1d28c6bea83
+      timeout-minutes: 90
+      packages: >-
+        pkg-config libxkbcommon-dev libwayland-dev libx11-dev libxcb1-dev libxcursor-dev
+        libxrandr-dev libxi-dev libfontconfig1-dev libfreetype-dev mesa-vulkan-drivers
+        libgl1-mesa-dev
