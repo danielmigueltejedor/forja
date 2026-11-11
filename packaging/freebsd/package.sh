@@ -93,7 +93,7 @@ sed -e "s/@VERSION@/$VERSION/g" -e "s/@DATE@/$CADCRAFT_BUILD_DATE/g" \
 cp -R "$ROOT/assets/app-icon/hicolor" "$STAGE/share/icons/"
 
 # The .desktop names the icon dev.danielmiguelt.Forja (the Nodalia name); install it under that name too.
-for f in "$STAGE"/share/icons/hicolor/*/apps/"$APP_ID".*; do cp "$f" "${f%/*}/dev.danielmiguelt.Forja.${f##*.}"; done
+for f in "$STAGE"/share/icons/hicolor/*/apps/"$APP_ID".{png,svg}; do cp "$f" "${f%/*}/dev.danielmiguelt.Forja.${f##*.}"; done
 copy_docs "$STAGE/share/doc/cadcraft"
 # cadcraft-cli's man pages and shell completions, from its clap definition, written by the
 # example built above.
