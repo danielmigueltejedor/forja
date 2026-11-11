@@ -29,6 +29,6 @@ jobs:
     uses: storytold/craft-common-actions/.github/workflows/windows-arm64.yml@main
     with:
       app-name: forja
-      app-dir: CADCraft
-      install-relative-path: Programs/ArtCraft/CADCraft
+      app-dir: Forja
+      install-relative-path: Programs/ArtCraft/Forja
       install-scope: perUser
