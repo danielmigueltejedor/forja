@@ -1,7 +1,9 @@
 //! CADCraft's icon set, drawn in code (original work, MIT OR Apache-2.0 with the codebase).
 //!
-//! Icons are line drawings on a 24×24 design grid: light strokes for existing geometry, blue for
-//! the geometry a command creates and orange dots for picked points.
+//! Icons are line drawings on a 24×24 design grid in the Nodalia Design Language's bold style
+//! (a 2.25 stroke, round caps and joins): the icon colour for existing geometry, the accent for
+//! the geometry a command creates and accent dots for picked points. The generic icons (files,
+//! edit, view, navigation, chevrons) are NDL's own shapes ([`crate::ndl_icons`]).
 
 use craft_ui::buttons::{ButtonVisuals, IconButton, IconButtonStyle};
 use egui::{Color32, Painter, Pos2, Rect, Stroke, pos2};
@@ -180,14 +182,27 @@ impl Pen<'_> {
     fn st(&self, c: Color32) -> Stroke {
         Stroke::new(self.w, c)
     }
+    /// A round cap or join: a disc of the stroke's width.
+    fn cap(&self, p: Pos2, c: Color32) {
+        self.p.circle_filled(p, self.w / 2.0, c);
+    }
+    fn seg(&self, x1: f32, y1: f32, x2: f32, y2: f32, c: Color32) {
+        let (a, b) = (self.at(x1, y1), self.at(x2, y2));
+        self.p.line_segment([a, b], self.st(c));
+        self.cap(a, c);
+        self.cap(b, c);
+    }
     fn l(&self, x1: f32, y1: f32, x2: f32, y2: f32) {
-        self.p.line_segment([self.at(x1, y1), self.at(x2, y2)], self.st(self.base));
+        self.seg(x1, y1, x2, y2, self.base);
     }
     fn la(&self, x1: f32, y1: f32, x2: f32, y2: f32) {
-        self.p.line_segment([self.at(x1, y1), self.at(x2, y2)], self.st(self.acc));
+        self.seg(x1, y1, x2, y2, self.acc);
     }
     fn poly(&self, pts: &[(f32, f32)], closed: bool, c: Color32) {
         let mut v: Vec<Pos2> = pts.iter().map(|(x, y)| self.at(*x, *y)).collect();
+        for p in &v {
+            self.cap(*p, c);
+        }
         if closed && let Some(f) = v.first().copied() {
             v.push(f);
         }
@@ -208,6 +223,10 @@ impl Pen<'_> {
                 self.at(x + r * a.cos(), y - r * a.sin())
             })
             .collect();
+        if let (Some(a), Some(b)) = (pts.first().copied(), pts.last().copied()) {
+            self.cap(a, c);
+            self.cap(b, c);
+        }
         self.p.line(pts, self.st(c));
     }
     fn rect(&self, x: f32, y: f32, w: f32, h: f32, c: Color32) {
@@ -245,8 +264,15 @@ impl Pen<'_> {
 pub fn paint(p: &Painter, rect: Rect, icon: Icon, dim: bool) {
     let t = Tokens::get();
     let alpha = |c: Color32| if dim { c.gamma_multiply(0.4) } else { c };
-    let pen = Pen { p, r: rect, w: (rect.width() / 16.0).clamp(1.0, 1.6), base: alpha(t.icon), acc: alpha(t.icon_accent), pt: alpha(t.icon_point) };
+    // NDL's bold stroke on the 24 grid.
+    let w = (rect.width() * crate::ndl_icons::BOLD_STROKE / 24.0).max(1.0);
+    let pen = Pen { p, r: rect, w, base: alpha(t.icon), acc: alpha(t.icon_accent), pt: alpha(t.icon_point) };
     let (b, a) = (pen.base, pen.acc);
+    if let Some(body) = crate::ndl_icons::body(icon)
+        && crate::ndl_icons::paint(p, rect, body, b)
+    {
+        return;
+    }
     paint_file_view(&pen, icon, b, a, dim);
     paint_document_tools(&pen, icon, b, a, dim);
     paint_draw_tools(&pen, icon, b, a, dim);

@@ -58,6 +58,7 @@ pub mod layers;
 pub mod managers;
 pub mod menus;
 pub mod modal;
+mod ndl_icons;
 pub mod opening;
 pub mod options;
 pub mod palettes;
