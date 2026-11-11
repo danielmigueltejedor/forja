@@ -82,7 +82,7 @@ fn an_ac1018_dwg_gets_the_variable_dictionary_autocad_always_writes() {
     assert!(value(&vars, "LAYEREVAL").is_some() && value(&vars, "LAYERNOTIFY").is_some(), "{vars:?}");
 
     // The added objects don't disturb CADCraft's own read of the file: the rectangle is there.
-    let back = cadcraft_io::read(&dwg, "rect.dwg").expect("CADCraft reads its own 2004 DWG");
+    let back = cadcraft_io::read(&dwg, "rect.dwg").expect("Forja reads its own 2004 DWG");
     assert_eq!(back.model.len(), 1);
 }
 

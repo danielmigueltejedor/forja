@@ -150,7 +150,7 @@ fn missing_marked_ui_literals(language: &str) -> BTreeSet<String> {
                     .unwrap();
                 let key: String = serde_json::from_str(&rest[..end]).unwrap();
                 // Coordinate axes, glyph buttons and product names are not translated.
-                if !["X", "Y", "B", "CADCraft"].contains(&key.as_str()) && !catalog.contains_key(&("", key.as_str())) {
+                if !["X", "Y", "B", "Forja"].contains(&key.as_str()) && !catalog.contains_key(&("", key.as_str())) {
                     missing.insert(key);
                 }
             }
@@ -456,7 +456,7 @@ fn dialogs_render_in_every_language_and_keep_their_source_ids() {
     for language in translated() {
         for (dialog, heading) in [
             ("dsettings", "Drafting Settings"),
-            ("about", "About CADCraft"),
+            ("about", "About Forja"),
             ("commands", "Command Reference"),
             ("blocks", "Blocks"),
             ("layers", "Layer Properties Manager"),

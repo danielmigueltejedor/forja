@@ -94,7 +94,7 @@ mod native {
     /// passes for a complete one.
     pub fn dwg_to_dxf_noted(bytes: &[u8], limits: Limits) -> Result<(Vec<u8>, Vec<String>), String> {
         if bytes.len() > limits.max_dwg_bytes {
-            return Err(format!("DWG: the file is {}, larger than the {} CADCraft opens", mb(bytes.len() as u64), mb(limits.max_dwg_bytes as u64)));
+            return Err(format!("DWG: the file is {}, larger than the {} Forja opens", mb(bytes.len() as u64), mb(limits.max_dwg_bytes as u64)));
         }
         let outcome = std::panic::catch_unwind(|| {
             acadrust::DwgReader::from_stream_with_options(Cursor::new(bytes), acadrust::DwgReadOptions::failsafe()).read_with_stats()
@@ -480,7 +480,7 @@ mod native {
             list.push(format!("{} more types", left.len() - NOTE_TYPES));
         }
         vec![format!(
-            "DWG: {total} objects of types CADCraft doesn't keep were left out ({}); saving over the original file would lose them",
+            "DWG: {total} objects of types Forja doesn't keep were left out ({}); saving over the original file would lose them",
             list.join(", ")
         )]
     }
@@ -1208,7 +1208,7 @@ mod native {
     fn check_dxf_size(len: usize) -> Result<(), String> {
         if len > Limits::DEFAULT.max_dxf_bytes {
             return Err(format!(
-                "DXF: the input is {}, larger than the {} CADCraft converts to DWG",
+                "DXF: the input is {}, larger than the {} Forja converts to DWG",
                 mb(len as u64),
                 mb(Limits::DEFAULT.max_dxf_bytes as u64)
             ));
@@ -1225,7 +1225,7 @@ mod native {
         let data = match kept.and_then(|k| declare_version(dxf, k)) {
             Some(d) if d.len() > Limits::DEFAULT.max_dxf_bytes => {
                 return Err(format!(
-                    "DXF: the input is {} as UTF-8, larger than the {} CADCraft converts to DWG",
+                    "DXF: the input is {} as UTF-8, larger than the {} Forja converts to DWG",
                     mb(d.len() as u64),
                     mb(Limits::DEFAULT.max_dxf_bytes as u64)
                 ));
@@ -1528,7 +1528,7 @@ mod native {
             assert_eq!(
                 notes,
                 [
-                    "DWG: 1 objects of types CADCraft doesn't keep were left out (BLOCKPROPERTIESTABLE × 1); saving over the original file would lose them"
+                    "DWG: 1 objects of types Forja doesn't keep were left out (BLOCKPROPERTIESTABLE × 1); saving over the original file would lose them"
                 ]
             );
         }
@@ -1593,7 +1593,7 @@ fn fail_in_test(_stage: &str) {
 #[cfg_attr(no_dwg_bridge, allow(dead_code))]
 fn unsupported(version: &str) -> String {
     let list: Vec<&str> = VERSIONS.iter().map(|(_, year)| *year).collect();
-    format!("DWG version `{version}` can't be written (CADCraft writes {})", list.join(", "))
+    format!("DWG version `{version}` can't be written (Forja writes {})", list.join(", "))
 }
 
 /// Which build has no DWG bridge, for the stubs' errors.

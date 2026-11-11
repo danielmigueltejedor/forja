@@ -206,7 +206,7 @@ pub fn prompt(app: &mut CadApp, ctx: &egui::Context) {
     let mut choice = None;
     crate::modal::instant(ctx, egui::Id::unique("cc_close_prompt")).show(ctx, |ui| {
         ui.set_width(360.0);
-        ui.label(RichText::new(crate::tl!("CADCraft")).strong());
+        ui.label(RichText::new(crate::tl!("Forja")).strong());
         ui.add_space(4.0);
         ui.label(crate::tf!("Save changes to {name}?", name = title));
         ui.label(RichText::new(crate::tl!("Your changes will be lost if you don't save them.")).color(t.text_dim));

@@ -92,7 +92,7 @@ fn run_view(s: &mut Session, p: &Value) -> Result<Value> {
             }
             Ok(json!({ "layerSnapshot": s.settings.view_layer_snapshot }))
         }
-        "orthographic" | "o" => Err(EngineError::Other("Orthographic views are not available yet: CADCraft views are 2D.".into())),
+        "orthographic" | "o" => Err(EngineError::Other("Orthographic views are not available yet: Forja views are 2D.".into())),
         _ => Err(bad("view", "option must be save, window, restore, delete, list or settings")),
     }
 }
@@ -313,7 +313,7 @@ impl Interactive for ViewM {
                     "window" | "w" => Stage::WindowName,
                     "settings" | "e" => Stage::Settings,
                     "orthographic" | "o" => {
-                        s.echo("Orthographic views are not available yet: CADCraft views are 2D.");
+                        s.echo("Orthographic views are not available yet: Forja views are 2D.");
                         return Ok(Step::Done);
                     }
                     _ => return Err(EngineError::Other("Invalid option keyword.".into())),

@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Build and package CADCraft for FreeBSD:
+# Build and package Forja for FreeBSD:
 #
-#   $DIST/cadcraft-<version>-freebsd-<arch>.tar.gz   a /usr/local-style tree (<arch> is x86_64, or
+#   $DIST/forja-<version>-freebsd-<arch>.tar.gz   a /usr/local-style tree (<arch> is x86_64, or
 #       aarch64 when CARGO_BUILD_TARGET=aarch64-unknown-freebsd):
-#       cadcraft-<version>-freebsd-<arch>/{bin, man/man1, share/applications, share/icons,
-#       share/mime, share/metainfo, share/doc/cadcraft, share/{bash-completion,zsh,fish}}
+#       forja-<version>-freebsd-<arch>/{bin, man/man1, share/applications, share/icons,
+#       share/mime, share/metainfo, share/doc/forja, share/{bash-completion,zsh,fish}}
 #
 # Install by copying the tree's contents into /usr/local, e.g.
-#   tar -xzf cadcraft-*-freebsd-x86_64.tar.gz --strip-components 1 -C /usr/local
+#   tar -xzf forja-*-freebsd-x86_64.tar.gz --strip-components 1 -C /usr/local
 #
 # Usage: packaging/freebsd/package.sh [--skip-build] [--dry-run]
 #   --dry-run  print the resolved target, archive and cargo commands, then exit without building
@@ -18,7 +18,7 @@ set -euo pipefail
 # shellcheck source=../env.sh
 . "$(dirname "${BASH_SOURCE[0]}")/../env.sh"
 LINUX="$ROOT/packaging/linux"
-APP_ID=ai.storyteller.cadcraft
+APP_ID=ai.storyteller.forja
 
 SKIP_BUILD=0
 DRY_RUN=0
@@ -56,23 +56,23 @@ HOST_ARCH="$(release_arch "$(uname -m)" 2>/dev/null)" || HOST_ARCH="$(uname -m)"
 if [[ -n "${CARGO_BUILD_TARGET:-}" ]] && [[ "$(uname -s)" != FreeBSD ]]; then
   HOST_ARCH="$(uname -s) $HOST_ARCH"
 fi
-BASENAME="cadcraft-$VERSION-freebsd-$ARCH"
+BASENAME="forja-$VERSION-freebsd-$ARCH"
 
-echo "==> CADCraft $VERSION for FreeBSD $ARCH"
+echo "==> Forja $VERSION for FreeBSD $ARCH"
 
-# cadcraft-cli's man-and-completions example is built on its own, not with the binaries: its
+# forja-cli's man-and-completions example is built on its own, not with the binaries: its
 # dev-dependencies would otherwise be unified into them (packaging/linux/package.sh). It runs on
 # this machine, so a cross build builds it without the target.
 CARGO_BUILD_FLAGS=(--release --locked ${CARGO_BUILD_TARGET:+--target "$CARGO_BUILD_TARGET"})
 if [[ "$DRY_RUN" = 1 ]]; then
   echo "dry run: archive $DIST/$BASENAME.tar.gz"
-  echo "dry run: (cd $ROOT && cargo build ${CARGO_BUILD_FLAGS[*]} -p cadcraft -p cadcraft-cli)"
-  echo "dry run: (cd $ROOT && env -u CARGO_BUILD_TARGET cargo build --release --locked -p cadcraft-cli --example man-and-completions)"
+  echo "dry run: (cd $ROOT && cargo build ${CARGO_BUILD_FLAGS[*]} -p forja -p forja-cli)"
+  echo "dry run: (cd $ROOT && env -u CARGO_BUILD_TARGET cargo build --release --locked -p forja-cli --example man-and-completions)"
   exit 0
 fi
 if [[ "$SKIP_BUILD" = 0 ]]; then
-  (cd "$ROOT" && cargo build "${CARGO_BUILD_FLAGS[@]}" -p cadcraft -p cadcraft-cli)
-  (cd "$ROOT" && env -u CARGO_BUILD_TARGET cargo build --release --locked -p cadcraft-cli --example man-and-completions)
+  (cd "$ROOT" && cargo build "${CARGO_BUILD_FLAGS[@]}" -p forja -p forja-cli)
+  (cd "$ROOT" && env -u CARGO_BUILD_TARGET cargo build --release --locked -p forja-cli --example man-and-completions)
 fi
 # Cargo puts a cross build under target/<triple>/release.
 BIN="$CARGO_TARGET_DIR/${CARGO_BUILD_TARGET:+$CARGO_BUILD_TARGET/}release"
@@ -82,17 +82,17 @@ rm -rf "$WORK"
 
 # ---- stage a /usr/local-style tree ---------------------------------------------------------------
 mkdir -p "$STAGE/bin" "$STAGE/share/applications" "$STAGE/share/mime/packages" "$STAGE/share/metainfo" \
-  "$STAGE/share/icons" "$STAGE/share/doc/cadcraft"
-install -m 755 "$BIN/cadcraft" "$BIN/cadcraft-cli" "$STAGE/bin/"
-strip "$STAGE/bin/cadcraft" "$STAGE/bin/cadcraft-cli" 2>/dev/null || true
+  "$STAGE/share/icons" "$STAGE/share/doc/forja"
+install -m 755 "$BIN/forja" "$BIN/forja-cli" "$STAGE/bin/"
+strip "$STAGE/bin/forja" "$STAGE/bin/forja-cli" 2>/dev/null || true
 # The desktop entry, MIME type and metainfo are the freedesktop files the Linux packages use.
 install -m 644 "$LINUX/$APP_ID.desktop" "$STAGE/share/applications/$APP_ID.desktop"
 install -m 644 "$LINUX/$APP_ID.mime.xml" "$STAGE/share/mime/packages/$APP_ID.xml"
 sed -e "s/@VERSION@/$VERSION/g" -e "s/@DATE@/$CADCRAFT_BUILD_DATE/g" \
   "$LINUX/$APP_ID.metainfo.xml.in" >"$STAGE/share/metainfo/$APP_ID.metainfo.xml"
 cp -R "$ROOT/assets/app-icon/hicolor" "$STAGE/share/icons/"
-copy_docs "$STAGE/share/doc/cadcraft"
-# cadcraft-cli's man pages and shell completions, from its clap definition, written by the
+copy_docs "$STAGE/share/doc/forja"
+# forja-cli's man pages and shell completions, from its clap definition, written by the
 # example built above.
 CLI_DOCS="$CARGO_TARGET_DIR/release/examples/man-and-completions"
 if [[ ! -x "$CLI_DOCS" ]]; then
@@ -103,9 +103,9 @@ fi
 mkdir -p "$STAGE/man/man1" "$STAGE/share/bash-completion/completions" \
   "$STAGE/share/zsh/site-functions" "$STAGE/share/fish/vendor_completions.d"
 install -m 644 "$WORK"/cli-docs/*.1 "$STAGE/man/man1/"
-install -m 644 "$WORK/cli-docs/cadcraft-cli.bash" "$STAGE/share/bash-completion/completions/cadcraft-cli"
-install -m 644 "$WORK/cli-docs/_cadcraft-cli" "$STAGE/share/zsh/site-functions/_cadcraft-cli"
-install -m 644 "$WORK/cli-docs/cadcraft-cli.fish" "$STAGE/share/fish/vendor_completions.d/cadcraft-cli.fish"
+install -m 644 "$WORK/cli-docs/forja-cli.bash" "$STAGE/share/bash-completion/completions/forja-cli"
+install -m 644 "$WORK/cli-docs/_forja-cli" "$STAGE/share/zsh/site-functions/_forja-cli"
+install -m 644 "$WORK/cli-docs/forja-cli.fish" "$STAGE/share/fish/vendor_completions.d/forja-cli.fish"
 
 # ---- .tar.gz -------------------------------------------------------------------------------------
 mkdir -p "$DIST"
@@ -113,7 +113,7 @@ tar -C "$WORK" -czf "$DIST/$BASENAME.tar.gz" "$BASENAME"
 echo "wrote $DIST/$BASENAME.tar.gz"
 
 if [[ -z "${CARGO_BUILD_TARGET:-}" ]] && [[ "$ARCH" = "$HOST_ARCH" ]]; then
-  "$STAGE/bin/cadcraft-cli" --version
+  "$STAGE/bin/forja-cli" --version
 else
   # They cannot run here, so check what they are instead: executables, not libraries or objects.
   # An older file(1) calls a PIE a shared object; its interpreter still marks it as a program.

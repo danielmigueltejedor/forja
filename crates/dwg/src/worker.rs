@@ -269,7 +269,7 @@ fn write_reply(out: &mut impl Write, reply: Reply) -> std::io::Result<()> {
 
 /// What a request asks for, or why it can't be served.
 fn handle(mut b: &[u8]) -> Reply {
-    let bad = || "the DWG worker got a request it can't read (a different CADCraft version?)".to_string();
+    let bad = || "the DWG worker got a request it can't read (a different Forja version?)".to_string();
     if take(&mut b, 1).and_then(<[u8]>::first) != Some(&PROTOCOL) {
         return Err(bad());
     }
@@ -355,7 +355,7 @@ mod tests {
     /// one it can't read, and one with it reaches the converter.
     #[test]
     fn an_encode_request_carries_the_kept_version() {
-        let bad = "the DWG worker got a request it can't read (a different CADCraft version?)";
+        let bad = "the DWG worker got a request it can't read (a different Forja version?)";
         let short = self::request(ENCODE, Limits::DEFAULT, "AC1032");
         assert_eq!(handle(&short).unwrap_err(), bad);
         for kept in ["", "AC1032"] {

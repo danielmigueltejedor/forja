@@ -197,7 +197,7 @@ impl Parser {
             return None;
         }
         let list: Vec<String> = self.left_out.iter().map(|(k, n)| k.describe(*n)).collect();
-        Some(format!("SVG: CADCraft doesn't read these yet, so they were left out: {}", list.join(", ")))
+        Some(format!("SVG: Forja doesn't read these yet, so they were left out: {}", list.join(", ")))
     }
 
     fn parse(&mut self, text: &str) -> Result<()> {

@@ -4,11 +4,11 @@ members = ["crates/*", "apps/*", "xtask"]
 # default-members
 
 [workspace.package]
-version = "0.17.0"
+version = "0.1.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 rust-version = "1.95"
-repository = "https://github.com/storytold/cadcraft"
+repository = "https://github.com/danielmigueltejedor/forja"
 
 [workspace.dependencies]
 # internal

@@ -1405,7 +1405,7 @@ fn file_arrowhead_blocks_with_standard_names_are_kept() {
             assert_eq!(kinds(&back, name), kinds(&d, name), "{what}: {name}");
         }
         let again = write_dxf(&back);
-        assert!(!again.contains("\nSOLID\r"), "{what}: no arrowhead geometry of CADCraft's is written");
+        assert!(!again.contains("\nSOLID\r"), "{what}: no arrowhead geometry of Forja's is written");
         assert_eq!(kinds(&roundtrip(&back), "_Dot"), kinds(&d, "_Dot"), "{what}: a second save keeps it too");
     }
 }
@@ -1508,12 +1508,12 @@ fn oversized_dwg_and_dxf_are_rejected_early() {
 
     let limits = cadcraft_dwg::Limits { max_dwg_bytes: 100_000, ..cadcraft_dwg::Limits::DEFAULT };
     let e = cadcraft_dwg::dwg_to_dxf_with(&dwg, limits).unwrap_err();
-    assert!(e.starts_with("DWG: the file is 0.") && e.ends_with("MB, larger than the 0.1 MB CADCraft opens"), "{e}");
+    assert!(e.starts_with("DWG: the file is 0.") && e.ends_with("MB, larger than the 0.1 MB Forja opens"), "{e}");
 
     // Lines that aren't even group codes: the size is reported before anything is parsed.
     let text = "not a group code\nx\n".repeat(60);
     let e = cadcraft_dxf::parse_with_limit(text.as_bytes(), 50).unwrap_err();
-    assert_eq!(e.to_string(), "drawing too large: 60 DXF group codes, more than the 50 CADCraft reads (set CADCRAFT_MAX_DXF_TAGS to read more)");
+    assert_eq!(e.to_string(), "drawing too large: 60 DXF group codes, more than the 50 Forja reads (set CADCRAFT_MAX_DXF_TAGS to read more)");
 }
 
 /// Issue #800: one unreadable object record doesn't fail the whole DWG. The reader skips it, the

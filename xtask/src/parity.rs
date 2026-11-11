@@ -1,5 +1,5 @@
 //! `cargo xtask parity`: compare the reference app's menu tree (feature names only, in
-//! `xtask/data/menu-catalog.txt`) with the live command registry (`cadcraft-cli commands`), and
+//! `xtask/data/menu-catalog.txt`) with the live command registry (`forja-cli commands`), and
 //! write `docs/parity-checklist.md` (dated; the assessment that interprets it is
 //! `docs/target-app-parity.md`).
 
@@ -67,9 +67,9 @@ pub fn run(root: &Path) -> Result<(), String> {
     let catalog = std::fs::read_to_string(root.join("xtask/data/menu-catalog.txt")).map_err(|e| format!("menu catalog: {e}"))?;
     let out = Command::new(std::env::var("CARGO").unwrap_or_else(|_| "cargo".into()))
         .current_dir(root)
-        .args(["run", "-q", "-p", "cadcraft-cli", "--", "commands"])
+        .args(["run", "-q", "-p", "forja-cli", "--", "commands"])
         .output()
-        .map_err(|e| format!("cadcraft-cli: {e}"))?;
+        .map_err(|e| format!("forja-cli: {e}"))?;
     let cmds: serde_json::Value = serde_json::from_slice(&out.stdout).map_err(|e| format!("commands JSON: {e}"))?;
     let paths: Vec<String> = cmds
         .as_array()
@@ -106,7 +106,7 @@ pub fn run(root: &Path) -> Result<(), String> {
     }
     let pct = |a: usize, b: usize| if b == 0 { 0.0 } else { 100.0 * a as f64 / b as f64 };
     let mut md = format!(
-        "# Parity checklist\n\n> **Generated:** {} by `cargo xtask parity`. Do not edit by hand.\n\nMenu-breadth parity: a reference menu item counts as covered when a CADCraft command is registered under the same menu label. It measures breadth, not depth; see [target-app-parity.md](target-app-parity.md) for the weighted assessment.\n\n**Menu breadth: {hit} / {} items ({:.0}%)** · {} registered commands.\n\n| Menu | Items | Covered | % |\n|---|---|---|---|\n",
+        "# Parity checklist\n\n> **Generated:** {} by `cargo xtask parity`. Do not edit by hand.\n\nMenu-breadth parity: a reference menu item counts as covered when a Forja command is registered under the same menu label. It measures breadth, not depth; see [target-app-parity.md](target-app-parity.md) for the weighted assessment.\n\n**Menu breadth: {hit} / {} items ({:.0}%)** · {} registered commands.\n\n| Menu | Items | Covered | % |\n|---|---|---|---|\n",
         today(),
         ls.len(),
         pct(hit, ls.len()),

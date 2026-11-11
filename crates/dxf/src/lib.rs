@@ -23,7 +23,7 @@ pub enum DxfError {
     Eof,
     /// More group codes than [`MAX_TAGS`]: `tags` is the count found (or the count read when the
     /// limit was reached), `limit` the maximum.
-    #[error("drawing too large: {tags} DXF group codes, more than the {limit} CADCraft reads (set CADCRAFT_MAX_DXF_TAGS to read more)")]
+    #[error("drawing too large: {tags} DXF group codes, more than the {limit} Forja reads (set CADCRAFT_MAX_DXF_TAGS to read more)")]
     TooLarge { tags: usize, limit: usize },
     /// The memory for `tags` group codes couldn't be had: an error, not the process ending.
     #[error("not enough memory to read this drawing's {tags} DXF group codes")]

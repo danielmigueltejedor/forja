@@ -1,6 +1,6 @@
-# CADCraft Czech interface catalog — original translations by @Losminek (AI-assisted).
+# Forja Czech interface catalog — original translations by @Losminek (AI-assisted).
 # SPDX-License-Identifier: MIT OR Apache-2.0
-# Written from the meaning of CADCraft English strings; no proprietary translations copied.
+# Written from the meaning of Forja English strings; no proprietary translations copied.
 # UTF-8: context<TAB>English source<TAB>Czech translation.
 # @plural = one|few|other forms for integer counts.
 	Apply	Použít
@@ -50,7 +50,7 @@
 	> Greater than	> Větší než
 	A variable name starts with a letter and has only letters, digits and _	Název proměnné začíná písmenem a obsahuje pouze písmena, číslice a _
 	About	O aplikaci
-	About CADCraft	O aplikaci CADCraft
+	About Forja	O aplikaci Forja
 	Absolute	Absolutní
 	Add Leader	Přidat odkaz
 	Additional angles	Další úhly
@@ -112,7 +112,7 @@
 	ByBlock	Dle bloku
 	ByColor	Dle barvy
 	ByLayer	Dle hladiny
-	CADCraft Help	Nápověda CADCraft
+	Forja Help	Nápověda Forja
 	Cancel	Zrušit
 	Cartesian (x, y)	Kartézské (x, y)
 	Center	Střed
@@ -699,7 +699,7 @@
 	Quick Select...	Rychlý výběr...
 	QuickCalc	Rychlá kalkulačka
 	QuickCalc Pick	Výběr pro rychlou kalkulačku
-	Quit CADCraft	Ukončit CADCraft
+	Quit Forja	Ukončit Forja
 	Radius	Poloměr
 	Raster Image	Rastrový obrázek
 	Ray	Polopřímka
@@ -930,7 +930,7 @@
 	Specify insertion point	Určete bod vložení
 	A drawing opened from a file keeps that file's format.	Výkres otevřený ze souboru si zachová formát tohoto souboru.
 	An array that would create more objects than this is refused.	Pole překračující tento počet objektů bude odmítnuto.
-	CADCraft keeps these preferences, object snap modes and drafting toggles for your user account and restores them when it starts.	CADCraft ukládá tyto předvolby, režimy uchopení objektu a přepínače kreslení pro váš uživatelský účet a obnovuje je při spuštění.
+	Forja keeps these preferences, object snap modes and drafting toggles for your user account and restores them when it starts.	Forja ukládá tyto předvolby, režimy uchopení objektu a přepínače kreslení pro váš uživatelský účet a obnovuje je při spuštění.
 	Changes apply at once and are kept for next time.	Změny se projeví okamžitě a uloží se pro příště.
 	Command line history	Historie příkazového řádku
 	Copy as JSON	Kopírovat jako JSON
@@ -1176,7 +1176,7 @@
 @plural	{n} contributor	{n} přispěvatel|{n} přispěvatelé|{n} přispěvatelů
 	Drawing as bytes	Výkres jako bajty
 	Services	Služby
-	Hide CADCraft	Skrýt CADCraft
+	Hide Forja	Skrýt Forja
 	Hide Others	Skrýt ostatní
 	Accessibility	Zpřístupnění
 	Show System Cursor	Zobrazit systémový kurzor
@@ -1210,7 +1210,7 @@
 	X	X
 	Y	Y
 	B	B
-	CADCraft	CADCraft
+	Forja	Forja
 	More toolbar commands	Další příkazy panelu nástrojů
 menu	View	Zobrazení
 menu	Draw	Kreslení
@@ -1222,7 +1222,7 @@ menu	Modify	Modifikace
 	Query Texts	Dotaz na texty
 	Analyze Shapes	Analyzovat tvary
 	Check for Updates…	Zkontrolovat aktualizace…
-	CADCraft is up to date.	CADCraft je aktuální.
+	Forja is up to date.	Forja je aktuální.
 	Could not check for updates.	Aktualizace se nepodařilo zkontrolovat.
 	Find All	Find All
 	Find what:	Find what:

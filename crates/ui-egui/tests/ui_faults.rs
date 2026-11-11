@@ -76,7 +76,7 @@ fn a_panic_saves_the_work_and_reports_and_repeated_ones_close_safely() {
     let report = std::fs::read_dir(&reports).unwrap().flatten().next().expect("a report").path();
     let report = std::fs::read_to_string(report).unwrap();
     assert!(report.contains("Message: a bug in a panel") && report.contains("ui_faults.rs"), "{report}");
-    assert!(report.starts_with("CADCraft "), "{report}");
+    assert!(report.starts_with("Forja "), "{report}");
 
     // The app still works after it.
     app.run("circle", serde_json::json!({"center": [5, 0], "radius": 1})).unwrap();

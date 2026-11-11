@@ -400,7 +400,7 @@ pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
                             let _ = assign(&mut app.ui.shortcuts, id, "");
                         }
                         if app.ui.shortcuts.contains_key(*id)
-                            && ui.small_button(crate::tl!("Default")).on_hover_text(crate::tl!("Back to CADCraft's shortcut")).clicked()
+                            && ui.small_button(crate::tl!("Default")).on_hover_text(crate::tl!("Back to Forja's shortcut")).clicked()
                         {
                             app.ui.shortcuts.remove(*id);
                         }
@@ -421,7 +421,7 @@ pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
                 reset_all = ui.button(crate::tl!("Reset to Defaults")).clicked();
             });
             ui.label(
-                RichText::new(crate::tl!("A shortcut you give wins over CADCraft's own. Changes apply at once and are kept for next time."))
+                RichText::new(crate::tl!("A shortcut you give wins over Forja's own. Changes apply at once and are kept for next time."))
                     .color(t.text_dim)
                     .small(),
             );

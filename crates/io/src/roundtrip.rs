@@ -9,7 +9,7 @@
 //! file itself holds, so opening a file can be checked against it too.
 //!
 //! The corpus harness ([`corpus`], native only) runs both over a folder of real files and writes
-//! a Markdown and JSON report; `cadcraft-cli roundtrip` and `cargo xtask corpus` run it.
+//! a Markdown and JSON report; `forja-cli roundtrip` and `cargo xtask corpus` run it.
 
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 

@@ -53,7 +53,7 @@ fn read_reply_line(reader: &mut impl BufRead, reply: &mut String, max: usize) ->
     if n > max && !reply.ends_with('\n') {
         return Err(std::io::Error::new(
             std::io::ErrorKind::InvalidData,
-            format!("reply from the control port is longer than {max} bytes; is that CADCraft's control server?"),
+            format!("reply from the control port is longer than {max} bytes; is that Forja's control server?"),
         ));
     }
     Ok(n)
@@ -105,7 +105,7 @@ impl Remote {
         Err(std::io::Error::new(
             std::io::ErrorKind::TimedOut,
             format!(
-                "CADCraft was opened but its control port {} did not answer; if it was already open without the port, quit it and try again",
+                "Forja was opened but its control port {} did not answer; if it was already open without the port, quit it and try again",
                 self.addr
             ),
         ))
@@ -173,7 +173,7 @@ fn not_open(addr: &str, e: std::io::Error) -> std::io::Error {
     std::io::Error::new(
         e.kind(),
         format!(
-            "CADCraft is not answering at {addr} ({e}). Open CADCraft with its control port (`--control PORT` or CADCRAFT_CONTROL_PORT), then try again"
+            "Forja is not answering at {addr} ({e}). Open Forja with its control port (`--control PORT` or CADCRAFT_CONTROL_PORT), then try again"
         ),
     )
 }
@@ -182,10 +182,10 @@ fn not_open(addr: &str, e: std::io::Error) -> std::io::Error {
 fn launch_app(addr: &str) -> std::io::Result<()> {
     let port = addr.rsplit(':').next().filter(|p| p.parse::<u16>().is_ok()).ok_or_else(|| std::io::Error::other(format!("no port in {addr}")))?;
     if cfg!(target_os = "macos") {
-        let ok = std::process::Command::new("open").args(["-a", "CADCraft", "--args", "--control", port]).status()?.success();
-        if ok { Ok(()) } else { Err(std::io::Error::other("could not open CADCraft (is it in Applications?)")) }
+        let ok = std::process::Command::new("open").args(["-a", "Forja", "--args", "--control", port]).status()?.success();
+        if ok { Ok(()) } else { Err(std::io::Error::other("could not open Forja (is it in Applications?)")) }
     } else {
-        Err(std::io::Error::other(format!("CADCraft is not running; start it with `cadcraft --control {port}`")))
+        Err(std::io::Error::other(format!("Forja is not running; start it with `forja --control {port}`")))
     }
 }
 
@@ -227,7 +227,7 @@ impl Remote {
                 // A mutation whose reply was lost must never be sent twice.
                 if sent && !is_read_only(method) {
                     return Err(format!(
-                        "CADCraft at {}: {e}; the reply was lost, so `{method}` may or may not have been applied. Inspect the drawing first",
+                        "Forja at {}: {e}; the reply was lost, so `{method}` may or may not have been applied. Inspect the drawing first",
                         self.addr
                     ));
                 }
@@ -236,7 +236,7 @@ impl Remote {
                 self.roundtrip(&req.to_string()).map_err(|(e, _)| {
                     self.token = None;
                     self.conn = None;
-                    format!("CADCraft at {}: {e}", self.addr)
+                    format!("Forja at {}: {e}", self.addr)
                 })?
             }
         };
@@ -276,7 +276,7 @@ impl Backend for Remote {
             }
             // A timeout says whether the request can still have run (#345).
             Err(match v.get("state").and_then(Value::as_str) {
-                Some("not-run") => format!("{e}: CADCraft did not start `{method}` and won't; it is safe to send again"),
+                Some("not-run") => format!("{e}: Forja did not start `{method}` and won't; it is safe to send again"),
                 Some("may-have-run") => format!("{e}: `{method}` may or may not have been applied. Inspect the drawing first"),
                 _ => e.to_string(),
             })
@@ -286,7 +286,7 @@ impl Backend for Remote {
         true
     }
     fn describe(&self) -> String {
-        format!("connected to CADCraft at {}", self.addr)
+        format!("connected to Forja at {}", self.addr)
     }
 }
 
@@ -454,7 +454,7 @@ impl Backend for Headless {
         false
     }
     fn describe(&self) -> String {
-        "headless CADCraft session".into()
+        "headless Forja session".into()
     }
 }
 

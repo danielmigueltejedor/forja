@@ -26,7 +26,7 @@ commands:
   corpus [DIR] [--out DIR] [--keep-saved] [--same-format]
                   open -> save -> reopen every DXF/DWG of a real-file corpus (DIR, default
                   $CADCRAFT_CORPUS_DIR or ../cadcraft-corpus) and write report.md + report.json
-                  (default DIR/report); runs `cadcraft-cli roundtrip` in release mode
+                  (default DIR/report); runs `forja-cli roundtrip` in release mode
   stats [--exact] count tests and lines per crate (--exact: ask the test harness via `-- --list`)
   parity          recompute the AutoCAD menu-breadth checklist in docs/parity-checklist.md
   ico <out.ico> <in.png>...
@@ -231,7 +231,7 @@ fn cmd_ci() -> Result<(), String> {
 /// `corpus [DIR] [options]`: the round-trip report over a real-file corpus (gaps FF1, FF5). The
 /// corpus lives outside this repo (storytold/cadcraft-corpus); its files are never committed here.
 fn cmd_corpus(args: &[&str]) -> Result<(), String> {
-    // `cadcraft-cli` runs from the repository root: relative paths are made absolute against the
+    // `forja-cli` runs from the repository root: relative paths are made absolute against the
     // folder `cargo xtask` was run from first, so they mean what the user typed.
     let here = std::env::current_dir().map_err(|e| format!("current folder: {e}"))?;
     let mut pass: Vec<String> = Vec::new();
@@ -269,6 +269,6 @@ fn cmd_corpus(args: &[&str]) -> Result<(), String> {
     }
     let dir = dir.display().to_string();
     let mut c = cargo();
-    c.args(["run", "--release", "-q", "-p", "cadcraft-cli", "--", "roundtrip", &dir]).args(&pass);
-    run(c, &format!("cadcraft-cli roundtrip {dir} {}", pass.join(" ")))
+    c.args(["run", "--release", "-q", "-p", "forja-cli", "--", "roundtrip", &dir]).args(&pass);
+    run(c, &format!("forja-cli roundtrip {dir} {}", pass.join(" ")))
 }

@@ -105,7 +105,7 @@ fn the_issue_repro_saves_every_associated_dimension_with_dimassoc() {
         let d = s.doc().unwrap();
         for h in dims {
             match d.entity(h).map(|e| &e.kind) {
-                Some(EntityKind::Dimension(dm)) => assert!(!dm.assoc.is_empty(), "{} is associative in CADCraft", h.hex()),
+                Some(EntityKind::Dimension(dm)) => assert!(!dm.assoc.is_empty(), "{} is associative in Forja", h.hex()),
                 _ => panic!("{} is not a dimension", h.hex()),
             }
         }

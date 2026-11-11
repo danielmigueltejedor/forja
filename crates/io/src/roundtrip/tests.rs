@@ -450,7 +450,7 @@ fn report_renders_as_markdown_and_json() {
         files: vec![check_bytes(&dxf, "synthetic/a.dxf", &opts), check_bytes(b"AC1032 broken", "dwg/broken.dwg", &opts)],
     };
     let md = report.to_markdown();
-    assert!(md.starts_with("# CADCraft round-trip report"), "{md}");
+    assert!(md.starts_with("# Forja round-trip report"), "{md}");
     assert!(md.contains("| `synthetic/a.dxf` | DXF AC1032 |"), "{md}");
     assert!(md.contains("dxf → dxf") && md.contains("dxf → dwg"), "{md}");
     assert!(md.contains("| `dwg/broken.dwg` | DWG AC1032 |") && md.contains("**failed**"), "{md}");
