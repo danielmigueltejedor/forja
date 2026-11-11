@@ -613,61 +613,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc652a48c352aef3ea3aed32080501cf3ef6ed5da78602a020c991775b0aff04"
 
 [[package]]
-name = "cadcraft"
-version = "0.17.0"
-dependencies = [
- "cadcraft-engine",
- "cadcraft-io",
- "cadcraft-mcp",
- "cadcraft-ui-egui",
- "chrono",
- "clap",
- "craft-ui",
- "craft-update",
- "craft-window",
- "eframe",
- "egui",
- "hidapi",
- "log",
- "muda",
- "objc2-app-kit 0.3.2",
- "rfd",
- "ron",
- "serde_json",
- "sys-locale",
- "thiserror 2.0.21",
- "windows",
- "winit",
- "winresource",
- "zbus",
-]
-
-[[package]]
-name = "cadcraft-cli"
-version = "0.17.0"
-dependencies = [
- "cadcraft-engine",
- "cadcraft-io",
- "cadcraft-mcp",
- "cadcraft-render",
- "clap",
- "clap_complete",
- "clap_mangen",
- "same-file",
- "serde_json",
- "thiserror 2.0.21",
-]
-
-[[package]]
 name = "cadcraft-color"
-version = "0.17.0"
+version = "0.1.0"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "cadcraft-constraints"
-version = "0.17.0"
+version = "0.1.0"
 dependencies = [
  "cadcraft-doc",
  "cadcraft-geom",
@@ -677,7 +631,7 @@ dependencies = [
 
 [[package]]
 name = "cadcraft-doc"
-version = "0.17.0"
+version = "0.1.0"
 dependencies = [
  "cadcraft-color",
  "cadcraft-geom",
@@ -688,7 +642,7 @@ dependencies = [
 
 [[package]]
 name = "cadcraft-dwg"
-version = "0.17.0"
+version = "0.1.0"
 dependencies = [
  "acadrust",
  "log",
@@ -696,7 +650,7 @@ dependencies = [
 
 [[package]]
 name = "cadcraft-dxf"
-version = "0.17.0"
+version = "0.1.0"
 dependencies = [
  "encoding_rs",
  "log",
@@ -705,7 +659,7 @@ dependencies = [
 
 [[package]]
 name = "cadcraft-engine"
-version = "0.17.0"
+version = "0.1.0"
 dependencies = [
  "cadcraft-color",
  "cadcraft-constraints",
@@ -726,7 +680,7 @@ dependencies = [
 
 [[package]]
 name = "cadcraft-fonts"
-version = "0.17.0"
+version = "0.1.0"
 dependencies = [
  "cadcraft-dxf",
  "cadcraft-geom",
@@ -739,14 +693,14 @@ dependencies = [
 
 [[package]]
 name = "cadcraft-geom"
-version = "0.17.0"
+version = "0.1.0"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "cadcraft-io"
-version = "0.17.0"
+version = "0.1.0"
 dependencies = [
  "acadrust",
  "cadcraft-color",
@@ -768,7 +722,7 @@ dependencies = [
 
 [[package]]
 name = "cadcraft-mcp"
-version = "0.17.0"
+version = "0.1.0"
 dependencies = [
  "cadcraft-engine",
  "cadcraft-io",
@@ -782,7 +736,7 @@ dependencies = [
 
 [[package]]
 name = "cadcraft-render"
-version = "0.17.0"
+version = "0.1.0"
 dependencies = [
  "cadcraft-color",
  "cadcraft-doc",
@@ -796,7 +750,7 @@ dependencies = [
 
 [[package]]
 name = "cadcraft-ui-egui"
-version = "0.17.0"
+version = "0.1.0"
 dependencies = [
  "cadcraft-color",
  "cadcraft-doc",
@@ -819,26 +773,6 @@ dependencies = [
  "serde_json",
  "toml",
  "web-time",
-]
-
-[[package]]
-name = "cadcraft-web"
-version = "0.17.0"
-dependencies = [
- "cadcraft-engine",
- "cadcraft-fonts",
- "cadcraft-io",
- "cadcraft-ui-egui",
- "craft-web-api",
- "craft-web-host",
- "eframe",
- "egui",
- "js-sys",
- "log",
- "serde_json",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
 ]
 
 [[package]]
@@ -1898,6 +1832,72 @@ name = "foreign-types-shared"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aa9a19cbb55df58761df49b23516a86d432839add4af60fc256da840f66ed35b"
+
+[[package]]
+name = "forja"
+version = "0.1.0"
+dependencies = [
+ "cadcraft-engine",
+ "cadcraft-io",
+ "cadcraft-mcp",
+ "cadcraft-ui-egui",
+ "chrono",
+ "clap",
+ "craft-ui",
+ "craft-update",
+ "craft-window",
+ "eframe",
+ "egui",
+ "hidapi",
+ "log",
+ "muda",
+ "objc2-app-kit 0.3.2",
+ "rfd",
+ "ron",
+ "serde_json",
+ "sys-locale",
+ "thiserror 2.0.21",
+ "windows",
+ "winit",
+ "winresource",
+ "zbus",
+]
+
+[[package]]
+name = "forja-cli"
+version = "0.1.0"
+dependencies = [
+ "cadcraft-engine",
+ "cadcraft-io",
+ "cadcraft-mcp",
+ "cadcraft-render",
+ "clap",
+ "clap_complete",
+ "clap_mangen",
+ "same-file",
+ "serde_json",
+ "thiserror 2.0.21",
+]
+
+[[package]]
+name = "forja-web"
+version = "0.1.0"
+dependencies = [
+ "cadcraft-engine",
+ "cadcraft-fonts",
+ "cadcraft-io",
+ "cadcraft-ui-egui",
+ "craft-web-api",
+ "craft-web-host",
+ "eframe",
+ "egui",
+ "js-sys",
+ "log",
+ "serde_json",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
 
 [[package]]
 name = "form_urlencoded"
@@ -6028,7 +6028,7 @@ checksum = "9440ea3e5aeabb0ac63af70daf835274065238cdd0cec83418f417eae38bacee"
 
 [[package]]
 name = "xtask"
-version = "0.17.0"
+version = "0.1.0"
 dependencies = [
  "chrono",
  "serde_json",

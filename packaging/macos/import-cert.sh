@@ -20,9 +20,9 @@ fi
 TMP="${RUNNER_TEMP:-${TMPDIR:-/tmp}}"
 # Create a private per-run directory (mode 0700 via the umask above) so the decoded signing
 # container cannot be read by, or pre-created by, another local user in a shared temp directory.
-CERT_DIR="$(mktemp -d "$TMP/cadcraft-signing.XXXXXXXX")"
-KEYCHAIN="$TMP/cadcraft-signing.keychain-db"
-CERT="$CERT_DIR/cadcraft-signing.p12"
+CERT_DIR="$(mktemp -d "$TMP/forja-signing.XXXXXXXX")"
+KEYCHAIN="$TMP/forja-signing.keychain-db"
+CERT="$CERT_DIR/forja-signing.p12"
 KC_PASS="${KEYCHAIN_PASSWORD:-$(openssl rand -hex 24)}"
 
 trap 'rm -f "$CERT"; rm -rf "$CERT_DIR"' EXIT

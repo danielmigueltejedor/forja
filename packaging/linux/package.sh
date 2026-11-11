@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Build and package CADCraft for Linux (<arch> is x86_64 or aarch64, or riscv64 when cross-compiling):
+# Build and package Forja for Linux (<arch> is x86_64 or aarch64, or riscv64 when cross-compiling):
 #
-#   $DIST/cadcraft-<version>-linux-<arch>.AppImage  any distro with glibc >= the build host's
-#   $DIST/cadcraft-<version>-linux-<arch>.AppImage.zsync  delta updates (needs zsyncmake)
-#   $DIST/cadcraft-<version>-linux-<arch>.deb       Debian, Ubuntu, Mint, Pop!_OS, ...
-#   $DIST/cadcraft-<version>-linux-<arch>.rpm       Fedora, openSUSE, RHEL, ...
-#   $DIST/cadcraft-<version>-linux-<arch>.tar.gz    plain FHS-style tree (bin/, share/)
+#   $DIST/forja-<version>-linux-<arch>.AppImage  any distro with glibc >= the build host's
+#   $DIST/forja-<version>-linux-<arch>.AppImage.zsync  delta updates (needs zsyncmake)
+#   $DIST/forja-<version>-linux-<arch>.deb       Debian, Ubuntu, Mint, Pop!_OS, ...
+#   $DIST/forja-<version>-linux-<arch>.rpm       Fedora, openSUSE, RHEL, ...
+#   $DIST/forja-<version>-linux-<arch>.tar.gz    plain FHS-style tree (bin/, share/)
 #
 # Usage: packaging/linux/package.sh [--skip-build] [--formats "appimage deb rpm tar"]
 #
@@ -17,7 +17,7 @@ set -euo pipefail
 # shellcheck source=../env.sh
 . "$(dirname "${BASH_SOURCE[0]}")/../env.sh"
 HERE="$ROOT/packaging/linux"
-APP_ID=ai.storyteller.cadcraft
+APP_ID=ai.storyteller.forja
 
 SKIP_BUILD=0
 FORMATS="appimage deb rpm tar"
@@ -39,21 +39,21 @@ case "$ARCH" in
   aarch64 | arm64) ARCH=aarch64; DEB_ARCH=arm64 ;;
   *) echo "unsupported architecture $ARCH" >&2; exit 2 ;;
 esac
-export CADCRAFT_MAINTAINER="${CADCRAFT_MAINTAINER:-CADCraft maintainers <cadcraft@storyteller.ai>}"
-BASENAME="cadcraft-$VERSION-linux-$ARCH"
+export CADCRAFT_MAINTAINER="${CADCRAFT_MAINTAINER:-Forja maintainers <forja@storyteller.ai>}"
+BASENAME="forja-$VERSION-linux-$ARCH"
 
-echo "==> CADCraft $VERSION for Linux $ARCH ($FORMATS)"
+echo "==> Forja $VERSION for Linux $ARCH ($FORMATS)"
 
-# The man-and-completions example writes cadcraft-cli's man pages and shell completions below. It
+# The man-and-completions example writes forja-cli's man pages and shell completions below. It
 # is built in its own cargo run: built with the binaries, its dev-dependencies' features would be
 # unified into them.
 if [[ "$SKIP_BUILD" = 0 ]]; then
   if [[ -n "${CROSS_TARGET:-}" ]]; then
-    (cd "$ROOT" && cargo build --release --locked -p cadcraft -p cadcraft-cli --target "$CROSS_TARGET")
-    (cd "$ROOT" && cargo build --release --locked -p cadcraft-cli --example man-and-completions --target "$CROSS_TARGET")
+    (cd "$ROOT" && cargo build --release --locked -p forja -p forja-cli --target "$CROSS_TARGET")
+    (cd "$ROOT" && cargo build --release --locked -p forja-cli --example man-and-completions --target "$CROSS_TARGET")
   else
-    (cd "$ROOT" && cargo build --release --locked -p cadcraft -p cadcraft-cli)
-    (cd "$ROOT" && cargo build --release --locked -p cadcraft-cli --example man-and-completions)
+    (cd "$ROOT" && cargo build --release --locked -p forja -p forja-cli)
+    (cd "$ROOT" && cargo build --release --locked -p forja-cli --example man-and-completions)
   fi
 fi
 BIN="$CARGO_TARGET_DIR/${CROSS_TARGET:+$CROSS_TARGET/}release"
@@ -62,9 +62,9 @@ STAGE="$WORK/root"
 rm -rf "$WORK"
 
 # ---- stage an FHS tree (shared by every format) -------------------------------------------------
-install -Dm755 "$BIN/cadcraft" "$STAGE/usr/bin/cadcraft"
-install -Dm755 "$BIN/cadcraft-cli" "$STAGE/usr/bin/cadcraft-cli"
-"${CROSS_COMPILE:-}strip" "$STAGE/usr/bin/cadcraft" "$STAGE/usr/bin/cadcraft-cli" 2>/dev/null || true
+install -Dm755 "$BIN/forja" "$STAGE/usr/bin/forja"
+install -Dm755 "$BIN/forja-cli" "$STAGE/usr/bin/forja-cli"
+"${CROSS_COMPILE:-}strip" "$STAGE/usr/bin/forja" "$STAGE/usr/bin/forja-cli" 2>/dev/null || true
 install -Dm644 "$HERE/$APP_ID.desktop" "$STAGE/usr/share/applications/$APP_ID.desktop"
 install -Dm644 "$HERE/$APP_ID.mime.xml" "$STAGE/usr/share/mime/packages/$APP_ID.xml"
 mkdir -p "$STAGE/usr/share/metainfo"
@@ -72,17 +72,17 @@ sed -e "s/@VERSION@/$VERSION/g" -e "s/@DATE@/$CADCRAFT_BUILD_DATE/g" \
   "$HERE/$APP_ID.metainfo.xml.in" >"$STAGE/usr/share/metainfo/$APP_ID.metainfo.xml"
 mkdir -p "$STAGE/usr/share/icons"
 cp -R "$ROOT/assets/app-icon/hicolor" "$STAGE/usr/share/icons/"
-mkdir -p "$STAGE/usr/share/doc/cadcraft"
-copy_docs "$STAGE/usr/share/doc/cadcraft"
-# cadcraft-cli's man pages and shell completions, from its clap definition, written by the
+mkdir -p "$STAGE/usr/share/doc/forja"
+copy_docs "$STAGE/usr/share/doc/forja"
+# forja-cli's man pages and shell completions, from its clap definition, written by the
 # example built above. A cross build runs it through $EMULATOR, like the --version check at the
 # end, and leaves them out without one, as a --skip-build run whose prebuilt binaries came without
 # the example does. zsh reads site-functions on Fedora and openSUSE.
 CLI_DOCS="$BIN/examples/man-and-completions"
 if [[ -n "${CROSS_TARGET:-}" ]] && [[ -z "${EMULATOR:-}" ]]; then
-  warn "no EMULATOR to run the $CROSS_TARGET build, so cadcraft-cli's man pages and completions are left out"
+  warn "no EMULATOR to run the $CROSS_TARGET build, so forja-cli's man pages and completions are left out"
 elif [[ ! -x "$CLI_DOCS" ]]; then
-  warn "$CLI_DOCS is not built, so cadcraft-cli's man pages and completions are left out"
+  warn "$CLI_DOCS is not built, so forja-cli's man pages and completions are left out"
 else
   if [[ -n "${CROSS_TARGET:-}" ]]; then
     "$EMULATOR" "$CLI_DOCS" "$WORK/cli-docs"
@@ -90,9 +90,9 @@ else
     "$CLI_DOCS" "$WORK/cli-docs"
   fi
   install -Dm644 -t "$STAGE/usr/share/man/man1" "$WORK"/cli-docs/*.1
-  install -Dm644 "$WORK/cli-docs/cadcraft-cli.bash" "$STAGE/usr/share/bash-completion/completions/cadcraft-cli"
-  install -Dm644 "$WORK/cli-docs/_cadcraft-cli" "$STAGE/usr/share/zsh/site-functions/_cadcraft-cli"
-  install -Dm644 "$WORK/cli-docs/cadcraft-cli.fish" "$STAGE/usr/share/fish/vendor_completions.d/cadcraft-cli.fish"
+  install -Dm644 "$WORK/cli-docs/forja-cli.bash" "$STAGE/usr/share/bash-completion/completions/forja-cli"
+  install -Dm644 "$WORK/cli-docs/_forja-cli" "$STAGE/usr/share/zsh/site-functions/_forja-cli"
+  install -Dm644 "$WORK/cli-docs/forja-cli.fish" "$STAGE/usr/share/fish/vendor_completions.d/forja-cli.fish"
 fi
 
 if command -v desktop-file-validate >/dev/null; then
@@ -126,11 +126,11 @@ fi
 
 # ---- AppImage -----------------------------------------------------------------------------------
 if has appimage; then
-  APPDIR="$WORK/CADCraft.AppDir"
+  APPDIR="$WORK/Forja.AppDir"
   cp -R "$STAGE" "$APPDIR"
   # Keep sctk-adwaita's MIT notice in the AppImage.
-  install -Dm644 "$ROOT/NOTICE" "$APPDIR/usr/share/doc/cadcraft/NOTICE"
-  ln -s usr/bin/cadcraft "$APPDIR/AppRun"
+  install -Dm644 "$ROOT/NOTICE" "$APPDIR/usr/share/doc/forja/NOTICE"
+  ln -s usr/bin/forja "$APPDIR/AppRun"
   cp "$HERE/$APP_ID.desktop" "$APPDIR/$APP_ID.desktop"
   cp "$ROOT/assets/app-icon/hicolor/256x256/apps/$APP_ID.png" "$APPDIR/$APP_ID.png"
   ln -s "$APP_ID.png" "$APPDIR/.DirIcon"
@@ -154,8 +154,8 @@ if has appimage; then
   # fetch only the blocks that changed in a newer release, through the .zsync published next to
   # each AppImage on GitHub Releases. `latest` is the newest published release that is not a
   # pre-release. A fork's builds point at its own releases through GITHUB_REPOSITORY.
-  REPO="${GITHUB_REPOSITORY:-storytold/cadcraft}"
-  UPDATE_INFO="gh-releases-zsync|${REPO%%/*}|${REPO#*/}|latest|cadcraft-*-linux-$ARCH.AppImage.zsync"
+  REPO="${GITHUB_REPOSITORY:-danielmigueltejedor/forja}"
+  UPDATE_INFO="gh-releases-zsync|${REPO%%/*}|${REPO#*/}|latest|forja-*-linux-$ARCH.AppImage.zsync"
   # Extract-and-run: works without FUSE (containers, CI). The output embeds the static runtime,
   # so users don't need libfuse2 either. With zsyncmake on the host (CI installs the zsync
   # package) appimagetool also writes the .zsync, into its working directory, hence the cd.
@@ -169,9 +169,9 @@ if has appimage; then
 fi
 
 if [[ -z "${CROSS_TARGET:-}" ]]; then
-  "$STAGE/usr/bin/cadcraft-cli" --version
+  "$STAGE/usr/bin/forja-cli" --version
 elif [[ -n "${EMULATOR:-}" ]]; then
-  "$EMULATOR" "$STAGE/usr/bin/cadcraft-cli" --version
+  "$EMULATOR" "$STAGE/usr/bin/forja-cli" --version
 fi
 echo "==> done"
 ls -lh "$DIST"

@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=Forja
+GenericName=Computer-Aided Design
+Comment=Draft, dimension and plot 2D drawings; open DXF and DWG files
+Exec=forja %F
+TryExec=forja
+Icon=ai.storyteller.forja
+Terminal=false
+StartupNotify=true
+StartupWMClass=ai.storyteller.forja
+Categories=Graphics;Engineering;VectorGraphics;
+MimeType=image/vnd.dxf;image/vnd.dwg;application/x-dxf;application/acad;
+Keywords=cad;drafting;dxf;dwg;drawing;engineering;architecture;mechanical;

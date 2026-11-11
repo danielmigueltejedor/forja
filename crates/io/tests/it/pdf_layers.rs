@@ -184,7 +184,7 @@ fn several_sheets_in_one_file_with_page_labels() {
     assert_eq!(doc2.labels, ["Layout1", "Model"]);
     // Title: the first page's label unless given.
     assert_eq!(doc2.title.as_deref(), Some("Layout1"));
-    assert_eq!((doc2.creator.as_deref(), doc2.producer.as_deref()), (Some("CADCraft"), Some("CADCraft")));
+    assert_eq!((doc2.creator.as_deref(), doc2.producer.as_deref()), (Some("Forja"), Some("Forja")));
 }
 
 #[test]

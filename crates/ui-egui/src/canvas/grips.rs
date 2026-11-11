@@ -244,7 +244,7 @@ mod tests {
     }
 
     fn xf() -> Xf {
-        Xf { rect: Rect::from_min_size(Pos2::ZERO, vec2(500.0, 500.0)), center: Vec2::new(50.0, 100.0), scale: 1.0 }
+        Xf { rect: Rect::from_min_size(Pos2::ZERO, vec2(500.0, 500.0)), center: Vec2::new(50.0, 100.0), scale: 1.0, twist: 0.0 }
     }
 
     #[test]

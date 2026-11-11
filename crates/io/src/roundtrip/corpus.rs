@@ -522,9 +522,9 @@ impl CorpusReport {
         let lossless = routes.iter().filter(|r| r.lossless()).count();
         let crashes = self.files.iter().filter(|f| f.open_error.as_deref().is_some_and(|e| e.starts_with("CRASH"))).count()
             + routes.iter().filter(|r| [&r.save_error, &r.reopen_error].iter().any(|e| e.as_deref().is_some_and(|e| e.contains("CRASH")))).count();
-        s.push_str("# CADCraft round-trip report\n\n");
+        s.push_str("# Forja round-trip report\n\n");
         s.push_str(&format!("- Corpus: `{}`\n", self.corpus));
-        s.push_str(&format!("- Generated: {} by CADCraft {}\n", self.generated, self.cadcraft_version));
+        s.push_str(&format!("- Generated: {} by Forja {}\n", self.generated, self.cadcraft_version));
         s.push_str(&format!("- Tolerance for numbers: {:e} absolute + {:e} relative\n", self.abs_tol, self.rel_tol));
         s.push_str(&format!(
             "- Files: {} ({opened} opened, {} failed to open); round trips: {} ({save_failed} failed to save, {reopen_failed} failed to reopen, {lossless} without any difference); crashes: {crashes}\n",

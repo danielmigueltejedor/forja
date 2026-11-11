@@ -23,7 +23,7 @@ pub enum DxfError {
     Eof,
     /// More group codes than [`MAX_TAGS`]: `tags` is the count found (or the count read when the
     /// limit was reached), `limit` the maximum.
-    #[error("drawing too large: {tags} DXF group codes, more than the {limit} CADCraft reads (set CADCRAFT_MAX_DXF_TAGS to read more)")]
+    #[error("drawing too large: {tags} DXF group codes, more than the {limit} Forja reads (set CADCRAFT_MAX_DXF_TAGS to read more)")]
     TooLarge { tags: usize, limit: usize },
     /// The memory for `tags` group codes couldn't be had: an error, not the process ending.
     #[error("not enough memory to read this drawing's {tags} DXF group codes")]
@@ -770,8 +770,8 @@ mod tests {
     #[test]
     fn ascii_parser_enforces_the_tag_limit_before_growing_the_buffer() {
         let src = "1\nA\n70\n1\n0\nEOF\n";
-        assert!(matches!(parse_ascii_with_limit(src, 2), Err(DxfError::TooLarge { tags: 3, limit: 2 })));
-        assert_eq!(parse_ascii_with_limit(src, 3).unwrap().len(), 3);
+        assert!(matches!(parse_ascii_counted(src, 2, 0), Err(DxfError::TooLarge { tags: 3, limit: 2 })));
+        assert_eq!(parse_ascii_counted(src, 3, 0).unwrap().len(), 3);
     }
 
     #[test]

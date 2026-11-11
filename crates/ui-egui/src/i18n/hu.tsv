@@ -1,6 +1,6 @@
-# CADCraft Hungarian interface catalog — original translations by the CADCraft contributors.
+# Forja Hungarian interface catalog — original translations by the Forja contributors.
 # License: MIT OR Apache-2.0 (the repository LICENSE-MIT and LICENSE-APACHE).
-# Written from CADCraft's English strings; no proprietary translations were copied.
+# Written from Forja's English strings; no proprietary translations were copied.
 # Clean room: every entry is written from the plain meaning of the English label in ordinary
 # computing and technical drawing vocabulary. No other product's Hungarian interface, string table
 # or terminology database was consulted, and no other catalog is used as a source.
@@ -50,7 +50,7 @@
 	A drawing opened from a file keeps that file's format.	A fájlból megnyitott rajz megtartja a fájl formátumát.
 	A variable name starts with a letter and has only letters, digits and _	A változónév betűvel kezdődik, és csak betűt, számjegyet és _ jelet tartalmazhat
 	About	Névjegy
-	About CADCraft	A CADCraft névjegye
+	About Forja	A Forja névjegye
 	Absolute	Abszolút
 	Accessibility	Akadálymentesség
 	Add	Hozzáad
@@ -139,8 +139,8 @@
 	ByBlock	Blokk szerint
 	ByColor	Szín szerint
 	ByLayer	Réteg szerint
-	CADCraft Help	A CADCraft súgója
-	CADCraft keeps these preferences, object snap modes and drafting toggles for your user account and restores them when it starts.	A CADCraft ezeket a beállításokat, objektumillesztési módokat és rajzolási kapcsolókat a felhasználói fiókodhoz menti, és indításkor visszaállítja.
+	Forja Help	A Forja súgója
+	Forja keeps these preferences, object snap modes and drafting toggles for your user account and restores them when it starts.	A Forja ezeket a beállításokat, objektumillesztési módokat és rajzolási kapcsolókat a felhasználói fiókodhoz menti, és indításkor visszaállítja.
 	Calibrate	Kalibrálás
 	Calibrate 3D Mouse	3D egér kalibrálása
 	Cancel	Mégse
@@ -478,7 +478,7 @@
 	Hide All	Összes elrejtése
 	Hide All Constraint Bars	Összes kényszersáv elrejtése
 	Hide All Dynamic Dimensions	Összes dinamikus méret elrejtése
-	Hide CADCraft	A CADCraft elrejtése
+	Hide Forja	A Forja elrejtése
 	Hide Layer List	Réteglista elrejtése
 	Hide Objects	Objektumok elrejtése
 	Hide Others	Többi elrejtése
@@ -821,7 +821,7 @@
 	Quick Select...	Gyorskijelölés...
 	QuickCalc	Gyorsszámológép
 	QuickCalc Pick	Érték felvétele a gyorsszámológépbe
-	Quit CADCraft	Kilépés a CADCraftból
+	Quit Forja	Kilépés a CADCraftból
 	Radius	Sugár
 	Raster Image	Raszterkép
 	Ray	Félegyenes
@@ -1344,7 +1344,7 @@ menu	Draw	Rajzolás
 menu	Modify	Módosítás
 menu	View	Nézet
 	Check for Updates…	Frissítések keresése…
-	CADCraft is up to date.	A CADCraft naprakész.
+	Forja is up to date.	A Forja naprakész.
 	Could not check for updates.	A frissítések keresése nem sikerült.
 	Find All	Find All
 	Find what:	Find what:

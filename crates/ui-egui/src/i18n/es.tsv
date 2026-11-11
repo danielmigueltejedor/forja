@@ -1,6 +1,6 @@
-# CADCraft Spanish interface catalog — original translations.
+# Forja Spanish interface catalog — original translations.
 # License: MIT OR Apache-2.0 (the repository LICENSE-MIT and LICENSE-APACHE).
-# Written from CADCraft's English strings; no proprietary translations were copied.
+# Written from Forja's English strings; no proprietary translations were copied.
 # UTF-8: context<TAB>English source<TAB>Spanish translation.
 # Empty context = ordinary label; @plural = one|other forms with {n}.
 # Command IDs, typed keywords, technology/product names and user data stay unchanged.
@@ -30,7 +30,7 @@
 	A drawing opened from a file keeps that file's format.	Un dibujo abierto desde un archivo conserva el formato de ese archivo.
 	A variable name starts with a letter and has only letters, digits and _	El nombre de una variable empieza por una letra y solo lleva letras, dígitos y _
 	About	Acerca de
-	About CADCraft	Acerca de CADCraft
+	About Forja	Acerca de Forja
 	Absolute	Absolutas
 	Add Current Scale	Añadir escala actual
 	Add Leader	Añadir directriz
@@ -109,9 +109,9 @@
 	ByBlock	PorBloque
 	ByColor	PorColor
 	ByLayer	PorCapa
-	CADCraft	CADCraft
-	CADCraft Help	Ayuda de CADCraft
-	CADCraft keeps these preferences, object snap modes and drafting toggles for your user account and restores them when it starts.	CADCraft guarda estas preferencias, los modos de referencia a objetos y los ajustes de dibujo para tu cuenta de usuario y los restaura al iniciarse.
+	Forja	Forja
+	Forja Help	Ayuda de Forja
+	Forja keeps these preferences, object snap modes and drafting toggles for your user account and restores them when it starts.	Forja guarda estas preferencias, los modos de referencia a objetos y los ajustes de dibujo para tu cuenta de usuario y los restaura al iniciarse.
 	Cancel	Cancelar
 	Cartesian (x, y)	Cartesianas (x, y)
 	Center	Centro
@@ -800,7 +800,7 @@
 	Quick Select Properties	Propiedades de selección rápida
 	Quick Select...	Selección rápida...
 	QuickCalc	Calculadora rápida
-	Quit CADCraft	Salir de CADCraft
+	Quit Forja	Salir de Forja
 	Radius	Radio
 	Raster Image	Imagen ráster
 	Ray	Semirrecta
@@ -1223,7 +1223,7 @@
 @plural	{n} contributor	{n} colaborador|{n} colaboradores
 	Drawing as bytes	Dibujo como bytes
 	Services	Servicios
-	Hide CADCraft	Ocultar CADCraft
+	Hide Forja	Ocultar Forja
 	Hide Others	Ocultar otros
 	Accessibility	Accesibilidad
 	Show System Cursor	Mostrar cursor del sistema
@@ -1253,7 +1253,7 @@
 	Query Texts	Consultar textos
 	Analyze Shapes	Analizar formas
 	Check for Updates…	Buscar actualizaciones…
-	CADCraft is up to date.	CADCraft está actualizado.
+	Forja is up to date.	Forja está actualizado.
 	Could not check for updates.	No se pudo buscar actualizaciones.
 	Find All	Find All
 	Find what:	Find what:

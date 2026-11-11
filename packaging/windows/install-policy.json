@@ -1,53 +1,53 @@
 {
-  "id": "cadcraft",
-  "name": "CADCraft",
+  "id": "forja",
+  "name": "Forja",
   "upgradeCode": "119D7D76-0167-4A9E-8F37-09DA0235F68E",
   "sources": [
-    "cadcraft.wxs"
+    "forja.wxs"
   ],
-  "icon": "assets/app-icon/cadcraft.ico",
+  "icon": "assets/app-icon/forja.ico",
   "localization": [],
   "extensions": [
     "UI"
   ],
   "payloads": [
-    "cadcraft-cli.exe",
-    "cadcraft.exe"
+    "forja-cli.exe",
+    "forja.exe"
   ],
   "registry": [
     [
       "-1",
-      "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\cadcraft.exe",
+      "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\forja.exe",
       "",
       "[#CadcraftExe]"
     ],
     [
       "-1",
-      "Software\\Classes\\Applications\\cadcraft.exe\\shell\\open\\command",
+      "Software\\Classes\\Applications\\forja.exe\\shell\\open\\command",
       "",
       "\"[#CadcraftExe]\" \"%1\""
     ],
     [
       "-1",
       "Software\\Classes\\.dxf\\OpenWithProgids",
-      "CADCraft.Drawing",
+      "Forja.Drawing",
       ""
     ],
     [
       "-1",
       "Software\\Classes\\.dwg\\OpenWithProgids",
-      "CADCraft.Drawing",
+      "Forja.Drawing",
       ""
     ],
     [
       "-1",
-      "Software\\Classes\\CADCraft.Drawing\\shell\\open\\command",
+      "Software\\Classes\\Forja.Drawing\\shell\\open\\command",
       "",
       "\"[#CadcraftExe]\" \"%1\""
     ],
     [
       "-1",
-      "Software\\Learning Machines LLC\\CADCraft",
+      "Software\\Learning Machines LLC\\Forja",
       "DesktopShortcut",
       "1"
     ]

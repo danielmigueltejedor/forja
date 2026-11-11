@@ -1,6 +1,6 @@
-# CADCraft Arabic interface catalog — original translations.
+# Forja Arabic interface catalog — original translations.
 # License: MIT OR Apache-2.0 (the repository LICENSE-MIT and LICENSE-APACHE).
-# Written from CADCraft's English strings; no proprietary translations were copied.
+# Written from Forja's English strings; no proprietary translations were copied.
 # UTF-8: context<TAB>English source<TAB>Arabic (العربية) translation.
 # Empty context = ordinary label; @plural = zero|one|two|few|many|other forms with {n}.
 # Command IDs, typed keywords, technology/product names and user data stay unchanged.
@@ -39,7 +39,7 @@
 	A drawing opened from a file keeps that file's format.	الرسم المفتوح من ملف يحتفظ بتنسيق ذلك الملف.
 	A variable name starts with a letter and has only letters, digits and _	يبدأ اسم المتغير بحرف ولا يحوي إلا أحرفاً وأرقاماً و _
 	About	حول
-	About CADCraft	حول CADCraft
+	About Forja	حول Forja
 	Absolute	مطلق
 	Accessibility	إمكانية الوصول
 	Add	إضافة
@@ -116,8 +116,8 @@
 	ByBlock	حسب الكتلة
 	ByColor	حسب اللون
 	ByLayer	حسب الطبقة
-	CADCraft Help	تعليمات CADCraft
-	CADCraft keeps these preferences, object snap modes and drafting toggles for your user account and restores them when it starts.	يحتفظ CADCraft بهذه التفضيلات وأنماط الالتقاط بالكائن ومفاتيح تبديل الرسم لحساب مستخدمك ويعيدها عند بدء التشغيل.
+	Forja Help	تعليمات Forja
+	Forja keeps these preferences, object snap modes and drafting toggles for your user account and restores them when it starts.	يحتفظ Forja بهذه التفضيلات وأنماط الالتقاط بالكائن ومفاتيح تبديل الرسم لحساب مستخدمك ويعيدها عند بدء التشغيل.
 	Calibrate	معايرة
 	Calibrate 3D Mouse	معايرة الفأرة ثلاثية الأبعاد
 	Cancel	إلغاء
@@ -424,7 +424,7 @@
 	Hide All	إخفاء الكل
 	Hide All Constraint Bars	إخفاء كل أشرطة القيود
 	Hide All Dynamic Dimensions	إخفاء كل التأشيرات الديناميكية
-	Hide CADCraft	إخفاء CADCraft
+	Hide Forja	إخفاء Forja
 	Hide Layer List	إخفاء قائمة الطبقات
 	Hide Objects	إخفاء الكائنات
 	Hide Others	إخفاء الطبقات الأخرى
@@ -746,7 +746,7 @@
 	Quick Select...	تحديد سريع...
 	QuickCalc	الحاسبة السريعة
 	QuickCalc Pick	اختيار الحاسبة السريعة
-	Quit CADCraft	إنهاء CADCraft
+	Quit Forja	إنهاء Forja
 	Radius	نصف القطر
 	Raster Image	صورة نقطية
 	Ray	شعاع
@@ -1237,7 +1237,7 @@ menu	View	عرض
 @plural	{n} commit	{n} إيداع|{n} إيداع|{n} إيداعان|{n} إيداعات|{n} إيداعاً|{n} إيداع
 @plural	{n} contributor	{n} مساهم|{n} مساهم|{n} مساهمان|{n} مساهمين|{n} مساهماً|{n} مساهم
 	Check for Updates…	التحقق من وجود تحديثات…
-	CADCraft is up to date.	CADCraft محدّث.
+	Forja is up to date.	Forja محدّث.
 	Could not check for updates.	تعذّر التحقق من وجود تحديثات.
 	Add to Working Set	إضافة إلى مجموعة العمل
 	Add: Pick points	إضافة: انتقاء نقاط

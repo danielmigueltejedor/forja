@@ -1,6 +1,6 @@
-# CADCraft Brazilian Portuguese (pt-BR) interface catalog.
+# Forja Brazilian Portuguese (pt-BR) interface catalog.
 # License: MIT OR Apache-2.0 (the repository LICENSE-MIT and LICENSE-APACHE).
-# Written from CADCraft's English strings; no proprietary translations were copied.
+# Written from Forja's English strings; no proprietary translations were copied.
 # UTF-8: context<TAB>English source<TAB>Portuguese translation.
 # Empty context = ordinary label; @plural = one|other forms with {n}.
 # Keep command IDs, keywords, technology/product names and user data unchanged.
@@ -30,7 +30,7 @@
 	A drawing opened from a file keeps that file's format.	Um desenho aberto de um arquivo mantém o formato desse arquivo.
 	A variable name starts with a letter and has only letters, digits and _	Um nome de variável começa com uma letra e contém apenas letras, dígitos e _
 	About	Sobre
-	About CADCraft	Sobre o CADCraft
+	About Forja	Sobre o Forja
 	Absolute	Absoluto
 	Add Current Scale	Adicionar escala atual
 	Add Leader	Adicionar linha de chamada
@@ -106,9 +106,9 @@
 	ByBlock	PorBloco
 	ByColor	PorCor
 	ByLayer	PorCamada
-	CADCraft	CADCraft
-	CADCraft Help	Ajuda do CADCraft
-	CADCraft keeps these preferences, object snap modes and drafting toggles for your user account and restores them when it starts.	O CADCraft mantém estas preferências, os modos de snap a objetos e as opções de desenho na sua conta de usuário e os restaura ao iniciar.
+	Forja	Forja
+	Forja Help	Ajuda do Forja
+	Forja keeps these preferences, object snap modes and drafting toggles for your user account and restores them when it starts.	O Forja mantém estas preferências, os modos de snap a objetos e as opções de desenho na sua conta de usuário e os restaura ao iniciar.
 	Cancel	Cancelar
 	Cartesian (x, y)	Cartesiano (x, y)
 	Center	Centro
@@ -795,7 +795,7 @@
 	Quick Select Properties	Propriedades da seleção rápida
 	Quick Select...	Seleção rápida...
 	QuickCalc	Calculadora rápida
-	Quit CADCraft	Sair do CADCraft
+	Quit Forja	Sair do Forja
 	Radius	Raio
 	Raster Image	Imagem raster
 	Ray	Semirreta
@@ -1218,7 +1218,7 @@
 @plural	{n} contributor	{n} colaborador|{n} colaboradores
 	Drawing as bytes	Desenho como bytes
 	Services	Serviços
-	Hide CADCraft	Ocultar o CADCraft
+	Hide Forja	Ocultar o Forja
 	Hide Others	Ocultar outros
 	Accessibility	Acessibilidade
 	Show System Cursor	Exibir cursor do sistema
@@ -1251,7 +1251,7 @@
 	Select using two clicks only	Selecionar apenas com dois cliques
 	Define each corner of the selection window with a separate click.	Defina cada canto da janela de seleção com um clique separado.
 	Check for Updates…	Verificar atualizações…
-	CADCraft is up to date.	O CADCraft está atualizado.
+	Forja is up to date.	O Forja está atualizado.
 	Could not check for updates.	Não foi possível verificar atualizações.
 	Find All	Find All
 	Find what:	Find what:
