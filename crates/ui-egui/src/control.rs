@@ -226,7 +226,7 @@ const METHODS: &[(&str, &str, &str)] = &[
     ("ui.pointer", "{x, y, space?, button?, action?}", "Click or move in the drawing area (world coordinates by default). Right button = Enter."),
     ("ui.click", "{x, y, button?, shift?, ctrl?}", "Real egui click in screen points."),
     ("ui.move", "{x, y}", "Real egui pointer move in screen points."),
-    ("ui.drag", "{x, y, to: [x, y], button?}", "Real press, move and release."),
+    ("ui.drag", "{x, y, to: [x, y], via?: [[x, y]…], button?}", "Real press, move (through `via`, e.g. a lasso) and release."),
     ("ui.key", "{key, cmd?, shift?, alt?}", "Synthetic key press."),
     ("ui.text", "{text}", "Synthetic text input."),
     ("ui.set", "UiState fields", "Change UI state: palettes, toolbars, command line, theme…"),
@@ -443,8 +443,26 @@ pub fn handle(app: &mut CadApp, ctx: &egui::Context, req: &ControlRequest) -> Ou
             let to = egui::pos2(tx as f32, ty as f32);
             app.synthetic.push(egui::Event::PointerMoved(from));
             app.synthetic.push(egui::Event::PointerButton { pos: from, button, pressed: true, modifiers });
-            for i in 1..=8 {
-                app.synthetic.push(egui::Event::PointerMoved(from + (to - from) * (i as f32 / 8.0)));
+            // Through the `via` points when given (a lasso's outline), else straight in 8 steps.
+            let via: Vec<egui::Pos2> = p
+                .get("via")
+                .and_then(Value::as_array)
+                .map(|a| {
+                    a.iter()
+                        .take(4096)
+                        .filter_map(|q| Some(egui::pos2(q.get(0)?.as_f64()? as f32, q.get(1)?.as_f64()? as f32)))
+                        .filter(|q| q.is_finite())
+                        .collect()
+                })
+                .unwrap_or_default();
+            if via.is_empty() {
+                for i in 1..=8 {
+                    app.synthetic.push(egui::Event::PointerMoved(from + (to - from) * (i as f32 / 8.0)));
+                }
+            } else {
+                for q in via.into_iter().chain([to]) {
+                    app.synthetic.push(egui::Event::PointerMoved(q));
+                }
             }
             app.synthetic.push(egui::Event::PointerButton { pos: to, button, pressed: false, modifiers });
             ok(Value::Null)

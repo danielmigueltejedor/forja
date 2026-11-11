@@ -1,5 +1,8 @@
 use super::{Bounds2, Drawing, Entity, Handle, Input, PendingWindow, Result, Session, Space, Vec2, cmd, select};
 
+/// The most points a lasso outline keeps ([`Session::lasso`]).
+pub const MAX_LASSO_POINTS: usize = 2048;
+
 impl Session {
     // ---------------- picking without a command ----------------
 
@@ -8,12 +11,55 @@ impl Session {
     /// the next point, where the drag ends, closes it). Only while objects are being selected: no
     /// command running, or a command asking for objects. Returns whether a window was opened.
     pub fn begin_window(&mut self, corner: Vec2) -> bool {
-        let during_command = self.running.is_some();
-        if !self.settings.pickdrag || !corner.is_finite() || (during_command && !self.current_prompt().is_some_and(|p| p.accept.select)) {
+        if !corner.is_finite() || !self.drag_selects() {
             return false;
         }
-        self.pending_window = Some(PendingWindow { corner, during_command });
+        self.pending_window = Some(PendingWindow { corner, during_command: self.running.is_some() });
         true
+    }
+
+    /// Whether a press-and-drag selects objects now: PICKDRAG on, no selection window under way,
+    /// and no command running or a command asking for objects.
+    pub fn drag_selects(&self) -> bool {
+        self.settings.pickdrag && self.pending_window.is_none() && (self.running.is_none() || self.current_prompt().is_some_and(|p| p.accept.select))
+    }
+
+    /// Whether a lasso drawn through `pts` is a crossing lasso: like a selection window, it is
+    /// one when it set off leftwards on screen (in a twisted view, not along the drawing's X axis).
+    pub fn lasso_is_crossing(&self, pts: &[Vec2]) -> bool {
+        let Some(first) = pts.first().copied() else { return false };
+        let twist = self.state().map_or(0.0, |st| st.view().twist);
+        pts.iter().map(|p| (*p - first).rotate(twist).x).find(|dx| *dx != 0.0).is_some_and(|dx| dx < 0.0)
+    }
+
+    /// Select with a lasso: the freeform outline a press-and-drag draws (AutoCAD's lasso). Set
+    /// off rightwards it is a window lasso (objects entirely inside); leftwards, a crossing lasso
+    /// (objects inside or crossed). With no command running the objects join the selection by
+    /// [`Self::idle_click`]'s PICKADD and Shift rules; at "Select objects" they go to the command.
+    /// Outlines of fewer than three points, or with a non-finite point, select nothing; long
+    /// ones are thinned to [`MAX_LASSO_POINTS`].
+    pub fn lasso(&mut self, pts: &[Vec2], shift: bool) -> Result<()> {
+        if pts.len() < 3 || !pts.iter().all(|p| p.is_finite()) || !self.drag_selects() {
+            return Ok(());
+        }
+        let step = pts.len().div_ceil(MAX_LASSO_POINTS).max(1);
+        let pts: Vec<Vec2> = pts.iter().step_by(step).copied().collect();
+        let crossing = self.lasso_is_crossing(&pts);
+        let space = self.space();
+        let hs = select::select_polygon(self.doc()?, &space, &pts, crossing);
+        let hs = cmd::groups::expand(self, hs);
+        if self.running.is_some() {
+            return self.input(Input::Pick(hs));
+        }
+        let pickadd = self.settings.pickadd;
+        let mut sel = if pickadd || shift { self.selection() } else { Vec::new() };
+        if shift && pickadd {
+            sel.retain(|h| !hs.contains(h));
+        } else {
+            sel.extend(hs.into_iter().filter(|h| !sel.contains(h)).collect::<Vec<_>>());
+        }
+        self.set_selection(sel);
+        Ok(())
     }
 
     /// Whether a selection window from `corner` to `p` is a crossing window: it was dragged

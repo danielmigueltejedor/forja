@@ -1,7 +1,7 @@
 //! CADCraft's icon set, drawn in code (original work, MIT OR Apache-2.0 with the codebase).
 //!
-//! Icons are line drawings on a 24×24 design grid in the Nodalia Design Language's bold style
-//! (a 2.25 stroke, round caps and joins): the icon colour for existing geometry, the accent for
+//! Icons are line drawings on a 24×24 design grid with a fine stroke and round caps and joins:
+//! the icon colour for existing geometry, the accent for
 //! the geometry a command creates and accent dots for picked points. The generic icons (files,
 //! edit, view, navigation, chevrons) are NDL's own shapes ([`crate::ndl_icons`]).
 
@@ -264,8 +264,9 @@ impl Pen<'_> {
 pub fn paint(p: &Painter, rect: Rect, icon: Icon, dim: bool) {
     let t = Tokens::get();
     let alpha = |c: Color32| if dim { c.gamma_multiply(0.4) } else { c };
-    // NDL's bold stroke on the 24 grid.
-    let w = (rect.width() * crate::ndl_icons::BOLD_STROKE / 24.0).max(1.0);
+    // CAD glyphs keep a fine stroke (a bold one clogs their geometry); only the generic NDL
+    // icons below are bold.
+    let w = (rect.width() / 16.0).clamp(1.0, 1.6);
     let pen = Pen { p, r: rect, w, base: alpha(t.icon), acc: alpha(t.icon_accent), pt: alpha(t.icon_point) };
     let (b, a) = (pen.base, pen.acc);
     if let Some(body) = crate::ndl_icons::body(icon)

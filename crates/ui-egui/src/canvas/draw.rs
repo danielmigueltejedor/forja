@@ -621,3 +621,85 @@ mod zoomed_highlight_tests {
         assert!(dashed_rect(SCREEN, small.translate(egui::vec2(5000.0, 0.0)), stroke, 4.0, 4.0).is_empty());
     }
 }
+
+/// The lasso a press-and-drag draws (the outline from where the button went down, closing back
+/// to it): filled like a selection window, solid for a window lasso, dashed for a crossing one.
+pub(super) fn paint_lasso(painter: &egui::Painter, pts: &[Pos2], crossing: bool, fill: Option<Color32>, stroke: Stroke) {
+    if pts.len() < 2 {
+        return;
+    }
+    if let Some(fill) = fill
+        && pts.len() >= 3
+    {
+        let mut mesh = egui::Mesh::default();
+        for p in pts {
+            mesh.colored_vertex(*p, fill);
+        }
+        for [a, b, c] in triangulate(pts) {
+            mesh.add_triangle(a, b, c);
+        }
+        if !mesh.indices.is_empty() {
+            painter.add(Shape::mesh(mesh));
+        }
+    }
+    let mut run = pts.to_vec();
+    if let Some(first) = pts.first() {
+        run.push(*first);
+    }
+    if crossing {
+        painter.extend(Shape::dashed_line_with_offset(&run, stroke, &[5.0], &[3.0], 0.0));
+    } else {
+        painter.add(Shape::line(run, stroke));
+    }
+}
+
+/// Ear-clipping triangles of a simple polygon, as index triples into `pts`. A freehand outline
+/// may cross itself: what can't be clipped is left unfilled (the outline still shows), and long
+/// outlines are not filled at all rather than spending the frame on them.
+pub(super) fn triangulate(pts: &[Pos2]) -> Vec<[u32; 3]> {
+    const MAX_FILL_POINTS: usize = 1500;
+    let n = pts.len();
+    if !(3..=MAX_FILL_POINTS).contains(&n) {
+        return Vec::new();
+    }
+    let area: f32 = (0..n).map(|i| pts.get(i).zip(pts.get((i + 1) % n)).map_or(0.0, |(a, b)| a.x * b.y - b.x * a.y)).sum();
+    let ccw = area > 0.0;
+    let cross = |a: Pos2, b: Pos2, c: Pos2| (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
+    let convex = |a: Pos2, b: Pos2, c: Pos2| if ccw { cross(a, b, c) > 0.0 } else { cross(a, b, c) < 0.0 };
+    let inside = |p: Pos2, a: Pos2, b: Pos2, c: Pos2| {
+        let (d1, d2, d3) = (cross(a, b, p), cross(b, c, p), cross(c, a, p));
+        let neg = d1 < 0.0 || d2 < 0.0 || d3 < 0.0;
+        let pos = d1 > 0.0 || d2 > 0.0 || d3 > 0.0;
+        !(neg && pos)
+    };
+    let mut idx: Vec<usize> = (0..n).collect();
+    let mut out = Vec::with_capacity(n.saturating_sub(2));
+    let mut guard = 0;
+    while idx.len() > 3 && guard < n * n {
+        guard += 1;
+        let m = idx.len();
+        let mut clipped = false;
+        for k in 0..m {
+            let (Some(&ia), Some(&ib), Some(&ic)) = (idx.get((k + m - 1) % m), idx.get(k), idx.get((k + 1) % m)) else { continue };
+            let (Some(&a), Some(&b), Some(&c)) = (pts.get(ia), pts.get(ib), pts.get(ic)) else { continue };
+            if !convex(a, b, c) {
+                continue;
+            }
+            let blocked = idx.iter().any(|&j| j != ia && j != ib && j != ic && pts.get(j).is_some_and(|&p| inside(p, a, b, c)));
+            if blocked {
+                continue;
+            }
+            out.push([ia as u32, ib as u32, ic as u32]);
+            idx.remove(k);
+            clipped = true;
+            break;
+        }
+        if !clipped {
+            break;
+        }
+    }
+    if let [a, b, c] = idx[..] {
+        out.push([a as u32, b as u32, c as u32]);
+    }
+    out
+}

@@ -10,6 +10,9 @@ use cadcraft_render::{DisplayList, Kind};
 use egui::{Color32, Pos2, Rect, Sense, Shape, Stroke, pos2, vec2};
 
 use crate::CadApp;
+
+/// The most points a lasso samples while it is drawn (one every 2 screen points).
+const LASSO_MAX_SAMPLES: usize = 16_384;
 use crate::theme::Tokens;
 
 mod cursor;
@@ -26,7 +29,7 @@ mod widgets;
 use cursor::{draw_crosshair, draw_snap_marker, draw_tracking, effective_point, override_cursor};
 use cycle::{CycleList, cycle_badge, cycle_click, cycle_list, over_canvas_menu, shift_space_cycle};
 pub(crate) use draw::{Look, draw_highlight, draw_list};
-use draw::{dashed_polygon, dashed_rect, draw_drag_gpu, draw_highlight_gpu, draw_list_gpu, list_mesh_key, selection_area_fill};
+use draw::{dashed_polygon, dashed_rect, draw_drag_gpu, draw_highlight_gpu, draw_list_gpu, list_mesh_key, paint_lasso, selection_area_fill};
 use dyn_boxes::dynamic_input;
 pub(crate) use dyn_boxes::length_units;
 use grid::draw_grid;
@@ -179,8 +182,9 @@ pub struct CanvasState {
     hover_at: Option<Pos2>,
     /// Constraint glyphs for the parametric overlay (cached per drawing revision).
     pub param: crate::parametric::Cache,
-    /// A selection window opened by a press-and-drag, to close where the button is let go.
-    drag_window: bool,
+    /// The lasso a press-and-drag is drawing, in world coordinates from where the button went
+    /// down: it selects when the button is let go ([`cadcraft_engine::Session::lasso`]).
+    pub lasso: Option<Vec<Vec2>>,
     /// The right-click that opened the shortcut menu held Shift or Ctrl: it is the object snap
     /// menu ([`crate::context_menu`]).
     pub snap_menu: bool,
@@ -605,12 +609,12 @@ fn handle_double_click(app: &mut CadApp, ctx: DoubleClickContext<'_>) -> Option<
         if !in_active {
             app.canvas.hot_grips.clear();
             app.session.pending_window = None;
-            app.canvas.drag_window = false;
+            app.canvas.lasso = None;
             if app.run("mspace", serde_json::json!({"at": [pp.x, pp.y]})).is_err() && active_viewport.is_some() {
                 let _ = app.run("pspace", serde_json::json!({}));
             }
             app.session.pending_window = None;
-            app.canvas.drag_window = false;
+            app.canvas.lasso = None;
             app.canvas.list = None;
             return None;
         }
@@ -868,7 +872,7 @@ pub fn show(app: &mut CadApp, ui: &mut egui::Ui) {
     let idle_dbl = dbl_primary && app.session.running.is_none();
     if idle_dbl {
         app.session.pending_window = None;
-        app.canvas.drag_window = false;
+        app.canvas.lasso = None;
     }
     let pressed_primary = pressed_primary && !picked && !hatch_dialog && !idle_dbl;
     let key: CycleKey = (
@@ -919,34 +923,39 @@ pub fn show(app: &mut CadApp, ui: &mut egui::Ui) {
             app.session.echo(e.to_string());
         }
     }
-    // Press-and-drag selection window (PICKDRAG = 2; click-click still works): a drag
-    // that starts while objects are being selected opens a window where the button went down,
-    // and letting go closes it. Drags on grips and drags while drawing are left alone.
+    // Press-and-drag draws a lasso (AutoCAD's press-and-drag selection, PICKDRAG = 2): a freehand
+    // outline from where the button went down, selecting when it is let go. The rectangular
+    // window stays with click, move, click. Drags on grips and drags while drawing are left alone.
     if !app.session.settings.pickdrag {
-        app.canvas.drag_window = false;
+        app.canvas.lasso = None;
     }
-    if app.session.settings.pickdrag
-        && resp.drag_started_by(egui::PointerButton::Primary)
+    if resp.drag_started_by(egui::PointerButton::Primary)
         && !middle_down
         && app.canvas.cycle.is_none()
-        && app.session.pending_window.is_none()
+        && app.session.drag_selects()
         && let Some(origin) = ui.input(|i| i.pointer.press_origin())
         && rect.contains(origin)
         && grip_at(app, &xf, Some(origin)).is_none()
         && crate::dyngrips::at(app, &xf, Some(origin)).is_none()
     {
-        app.canvas.drag_window = app.session.begin_window(xf.to_world(origin));
+        app.canvas.lasso = Some(vec![xf.to_world(origin)]);
     }
-    if app.canvas.drag_window && resp.drag_stopped_by(egui::PointerButton::Primary) {
-        app.canvas.drag_window = false;
-        if app.session.pending_window.is_some()
-            && let Some(end) = ui.input(|i| i.pointer.interact_pos())
-        {
-            let end = xf.to_world(end);
-            let done = if app.session.prompting() { app.session.input(Input::Point(end)) } else { app.session.idle_click(end, mods.shift) };
-            if let Err(e) = done {
-                app.session.echo(e.to_string());
-            }
+    if let Some(pts) = app.canvas.lasso.as_mut()
+        && resp.dragged_by(egui::PointerButton::Primary)
+        && let Some(p) = ui.input(|i| i.pointer.interact_pos())
+        && pts.len() < LASSO_MAX_SAMPLES
+        && pts.last().is_none_or(|l| (xf.to_screen(*l) - p).length() >= 2.0)
+    {
+        pts.push(xf.to_world(p));
+    }
+    if resp.drag_stopped_by(egui::PointerButton::Primary)
+        && let Some(mut pts) = app.canvas.lasso.take()
+    {
+        if let Some(end) = ui.input(|i| i.pointer.interact_pos()) {
+            pts.push(xf.to_world(end));
+        }
+        if let Err(e) = app.session.lasso(&pts, mods.shift) {
+            app.session.echo(e.to_string());
         }
     }
     // Right-click acts as Enter while a command runs (the classic CAD default; held, it opens the
@@ -1134,6 +1143,13 @@ fn paint_canvas(frame: CanvasPaint<'_>) {
             let list = rebuilt_preview(&st.doc, ents.iter(), scale);
             draw_list(painter, &xf, &list, bg, false);
         }
+    }
+    // The lasso a press-and-drag is drawing.
+    if let Some(pts) = app.canvas.lasso.as_ref() {
+        let crossing = app.session.lasso_is_crossing(pts);
+        let screen: Vec<Pos2> = pts.iter().map(|p| xf.to_screen(*p)).collect();
+        let st = Stroke::new(1.0, if crossing { t.crossing_stroke } else { t.window_stroke });
+        paint_lasso(painter, &screen, crossing, selection_area_fill(&app.session.settings, crossing), st);
     }
     // Pending selection window.
     if let (Some(pw), Some(c)) = (app.session.pending_window, raw_world) {
