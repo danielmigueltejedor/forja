@@ -154,21 +154,21 @@ pub fn toolsets(app: &mut CadApp, ui: &mut egui::Ui) {
             let tr = Rect::from_min_size(pos2(x, r.top()), vec2(w, tab_h));
             let active = app.ui.toolset_tab == name;
             let resp = ui.interact(tr, ui.scope_id().with(("ts", name)), Sense::click());
-            p.rect_filled(tr, 0.0, if active { t.tab_active } else { t.chrome });
-            p.text(
-                tr.center(),
-                egui::Align2::CENTER_CENTER,
-                crate::i18n::t(name),
-                egui::FontId::proportional(13.5),
-                if active { t.text } else { t.text_dim },
-            );
+            let color = if active || resp.hovered() { t.text } else { t.text_dim };
+            let galley = p.layout_no_wrap(crate::i18n::t(name).to_owned(), egui::FontId::proportional(13.5), color);
+            let at = tr.center() - galley.size() / 2.0;
+            let name_w = galley.size().x;
+            crate::chrome::tab_label(&p, at, galley, color, active);
+            if active {
+                let bar = Rect::from_center_size(pos2(tr.center().x, tr.bottom() - 1.0), vec2(name_w, 2.0));
+                p.rect_filled(bar, 1.0, t.accent);
+            }
             icons::describe_control(ui, &resp, crate::i18n::t(name), Some(active), true);
             if resp.clicked() {
                 app.ui.toolset_tab = name.into();
             }
             x += w;
         }
-        p.rect_filled(Rect::from_min_max(pos2(x, r.top()), pos2(r.right(), r.top() + tab_h)), 0.0, t.chrome);
         let cr = Rect::from_center_size(pos2(r.right() - 14.0, r.top() + tab_h / 2.0), vec2(14.0, 14.0));
         let cresp = ui.interact(cr, ui.scope_id().with("ts_collapse"), Sense::click());
         icons::paint(&p, cr, Icon::ChevronLeft, false);

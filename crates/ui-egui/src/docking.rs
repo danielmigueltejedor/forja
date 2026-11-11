@@ -324,11 +324,13 @@ pub fn show(app: &mut crate::CadApp, ui: &mut egui::Ui) {
     app.ui.docking = workspace.clone();
     let mut style = DockStyle::from_ui(ui);
     style.min_pane = 96.0;
-    style.background = t.panel;
     // Nodalia islands: each group is a panel-coloured surface on the window frame, 8 pt apart and
-    // with rounded corners ([`round_islands`]); no outlines.
-    style.tab_background = t.panel;
-    style.active_background = t.tab_active;
+    // with rounded corners, painted under the dock ([`islands`]); no outlines. The dock's own
+    // fills stay clear, so the bar above each column is no rectangle of its own and tabs are
+    // text with an accent underline ([`underline_active_tabs`]), as in every Nodalia app.
+    style.background = egui::Color32::TRANSPARENT;
+    style.tab_background = egui::Color32::TRANSPARENT;
+    style.active_background = egui::Color32::TRANSPARENT;
     style.text = t.text;
     style.inactive_text = t.text_dim;
     style.border = egui::Stroke::NONE;
@@ -347,8 +349,11 @@ pub fn show(app: &mut crate::CadApp, ui: &mut egui::Ui) {
         area = area.raise_panel(panel);
     }
     let mut bodies = Vec::new();
+    let under = ui.painter().add(egui::Shape::Noop);
     let mut output = area.show_content(ui, &workspace.layout, &style, &mut Panels { app, bodies: &mut bodies });
-    round_islands(ui, &bodies, style.tab_height, t.chrome);
+    ui.painter().set(under, islands(ui, &bodies, style.tab_height, t.panel));
+    round_canvas(ui, &bodies, t.chrome);
+    underline_active_tabs(ui, &bodies, t.accent);
     // Keys typed in a floating panel's own OS window run the main window's shortcuts and
     // command line; files dropped on one open like files dropped on the main window.
     app.forward_native_input(ui.ctx(), std::mem::take(&mut output.forwarded_events), output.forwarded_modifiers);
@@ -397,19 +402,32 @@ pub struct Panels<'a> {
     pub bodies: &'a mut Vec<(Panel, egui::LayerId, egui::Rect)>,
 }
 
-/// Rounds the corners of the docked islands by painting the window frame's colour over them: the
-/// shared dock renderer draws square groups. A group is its body plus, except for the drawing,
-/// the tab strip above it. Floating windows (other layers) keep their own frames.
-fn round_islands(ui: &egui::Ui, bodies: &[(Panel, egui::LayerId, egui::Rect)], tab_height: f32, frame: egui::Color32) {
+/// The docked islands: one rounded panel-coloured surface per group, its body plus, except for
+/// the drawing, the tab strip above it. Painted under the dock, whose own fills are clear.
+/// Floating windows (other layers) keep their own frames.
+fn islands(ui: &egui::Ui, bodies: &[(Panel, egui::LayerId, egui::Rect)], tab_height: f32, fill: egui::Color32) -> egui::Shape {
+    let radius = nodalia_theme::component::PANEL_RADIUS;
+    let shapes = bodies
+        .iter()
+        .filter(|(panel, layer, _)| *layer == ui.layer_id() && *panel != Panel::Canvas)
+        .map(|(_, _, body)| {
+            let mut island = *body;
+            island.min.y -= tab_height;
+            let r = radius.min(island.width() / 2.0).min(island.height() / 2.0).max(0.0);
+            egui::Shape::rect_filled(island, r, fill)
+        })
+        .collect();
+    egui::Shape::Vec(shapes)
+}
+
+/// Rounds the drawing's corners by painting the window frame's colour over them: the drawing
+/// fills its own square body.
+fn round_canvas(ui: &egui::Ui, bodies: &[(Panel, egui::LayerId, egui::Rect)], frame: egui::Color32) {
     let radius = nodalia_theme::component::PANEL_RADIUS;
     let painter = ui.painter();
-    for (panel, layer, body) in bodies {
-        if *layer != ui.layer_id() {
+    for (panel, layer, island) in bodies {
+        if *layer != ui.layer_id() || *panel != Panel::Canvas {
             continue;
-        }
-        let mut island = *body;
-        if *panel != Panel::Canvas {
-            island.min.y -= tab_height;
         }
         let r = radius.min(island.width() / 2.0).min(island.height() / 2.0);
         if r < 1.0 {
@@ -419,6 +437,25 @@ fn round_islands(ui: &egui::Ui, bodies: &[(Panel, egui::LayerId, egui::Rect)], t
             [(island.left_top(), 1.0, 1.0), (island.right_top(), -1.0, 1.0), (island.left_bottom(), 1.0, -1.0), (island.right_bottom(), -1.0, -1.0)]
         {
             painter.add(corner_mask(corner, sx, sy, r, frame));
+        }
+    }
+}
+
+/// The accent underline under each group's active tab: the panel whose body was drawn. The tab's
+/// place is the dock's response for it this frame.
+fn underline_active_tabs(ui: &egui::Ui, bodies: &[(Panel, egui::LayerId, egui::Rect)], accent: egui::Color32) {
+    let area = egui::Id::unique("cadcraft-docking");
+    for (panel, layer, _) in bodies {
+        if *layer != ui.layer_id() || *panel == Panel::Canvas {
+            continue;
+        }
+        let Some(tab) = ui.ctx().read_response(area.with(("tab", *panel))) else { continue };
+        let line = egui::Rect::from_min_max(
+            egui::pos2(tab.rect.left() + 8.0, tab.rect.bottom() - 3.0),
+            egui::pos2(tab.rect.right() - 8.0, tab.rect.bottom() - 1.0),
+        );
+        if line.width() > 0.0 {
+            ui.painter().rect_filled(line, 1.0, accent);
         }
     }
 }

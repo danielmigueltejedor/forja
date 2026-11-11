@@ -193,26 +193,15 @@ pub fn file_tabs(app: &mut CadApp, ui: &mut egui::Ui) {
                 // The close button takes the tab's hover, so `resp.hovered()` would make the tab and
                 // its X flicker while the pointer is on the X.
                 let hovered = ui.rect_contains_pointer(tr);
-                ui.painter().rect_filled(
-                    tr,
-                    0.0,
-                    if active {
-                        t.tab_active
-                    } else if hovered {
-                        t.chrome
-                    } else {
-                        t.chrome_dark
-                    },
-                );
                 // The name ends in "…" when it doesn't fit before the close button (#513).
-                let color = if active { t.text } else { t.text_dim };
+                let color = if active || hovered { t.text } else { t.text_dim };
                 let mark = if dirty { "*" } else { "" };
                 let text_w = (w - 8.0 - if closable { 24.0 } else { 8.0 }).max(0.0);
                 let mark_w = ui.painter().layout_no_wrap(mark.to_string(), crate::theme::body(), color).size().x;
                 let (galley, cut) = elided(ui.painter(), label, crate::theme::body(), color, text_w - mark_w);
                 let pos = pos2(tr.left() + 8.0, tr.center().y - galley.size().y / 2.0);
                 let name_w = galley.size().x;
-                ui.painter().galley(pos, galley, color);
+                tab_label(ui.painter(), pos, galley, color, active);
                 if dirty {
                     ui.painter().text(pos2(pos.x + name_w, tr.center().y), egui::Align2::LEFT_CENTER, mark, crate::theme::body(), color);
                 }
@@ -226,7 +215,10 @@ pub fn file_tabs(app: &mut CadApp, ui: &mut egui::Ui) {
                     close = cresp.clicked();
                 }
                 icons::describe_control(ui, &resp, label, Some(active), true);
-                ui.painter().vline(tr.right(), tr.y_range(), Stroke::new(1.0, t.border));
+                if active {
+                    let bar = Rect::from_min_max(pos2(tr.left() + 8.0, tr.bottom() - 2.0), pos2(tr.left() + 8.0 + name_w, tr.bottom()));
+                    ui.painter().rect_filled(bar, 1.0, t.accent);
+                }
                 x += w;
                 (resp.clicked(), close, resp)
             };
@@ -257,6 +249,13 @@ pub fn file_tabs(app: &mut CadApp, ui: &mut egui::Ui) {
             app.request_close(Some(i));
         }
     });
+}
+
+/// A tab's name as NDL draws it. The current tab's name is meant to be in a heavier weight, but
+/// egui's interface font has a single weight, so for now it is told apart by its colour and the
+/// accent bar under it.
+pub fn tab_label(p: &egui::Painter, pos: egui::Pos2, galley: std::sync::Arc<egui::Galley>, color: egui::Color32, _active: bool) {
+    p.galley(pos, galley, color);
 }
 
 /// `text` laid out on one line no wider than `max_width`, ending in "…" when it had to be cut;
@@ -449,12 +448,13 @@ pub fn status_bar(app: &mut CadApp, ui: &mut egui::Ui) {
             let tr = Rect::from_min_size(pos2(x, r.top() + 1.0), vec2(w, r.height() - 2.0)).intersect(clip);
             let active = active_tab == Some(i);
             let resp = ui.interact(tr, ui.scope_id().with(("lt", i)), Sense::click());
+            let color = if active || resp.hovered() { t.text } else { t.text_dim };
+            let name_w = g.size().x;
+            tab_label(&tp, pos2(tr.left() + 13.0, tr.center().y - g.size().y / 2.0), g, color, active);
             if active {
-                tp.rect_filled(tr, 2.0, t.tab_active);
-            } else if resp.hovered() {
-                tp.rect_filled(tr, 2.0, t.control.gamma_multiply(0.5));
+                let bar = Rect::from_min_max(pos2(tr.left() + 13.0, tr.bottom() - 2.0), pos2(tr.left() + 13.0 + name_w, tr.bottom()));
+                tp.rect_filled(bar, 1.0, t.accent);
             }
-            tp.galley(pos2(tr.left() + 13.0, tr.center().y - g.size().y / 2.0), g, if active { t.text } else { t.text_dim });
             icons::describe_control(ui, &resp, name, Some(active), true);
             let resp = if cut { resp.on_hover_text(shown_name(i, name)) } else { resp };
             if resp.clicked() {
