@@ -3,9 +3,9 @@
 
 use std::collections::HashMap;
 
-use cadcraft_color::Color;
-use cadcraft_doc::{CellBorder, CellStyle, Drawing, Lineweight, Table, TableStyle};
-use cadcraft_geom::Vec2;
+use forja_color::Color;
+use forja_doc::{CellBorder, CellStyle, Drawing, Lineweight, Table, TableStyle};
+use forja_geom::Vec2;
 
 use crate::{Builder, Ctx, Ink, ink};
 
@@ -150,7 +150,7 @@ pub fn table_geometry(d: &Drawing, t: &Table) -> TableGeom {
 /// `origin`; merges are cut at the part's edge.
 fn part_table(t: &Table, rows: &[usize], origin: Vec2) -> Table {
     let cols = t.col_widths.len().min(10_000);
-    let mut cells: Vec<Vec<cadcraft_doc::TableCell>> =
+    let mut cells: Vec<Vec<forja_doc::TableCell>> =
         rows.iter().take(10_000).map(|r| t.cells.get(*r).map(|row| row.iter().take(cols).cloned().collect()).unwrap_or_default()).collect();
     // Only expand sparse rows to the full column count when detailed layout is actually permitted.
     // Otherwise `layout` renders an outline, so materialising millions of empty cells here would be
@@ -378,14 +378,14 @@ pub(crate) fn draw(b: &mut Builder, ctx: &Ctx, t: &Table, rgb: Ink, lw: f32) {
         let font = crate::style_font(&ts);
         // Cell content is MTEXT (`\P`, `{\Q15;…}`, `\F…;`): laid out as such, at the cell's
         // alignment point (its numbering is MTEXT's attachment).
-        let mp = cadcraft_fonts::MTextParams {
+        let mp = forja_fonts::MTextParams {
             attach: tx.attach,
             font,
             width_factor: ts.width_factor,
             oblique: ts.oblique,
-            ..cadcraft_fonts::MTextParams::new(tx.at, tx.height)
+            ..forja_fonts::MTextParams::new(tx.at, tx.height)
         };
-        let layout = cadcraft_fonts::layout_mtext_with(&tx.text, &mp);
+        let layout = forja_fonts::layout_mtext_with(&tx.text, &mp);
         for piece in &layout.pieces {
             b.shaped(ctx, style_ink(tx.color, rgb), lw, &piece.shaped);
         }
@@ -395,7 +395,7 @@ pub(crate) fn draw(b: &mut Builder, ctx: &Ctx, t: &Table, rgb: Ink, lw: f32) {
 #[cfg(test)]
 mod budget_tests {
     use super::*;
-    use cadcraft_doc::TableCell;
+    use forja_doc::TableCell;
 
     /// Excessive overlapping merges draw only the table outline after coverage work is exhausted.
     #[test]

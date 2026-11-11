@@ -1,7 +1,7 @@
 //! Utilities: CAL (expression calculator), FIND (find and replace text), MASSPROP, MEASUREGEOM.
 
-use cadcraft_doc::{EntityKind, Handle};
-use cadcraft_geom::{Segment, Vec2};
+use forja_doc::{EntityKind, Handle};
+use forja_geom::{Segment, Vec2};
 use serde_json::{Value, json};
 
 use super::{CommandSpec, always, bad, bool_or, point_param, points_param, str_param, targets};
@@ -452,14 +452,14 @@ fn run_angle(s: &mut Session, p: &Value) -> Result<Value> {
 
 /// The point where two lines (extended) meet and the end of each line farther from it; `None` when they are parallel.
 fn lines_vertex((a1, a2): (Vec2, Vec2), (b1, b2): (Vec2, Vec2)) -> Option<(Vec2, Vec2, Vec2)> {
-    let (x, _, _) = cadcraft_geom::line_line_infinite(a1, a2, b1, b2)?;
+    let (x, _, _) = forja_geom::line_line_infinite(a1, a2, b1, b2)?;
     let far = |p: Vec2, q: Vec2| if p.dist(x) > q.dist(x) { p } else { q };
     Some((x, far(a1, a2), far(b1, b2)))
 }
 
 /// The angle at `v` between the directions to `a` and `b`, in degrees from 0 to 180.
 fn vertex_angle(v: Vec2, a: Vec2, b: Vec2) -> f64 {
-    let ang = (cadcraft_geom::norm_angle(v.angle_to(b) - v.angle_to(a))).to_degrees();
+    let ang = (forja_geom::norm_angle(v.angle_to(b) - v.angle_to(a))).to_degrees();
     if ang > 180.0 { 360.0 - ang } else { ang }
 }
 
@@ -586,7 +586,7 @@ impl Interactive for AngleM {
         let circle = s
             .doc()?
             .entity(h)
-            .and_then(|e| if let EntityKind::Circle(c) = &e.kind { Some(cadcraft_geom::Circle::new(c.center.xy(), c.radius)) } else { None });
+            .and_then(|e| if let EntityKind::Circle(c) = &e.kind { Some(forja_geom::Circle::new(c.center.xy(), c.radius)) } else { None });
         if let Some(c) = circle.filter(|_| self.first.is_none()) {
             self.vertex = Some(vec![c.center, c.closest(p)]);
             return Ok(Step::Continue);

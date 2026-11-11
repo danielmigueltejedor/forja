@@ -1,9 +1,9 @@
-//! #1651: the issue's repro through the commands. Every dimension CADCraft reports as
+//! #1651: the issue's repro through the commands. Every dimension Forja reports as
 //! associated (the diameter, radius and angular ones, as well as the linear control) is saved
 //! with a DIMASSOC object whose references name its geometry.
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::{EntityKind, Handle};
+use forja_engine::Session;
+use forja_engine::doc::{EntityKind, Handle};
 use serde_json::{Value, json};
 
 /// The entity handle a command result reports, from its `handle` field.
@@ -105,7 +105,7 @@ fn the_issue_repro_saves_every_associated_dimension_with_dimassoc() {
         let d = s.doc().unwrap();
         for h in dims {
             match d.entity(h).map(|e| &e.kind) {
-                Some(EntityKind::Dimension(dm)) => assert!(!dm.assoc.is_empty(), "{} is associative in CADCraft", h.hex()),
+                Some(EntityKind::Dimension(dm)) => assert!(!dm.assoc.is_empty(), "{} is associative in Forja", h.hex()),
                 _ => panic!("{} is not a dimension", h.hex()),
             }
         }
@@ -115,7 +115,7 @@ fn the_issue_repro_saves_every_associated_dimension_with_dimassoc() {
     let r = s.execute("dimreassociate", &json!({ "handles": hs })).unwrap();
     assert_eq!(r["associated"], json!(4), "{r}");
 
-    let text = cadcraft_io::write_dxf(s.doc().unwrap());
+    let text = forja_io::write_dxf(s.doc().unwrap());
     for (h, what) in [(diameter, "diameter"), (radius, "radius"), (angular, "angular"), (linear, "linear")] {
         let rec = dimassoc(&text, h).unwrap_or_else(|| panic!("{what} dimension {} has a DIMASSOC", h.hex()));
         let refs = point_refs(&rec);

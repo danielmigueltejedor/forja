@@ -2,8 +2,8 @@
 //! DIMTAD 1, DIMGAP 0.625, DIMASZ 2.5, DIMSCALE 1 and DIMTXT 2.5 unless a case sets another, and
 //! the drawing read back afterwards).
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::{EntityKind, Insert, Leader, MText};
+use forja_engine::Session;
+use forja_engine::doc::{EntityKind, Insert, Leader, MText};
 use serde_json::json;
 
 fn near(a: f64, b: f64) -> bool {

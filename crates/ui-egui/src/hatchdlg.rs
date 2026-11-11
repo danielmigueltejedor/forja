@@ -2,9 +2,9 @@
 //! dialog (HATCHEDIT, double-click): one window in two modes. It never edits the drawing itself:
 //! picks go through HATCHPICK, and OK runs one HATCH, GRADIENT or HATCHEDIT call.
 
-use cadcraft_color::Color;
-use cadcraft_doc::{Drawing, EntityKind, Handle, Space};
-use cadcraft_engine::{HatchPicks, PickMode};
+use forja_color::Color;
+use forja_doc::{Drawing, EntityKind, Handle, Space};
+use forja_engine::{HatchPicks, PickMode};
 use serde_json::{Value, json};
 
 use egui::vec2;
@@ -329,7 +329,7 @@ pub fn start_pick(app: &mut CadApp, mode: PickMode) {
         PickMode::Hatch => "Hatch",
     };
     if app.session.running.is_some()
-        && let Err(e) = app.session.input(cadcraft_engine::Input::Keyword(kw.into()))
+        && let Err(e) = app.session.input(forja_engine::Input::Keyword(kw.into()))
     {
         app.session.echo(e.to_string());
     }

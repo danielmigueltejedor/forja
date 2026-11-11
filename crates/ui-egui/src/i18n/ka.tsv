@@ -1,6 +1,6 @@
-# CADCraft Georgian (ქართული) interface catalog — original translations by the CADCraft contributors.
+# Forja Georgian (ქართული) interface catalog — original translations by the CADCraft contributors.
 # License: MIT OR Apache-2.0 (the repository LICENSE-MIT and LICENSE-APACHE).
-# Written from CADCraft's English strings; no proprietary translations were copied.
+# Written from Forja's English strings; no proprietary translations were copied.
 # Clean room: every entry is written from the plain meaning of the English label in ordinary
 # Georgian computing and technical-drawing (ხაზვა) vocabulary (შრე, ზომა, დაშტრიხვა, მომრგვალება,
 # ფასკა, წანაცვლება, მოკვეთა, ობიექტზე მიბმა, ხედვის არე, განლაგება). No other product's Georgian
@@ -61,7 +61,7 @@
 	> Greater than	> მეტია
 	A variable name starts with a letter and has only letters, digits and _	ცვლადის სახელი ასოთი იწყება და მხოლოდ ასოებს, ციფრებსა და _-ს შეიცავს
 	About	პროგრამის შესახებ
-	About CADCraft	CADCraft-ის შესახებ
+	About Forja	Forja-ის შესახებ
 	Absolute	აბსოლუტური
 	Add Leader	მიმთითებლის დამატება
 	Additional angles	დამატებითი კუთხეები
@@ -124,7 +124,7 @@
 	ByBlock	ბლოკის მიხედვით
 	ByColor	ფერის მიხედვით
 	ByLayer	შრის მიხედვით
-	CADCraft Help	CADCraft-ის დახმარება
+	Forja Help	Forja-ის დახმარება
 	Cancel	გაუქმება
 	Cartesian (x, y)	დეკარტული (x, y)
 	Center	ცენტრი
@@ -725,7 +725,7 @@
 	Quick Select...	სწრაფი მონიშვნა...
 	QuickCalc	სწრაფი კალკულატორი
 	QuickCalc Pick	სწრაფი კალკულატორი: არჩევა
-	Quit CADCraft	CADCraft-იდან გასვლა
+	Quit Forja	Forja-იდან გასვლა
 	Radius	რადიუსი
 	Raster Image	რასტრული გამოსახულება
 	Ray	სხივი
@@ -959,7 +959,7 @@
 	Specify insertion point	მიუთითეთ ჩასმის წერტილი
 	A drawing opened from a file keeps that file's format.	ფაილიდან გახსნილი ნახაზი ინარჩუნებს ამ ფაილის ფორმატს.
 	An array that would create more objects than this is refused.	მასივი, რომელიც ამაზე მეტ ობიექტს შექმნიდა, უარყოფილია.
-	CADCraft keeps these preferences, object snap modes and drafting toggles for your user account and restores them when it starts.	CADCraft ინახავს ამ პარამეტრებს, ობიექტზე მიბმის რეჟიმებს და ხაზვის გადამრთველებს თქვენი მომხმარებლის ანგარიშისთვის და აღადგენს მათ გაშვებისას.
+	Forja keeps these preferences, object snap modes and drafting toggles for your user account and restores them when it starts.	Forja ინახავს ამ პარამეტრებს, ობიექტზე მიბმის რეჟიმებს და ხაზვის გადამრთველებს თქვენი მომხმარებლის ანგარიშისთვის და აღადგენს მათ გაშვებისას.
 	Changes apply at once and are kept for next time.	ცვლილებები მაშინვე მოქმედებს და შემდეგი ჯერისთვისაც ინახება.
 	Command line history	ბრძანების სტრიქონის ისტორია
 	Copy as JSON	კოპირება JSON-ად
@@ -1234,7 +1234,7 @@
 @plural	{n} contributor	{n} მონაწილე
 	Drawing as bytes	ნახაზი ბაიტებად
 	Services	სერვისები
-	Hide CADCraft	CADCraft-ის დამალვა
+	Hide Forja	Forja-ის დამალვა
 	Hide Others	სხვების დამალვა
 	Accessibility	ხელმისაწვდომობა
 	Show System Cursor	სისტემის კურსორის ჩვენება
@@ -1421,10 +1421,10 @@
 	Customize	მორგება
 	Edit Command Aliases (PGP)...	ბრძანებების ფსევდონიმების რედაქტირება (PGP)...
 	Check for Updates…	განახლებების შემოწმება…
-	CADCraft is up to date.	CADCraft განახლებულია.
+	Forja is up to date.	Forja განახლებულია.
 	Could not check for updates.	განახლებების შემოწმება ვერ მოხერხდა.
 	B	B
-	CADCraft	CADCraft
+	Forja	Forja
 	X	X
 	Y	Y
 menu	Dimension	ზომების დატანა

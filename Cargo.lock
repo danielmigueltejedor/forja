@@ -613,13 +613,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc652a48c352aef3ea3aed32080501cf3ef6ed5da78602a020c991775b0aff04"
 
 [[package]]
-name = "cadcraft"
+name = "forja"
 version = "0.17.0"
 dependencies = [
- "cadcraft-engine",
- "cadcraft-io",
- "cadcraft-mcp",
- "cadcraft-ui-egui",
+ "forja-engine",
+ "forja-io",
+ "forja-mcp",
+ "forja-ui-egui",
  "chrono",
  "clap",
  "craft-ui",
@@ -643,13 +643,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "cadcraft-cli"
+name = "forja-cli"
 version = "0.17.0"
 dependencies = [
- "cadcraft-engine",
- "cadcraft-io",
- "cadcraft-mcp",
- "cadcraft-render",
+ "forja-engine",
+ "forja-io",
+ "forja-mcp",
+ "forja-render",
  "clap",
  "clap_complete",
  "clap_mangen",
@@ -659,35 +659,35 @@ dependencies = [
 ]
 
 [[package]]
-name = "cadcraft-color"
+name = "forja-color"
 version = "0.17.0"
 dependencies = [
  "serde",
 ]
 
 [[package]]
-name = "cadcraft-constraints"
+name = "forja-constraints"
 version = "0.17.0"
 dependencies = [
- "cadcraft-doc",
- "cadcraft-geom",
+ "forja-doc",
+ "forja-geom",
  "serde",
  "thiserror 2.0.21",
 ]
 
 [[package]]
-name = "cadcraft-doc"
+name = "forja-doc"
 version = "0.17.0"
 dependencies = [
- "cadcraft-color",
- "cadcraft-geom",
+ "forja-color",
+ "forja-geom",
  "serde",
  "serde_json",
  "thiserror 2.0.21",
 ]
 
 [[package]]
-name = "cadcraft-dwg"
+name = "forja-dwg"
 version = "0.17.0"
 dependencies = [
  "acadrust",
@@ -695,7 +695,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "cadcraft-dxf"
+name = "forja-dxf"
 version = "0.17.0"
 dependencies = [
  "encoding_rs",
@@ -704,17 +704,17 @@ dependencies = [
 ]
 
 [[package]]
-name = "cadcraft-engine"
+name = "forja-engine"
 version = "0.17.0"
 dependencies = [
- "cadcraft-color",
- "cadcraft-constraints",
- "cadcraft-doc",
- "cadcraft-dxf",
- "cadcraft-fonts",
- "cadcraft-geom",
- "cadcraft-io",
- "cadcraft-render",
+ "forja-color",
+ "forja-constraints",
+ "forja-doc",
+ "forja-dxf",
+ "forja-fonts",
+ "forja-geom",
+ "forja-io",
+ "forja-render",
  "craft-docpath",
  "libc",
  "log",
@@ -725,11 +725,11 @@ dependencies = [
 ]
 
 [[package]]
-name = "cadcraft-fonts"
+name = "forja-fonts"
 version = "0.17.0"
 dependencies = [
- "cadcraft-dxf",
- "cadcraft-geom",
+ "forja-dxf",
+ "forja-geom",
  "encoding_rs",
  "harfrust 0.14.0",
  "icu_segmenter",
@@ -738,24 +738,24 @@ dependencies = [
 ]
 
 [[package]]
-name = "cadcraft-geom"
+name = "forja-geom"
 version = "0.17.0"
 dependencies = [
  "serde",
 ]
 
 [[package]]
-name = "cadcraft-io"
+name = "forja-io"
 version = "0.17.0"
 dependencies = [
  "acadrust",
- "cadcraft-color",
- "cadcraft-doc",
- "cadcraft-dwg",
- "cadcraft-dxf",
- "cadcraft-fonts",
- "cadcraft-geom",
- "cadcraft-render",
+ "forja-color",
+ "forja-doc",
+ "forja-dwg",
+ "forja-dxf",
+ "forja-fonts",
+ "forja-geom",
+ "forja-render",
  "craft-pdf",
  "image",
  "miniz_oxide 0.9.1",
@@ -767,12 +767,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "cadcraft-mcp"
+name = "forja-mcp"
 version = "0.17.0"
 dependencies = [
- "cadcraft-engine",
- "cadcraft-io",
- "cadcraft-render",
+ "forja-engine",
+ "forja-io",
+ "forja-render",
  "clap",
  "getrandom 0.4.3",
  "log",
@@ -781,13 +781,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "cadcraft-render"
+name = "forja-render"
 version = "0.17.0"
 dependencies = [
- "cadcraft-color",
- "cadcraft-doc",
- "cadcraft-fonts",
- "cadcraft-geom",
+ "forja-color",
+ "forja-doc",
+ "forja-fonts",
+ "forja-geom",
  "lyon_tessellation",
  "rayon",
  "serde_json",
@@ -795,15 +795,15 @@ dependencies = [
 ]
 
 [[package]]
-name = "cadcraft-ui-egui"
+name = "forja-ui-egui"
 version = "0.17.0"
 dependencies = [
- "cadcraft-color",
- "cadcraft-doc",
- "cadcraft-engine",
- "cadcraft-fonts",
- "cadcraft-geom",
- "cadcraft-render",
+ "forja-color",
+ "forja-doc",
+ "forja-engine",
+ "forja-fonts",
+ "forja-geom",
+ "forja-render",
  "chrono",
  "craft-ui",
  "craft-update",
@@ -822,13 +822,13 @@ dependencies = [
 ]
 
 [[package]]
-name = "cadcraft-web"
+name = "forja-web"
 version = "0.17.0"
 dependencies = [
- "cadcraft-engine",
- "cadcraft-fonts",
- "cadcraft-io",
- "cadcraft-ui-egui",
+ "forja-engine",
+ "forja-fonts",
+ "forja-io",
+ "forja-ui-egui",
  "craft-web-api",
  "craft-web-host",
  "eframe",

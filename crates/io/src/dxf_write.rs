@@ -5,14 +5,14 @@
 
 use std::collections::HashMap;
 
-use cadcraft_color::Color;
-use cadcraft_doc::{
+use forja_color::Color;
+use forja_doc::{
     AssocSnap, Attrib, Block, Common, DimAssoc, DimKind, DimStyle, Dimension, Drawing, Entity, EntityKind, EntityStore, Gradient, Group, HAlign,
     HVal, Handle, Hatch, Insert, Layout, Leader, Line, Lineweight, LwPolyline, MLeader, MLeaderStyle, MText, PageSetup, Point, Solid, Space, Table,
     TableStyle, Text, Transparency, VAlign, VportConfig, VportTile,
 };
-use cadcraft_dxf::{Tag, Version};
-use cadcraft_geom::{Bounds2, Vec2, Vec3};
+use forja_dxf::{Tag, Version};
+use forja_geom::{Bounds2, Vec2, Vec3};
 
 use crate::dxf_ext::{self, DimVal, K};
 
@@ -111,7 +111,7 @@ impl W {
 /// Write a drawing as ASCII DXF.
 /// The drawing as R2000 ASCII DXF.
 pub fn write(d: &Drawing) -> String {
-    cadcraft_dxf::write_ascii(&tags(d, Version::R2000))
+    forja_dxf::write_ascii(&tags(d, Version::R2000))
 }
 
 /// The drawing's DXF tags, declaring `version` in `$ACADVER`.
@@ -124,7 +124,7 @@ pub fn tags(d: &Drawing, version: Version) -> Vec<Tag> {
 pub(crate) fn dwg_bridge(d: &Drawing, dwg: Version) -> String {
     let mut tags = tags_for(d, Version::R2000, dwg, false);
     bridge_markers(&mut tags);
-    cadcraft_dxf::write_ascii(&tags)
+    forja_dxf::write_ascii(&tags)
 }
 
 /// Proxy type names and lookup-parameter subclass names must match the bridge reader's spelling.
@@ -158,7 +158,7 @@ pub fn entity_groups(d: &Drawing, e: &Entity) -> (String, Vec<Tag>) {
         reactors: HashMap::new(),
     };
     let cx = Ctx { target: Version::R2018, legacy_columns: true, ..Ctx::default() };
-    let paper = d.space_of(e.handle).is_some_and(|s| !matches!(s, cadcraft_doc::Space::Model));
+    let paper = d.space_of(e.handle).is_some_and(|s| !matches!(s, forja_doc::Space::Model));
     entity(&mut w, d, e, "0", paper, &cx);
     let mut tags = w.t.into_iter();
     let kind = tags.next().filter(|t| t.code == 0).map(|t| t.value.as_str()).unwrap_or_default();

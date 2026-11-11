@@ -1,5 +1,5 @@
-use cadcraft_doc::{EntityKind, Handle, MLeader};
-use cadcraft_geom::Vec2;
+use forja_doc::{EntityKind, Handle, MLeader};
+use forja_geom::Vec2;
 use serde_json::{Value, json};
 
 use crate::{Input, Session};
@@ -118,13 +118,13 @@ fn hostile_mleader_edit_params_never_panic() {
     ] {
         let _ = s.execute(id, &p);
     }
-    let _ = cadcraft_render::build(s.doc().unwrap(), &cadcraft_doc::Space::Model, &cadcraft_render::Options::default());
+    let _ = forja_render::build(s.doc().unwrap(), &forja_doc::Space::Model, &forja_render::Options::default());
 }
 
 mod units {
     use super::super::{Spacing, align_directional, align_distribute, align_parallel};
-    use cadcraft_doc::{Handle, MLeader};
-    use cadcraft_geom::{Vec2, Vec3};
+    use forja_doc::{Handle, MLeader};
+    use forja_geom::{Vec2, Vec3};
 
     fn unit_ml(arrow: [f64; 2], land: [f64; 2]) -> MLeader {
         MLeader {

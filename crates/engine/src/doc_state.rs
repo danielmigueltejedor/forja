@@ -118,11 +118,11 @@ impl DocState {
         if self.active_viewport().is_some() { Space::Model } else { self.space.clone() }
     }
     /// The active MSPACE viewport, if it still exists in the current layout.
-    pub fn active_viewport(&self) -> Option<(Handle, cadcraft_doc::Viewport)> {
+    pub fn active_viewport(&self) -> Option<(Handle, forja_doc::Viewport)> {
         let h = self.mspace?;
         let e = self.doc.space(&self.space)?.get(h)?;
         match &e.kind {
-            cadcraft_doc::EntityKind::Viewport(v) if v.height > 1e-12 && v.view_height > 1e-12 => Some((h, v.clone())),
+            forja_doc::EntityKind::Viewport(v) if v.height > 1e-12 && v.view_height > 1e-12 => Some((h, v.clone())),
             _ => None,
         }
     }
@@ -169,7 +169,7 @@ impl DocState {
                 let doc = Arc::make_mut(&mut self.doc);
                 if let Some(store) = doc.space_mut(&self.space.clone()) {
                     store.modify(h, |e| {
-                        if let cadcraft_doc::EntityKind::Viewport(x) = &mut e.kind {
+                        if let forja_doc::EntityKind::Viewport(x) = &mut e.kind {
                             x.view_center = center;
                             x.view_height = height;
                             x.twist = twist;
@@ -202,8 +202,8 @@ impl DocState {
         }
     }
     fn keep_untiled_twist(&mut self, v: View) {
-        use cadcraft_doc::{VportConfig, VportTile};
-        let twist = cadcraft_geom::norm_angle(v.twist);
+        use forja_doc::{VportConfig, VportTile};
+        let twist = forja_geom::norm_angle(v.twist);
         let active = self.doc.vports.iter().find(|c| c.is_active());
         if active.is_some_and(|c| c.tiles.len() > 1) {
             return;
@@ -239,7 +239,7 @@ impl DocState {
     /// The active MSPACE viewport when ZOOM works on its own view, as in AutoCAD: extents and
     /// windows fit the viewport, and zooms keep its centre. A locked viewport keeps its scale, so
     /// zooming it moves the sheet instead (see `store_view`).
-    pub fn zoom_viewport(&self) -> Option<cadcraft_doc::Viewport> {
+    pub fn zoom_viewport(&self) -> Option<forja_doc::Viewport> {
         self.active_viewport().map(|(_, v)| v).filter(|v| !v.locked && v.width > 1e-12)
     }
     /// The view ZOOM starts from: the model view of the active unlocked viewport, else [`Self::view`].

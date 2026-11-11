@@ -25,8 +25,8 @@ commands:
   ci              fmt --check, clippy -D warnings, test, i18n, assets, layers, wasm (stops at first failure)
   corpus [DIR] [--out DIR] [--keep-saved] [--same-format]
                   open -> save -> reopen every DXF/DWG of a real-file corpus (DIR, default
-                  $CADCRAFT_CORPUS_DIR or ../cadcraft-corpus) and write report.md + report.json
-                  (default DIR/report); runs `cadcraft-cli roundtrip` in release mode
+                  $FORJA_CORPUS_DIR or ../cadcraft-corpus) and write report.md + report.json
+                  (default DIR/report); runs `forja-cli roundtrip` in release mode
   stats [--exact] count tests and lines per crate (--exact: ask the test harness via `-- --list`)
   parity          recompute the AutoCAD menu-breadth checklist in docs/parity-checklist.md
   ico <out.ico> <in.png>...
@@ -171,7 +171,7 @@ fn cmd_test() -> Result<(), String> {
     run(c, "cargo test --workspace --doc")
 }
 
-/// The translation gap report (`cadcraft-ui-egui`'s ignored `i18n::tests::translation_gaps`).
+/// The translation gap report (`forja-ui-egui`'s ignored `i18n::tests::translation_gaps`).
 /// A missing translation shows in English and never fails a build, so neither does this step.
 fn cmd_i18n() -> Result<(), String> {
     let mut c = cargo();
@@ -231,7 +231,7 @@ fn cmd_ci() -> Result<(), String> {
 /// `corpus [DIR] [options]`: the round-trip report over a real-file corpus (gaps FF1, FF5). The
 /// corpus lives outside this repo (storytold/cadcraft-corpus); its files are never committed here.
 fn cmd_corpus(args: &[&str]) -> Result<(), String> {
-    // `cadcraft-cli` runs from the repository root: relative paths are made absolute against the
+    // `forja-cli` runs from the repository root: relative paths are made absolute against the
     // folder `cargo xtask` was run from first, so they mean what the user typed.
     let here = std::env::current_dir().map_err(|e| format!("current folder: {e}"))?;
     let mut pass: Vec<String> = Vec::new();
@@ -257,18 +257,18 @@ fn cmd_corpus(args: &[&str]) -> Result<(), String> {
         }
     }
     let dir = dir
-        .or_else(|| std::env::var("CADCRAFT_CORPUS_DIR").ok())
+        .or_else(|| std::env::var("FORJA_CORPUS_DIR").ok())
         .unwrap_or_else(|| root().parent().map(|p| p.join("cadcraft-corpus").display().to_string()).unwrap_or_else(|| "../cadcraft-corpus".into()));
     let dir = here.join(&dir);
     if !dir.is_dir() {
         return Err(format!(
-            "no corpus at `{}`: clone storytold/cadcraft-corpus next to this repo, set CADCRAFT_CORPUS_DIR or pass DIR \
+            "no corpus at `{}`: clone storytold/cadcraft-corpus next to this repo, set FORJA_CORPUS_DIR or pass DIR \
              (never commit corpus files to this repo)",
             dir.display()
         ));
     }
     let dir = dir.display().to_string();
     let mut c = cargo();
-    c.args(["run", "--release", "-q", "-p", "cadcraft-cli", "--", "roundtrip", &dir]).args(&pass);
-    run(c, &format!("cadcraft-cli roundtrip {dir} {}", pass.join(" ")))
+    c.args(["run", "--release", "-q", "-p", "forja-cli", "--", "roundtrip", &dir]).args(&pass);
+    run(c, &format!("forja-cli roundtrip {dir} {}", pass.join(" ")))
 }

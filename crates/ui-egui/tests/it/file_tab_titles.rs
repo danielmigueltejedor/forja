@@ -1,10 +1,10 @@
 //! A long drawing name is cut short with "…" inside its file tab instead of running under the
 //! next tab and the close button (#513); the unsaved-changes mark stays visible.
 
-use cadcraft_engine::Session;
-use cadcraft_ui_egui::{CadApp, Services};
 use egui::{Rect, Shape, vec2};
 use egui_kittest::Harness;
+use forja_engine::Session;
+use forja_ui_egui::{CadApp, Services};
 
 /// Painted texts: the full source text, the painted bounds, and whether it was cut short.
 fn texts(shape: &Shape, out: &mut Vec<(String, Rect, bool)>) {

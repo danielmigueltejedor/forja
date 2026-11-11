@@ -1,8 +1,8 @@
 //! A 3D face draws only its visible edges: `hidden_edges` bit i hides the side from corner i to
 //! the next, as DXF group 70 defines it, and a triangle's zero-length side isn't drawn.
 
-use cadcraft_doc::{EntityKind, Face3d, Prim};
-use cadcraft_geom::Vec3;
+use forja_doc::{EntityKind, Face3d, Prim};
+use forja_geom::Vec3;
 
 fn sides(f: Face3d) -> usize {
     EntityKind::Face3d(f).prims().iter().filter(|p| matches!(p, Prim::Seg(_))).count()

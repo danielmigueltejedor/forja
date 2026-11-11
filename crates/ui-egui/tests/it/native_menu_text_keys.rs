@@ -1,11 +1,11 @@
 //! The macOS menu bar takes the Edit menu's key equivalents before the window does: with a text
 //! field focused they edit the field, and only without one do they run the drawing command.
 
-use cadcraft_engine::Session;
-use cadcraft_ui_egui::{CadApp, Services, menus};
 use egui::{accesskit::Role, vec2};
 use egui_kittest::Harness;
 use egui_kittest::kittest::{NodeT, Queryable};
+use forja_engine::Session;
+use forja_ui_egui::{CadApp, Services, menus};
 use serde_json::json;
 
 fn harness() -> Harness<'static, CadApp> {

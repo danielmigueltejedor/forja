@@ -2,8 +2,8 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use cadcraft_doc::{Entity, EntityKind, Handle};
-use cadcraft_geom::{Polyline, Vec2, Vec3};
+use forja_doc::{Entity, EntityKind, Handle};
+use forja_geom::{Polyline, Vec2, Vec3};
 use serde_json::{Value, json};
 
 use super::{CommandSpec, bad, bool_or, f64_req, point_req, point_value, points_param, targets};
@@ -286,7 +286,7 @@ fn entity_z(e: &Entity, p: Vec2) -> Option<f64> {
         // Read in world coordinates already.
         EntityKind::Circle(c) => Some(c.center.z),
         EntityKind::Arc(a) => Some(a.center.z),
-        EntityKind::Text(t) | EntityKind::AttDef(cadcraft_doc::Attrib { text: t, .. }) => Some(t.insert.z),
+        EntityKind::Text(t) | EntityKind::AttDef(forja_doc::Attrib { text: t, .. }) => Some(t.insert.z),
         EntityKind::MText(t) => Some(t.insert.z),
         EntityKind::Insert(i) => Some(i.insert.z),
         EntityKind::Face3d(f) => face_z(&f.corners, p).or_else(|| along(&f.corners, true)),
@@ -294,7 +294,7 @@ fn entity_z(e: &Entity, p: Vec2) -> Option<f64> {
         EntityKind::PolyfaceMesh(m) => m
             .faces3d()
             .iter()
-            .flat_map(cadcraft_doc::Face3d::visible_edges)
+            .flat_map(forja_doc::Face3d::visible_edges)
             .map(|(a, b)| on_segment(a, b))
             .min_by(|a, b| a.1.total_cmp(&b.1))
             .map(|(z, _)| z),
@@ -309,7 +309,7 @@ fn face_z(c: &[Vec3; 4], p: Vec2) -> Option<f64> {
         if n.z.abs() < 1e-12 * (1.0 + n.len()) {
             return None;
         }
-        let inside = cadcraft_geom::point_in_polygon(&[a.xy(), b.xy(), d.xy()], p);
+        let inside = forja_geom::point_in_polygon(&[a.xy(), b.xy(), d.xy()], p);
         inside.then(|| a.z - (n.x * (p.x - a.x) + n.y * (p.y - a.y)) / n.z)
     };
     tri(c[0], c[1], c[2]).or_else(|| if c[3] == c[2] { None } else { tri(c[0], c[2], c[3]) })
@@ -352,8 +352,8 @@ fn list_text(s: &Session, h: Handle) -> String {
                 fmt_d(s, c.center.y),
                 fmt_d(s, c.center.z),
                 fmt_d(s, c.radius),
-                fmt_d(s, c.radius * cadcraft_geom::TAU),
-                fmt_d(s, c.radius * c.radius * cadcraft_geom::PI)
+                fmt_d(s, c.radius * forja_geom::TAU),
+                fmt_d(s, c.radius * c.radius * forja_geom::PI)
             ));
         }
         EntityKind::Arc(a) => {
@@ -410,7 +410,7 @@ fn run_list(s: &mut Session, p: &Value) -> Result<Value> {
 }
 
 pub(super) fn area_of(pts: &[Vec2]) -> (f64, f64) {
-    let a = cadcraft_geom::shoelace(pts).abs();
+    let a = forja_geom::shoelace(pts).abs();
     let n = pts.len();
     let per: f64 = (0..n).filter_map(|i| Some(pts.get(i)?.dist(*pts.get((i + 1) % n)?))).sum();
     (a, per)
@@ -491,7 +491,7 @@ pub(super) fn object_area(s: &Session, h: Handle) -> Result<(f64, f64)> {
     let d = s.doc()?;
     let e = d.entity(h).ok_or_else(|| bad("area", "no such object"))?;
     Ok(match &e.kind {
-        EntityKind::Circle(c) => (c.radius * c.radius * cadcraft_geom::PI, c.radius * cadcraft_geom::TAU),
+        EntityKind::Circle(c) => (c.radius * c.radius * forja_geom::PI, c.radius * forja_geom::TAU),
         EntityKind::LwPolyline(pl) => {
             // An open polyline is measured as if closed for the area, but its perimeter is its own length (AutoCAD's AREA help).
             let g = Polyline { vertices: pl.vertices.clone(), closed: true };
@@ -499,7 +499,7 @@ pub(super) fn object_area(s: &Session, h: Handle) -> Result<(f64, f64)> {
             (g.area().abs(), drawn.len())
         }
         EntityKind::Ellipse(el) => {
-            let arc = cadcraft_geom::Ellipse { center: el.center.xy(), major: el.major.xy(), ratio: el.ratio, start: el.start, end: el.end };
+            let arc = forja_geom::Ellipse { center: el.center.xy(), major: el.major.xy(), ratio: el.ratio, start: el.start, end: el.end };
             if !arc.is_full() {
                 return Err(bad("area", "object has no area"));
             }
@@ -507,7 +507,7 @@ pub(super) fn object_area(s: &Session, h: Handle) -> Result<(f64, f64)> {
             let b = a * el.ratio;
             // The perimeter integrated around the ellipse, not a closed-form estimate (those
             // fall short as the ellipse flattens: 0.3% on a 100:1 one).
-            (cadcraft_geom::PI * a * b, arc.arc_length_from(0.0, cadcraft_geom::TAU))
+            (forja_geom::PI * a * b, arc.arc_length_from(0.0, forja_geom::TAU))
         }
         EntityKind::Hatch(hh) => {
             // Odd parity, as drawn: a loop nested inside an odd number of other loops is an unfilled island.
@@ -516,7 +516,7 @@ pub(super) fn object_area(s: &Session, h: Handle) -> Result<(f64, f64)> {
             let mut total = (0.0, 0.0);
             for (i, g) in geoms.iter().enumerate() {
                 let probe = polys.get(i).and_then(|p| p.first().copied());
-                let depth = probe.map_or(0, |pt| polys.iter().enumerate().filter(|(j, q)| *j != i && cadcraft_geom::point_in_polygon(q, pt)).count());
+                let depth = probe.map_or(0, |pt| polys.iter().enumerate().filter(|(j, q)| *j != i && forja_geom::point_in_polygon(q, pt)).count());
                 total.0 += if depth % 2 == 0 { g.area().abs() } else { -g.area().abs() };
                 total.1 += g.len();
             }
@@ -528,7 +528,7 @@ pub(super) fn object_area(s: &Session, h: Handle) -> Result<(f64, f64)> {
             let b = sp.bounds();
             let pts = sp.tessellate_spans((b.min.dist(b.max) * 1e-7).max(1e-12));
             // A length past f64's range is too large to report, as a polyline's is, not 0.
-            (cadcraft_geom::shoelace(&pts).abs(), sp.checked_length().unwrap_or(f64::INFINITY))
+            (forja_geom::shoelace(&pts).abs(), sp.checked_length().unwrap_or(f64::INFINITY))
         }
         _ => return Err(bad("area", "object has no area")),
     })
@@ -541,7 +541,7 @@ fn run_time(s: &mut Session, _p: &Value) -> Result<Value> {
 
 fn run_status(s: &mut Session, _p: &Value) -> Result<Value> {
     let d = s.doc()?;
-    let ext = d.extents(&cadcraft_doc::Space::Model);
+    let ext = d.extents(&forja_doc::Space::Model);
     let msg = format!(
         "{} objects in {}\nModel space limits are X: {}  Y: {}  (Off)\nModel space uses X: {}  Y: {}\n                 X: {}  Y: {}\nCurrent layer: {}\nCurrent color: {}\nCurrent linetype: {}",
         d.entity_count(),
@@ -553,13 +553,13 @@ fn run_status(s: &mut Session, _p: &Value) -> Result<Value> {
         fmt_d(s, ext.max.x),
         fmt_d(s, ext.max.y),
         d.header.str("CLAYER", "0"),
-        cadcraft_color::Color::from_aci(d.header.i64("CECOLOR", 256) as i16).name(),
+        forja_color::Color::from_aci(d.header.i64("CECOLOR", 256) as i16).name(),
         d.header.str("CELTYPE", "ByLayer"),
     );
     Ok(json!({ "message": msg }))
 }
 
-fn entity_summary(e: &cadcraft_doc::Entity) -> Value {
+fn entity_summary(e: &forja_doc::Entity) -> Value {
     json!({ "handle": e.handle.hex(), "type": e.kind.type_name(), "layer": e.common.layer, "color": e.common.color.name(), "transparency": super::props::transparency_value(e.common.transparency), "geometry": e.kind })
 }
 
@@ -624,7 +624,7 @@ fn run_entities(s: &mut Session, p: &Value) -> Result<Value> {
         .map(|w| {
             let corners: Option<Vec<Vec2>> = w.as_array().filter(|a| a.len() == 2).and_then(|a| a.iter().map(point_value).collect());
             match corners.as_deref() {
-                Some([a, b]) => Ok(cadcraft_geom::Bounds2::new(*a, *b)),
+                Some([a, b]) => Ok(forja_geom::Bounds2::new(*a, *b)),
                 _ => Err(bad(CMD, "`window` must be two corner points [[x0, y0], [x1, y1]]")),
             }
         })
@@ -638,7 +638,7 @@ fn run_entities(s: &mut Session, p: &Value) -> Result<Value> {
     let Some(store) = d.space(&st.space) else { return Ok(json!({ "count": 0, "returned": 0, "entities": [] })) };
     let tol = window.as_ref().map(crate::select::window_tol).unwrap_or(0.0);
     let selection: std::collections::HashSet<Handle> = if selected { st.selection.iter().copied().collect() } else { Default::default() };
-    let matches: Vec<&std::sync::Arc<cadcraft_doc::Entity>> = store
+    let matches: Vec<&std::sync::Arc<forja_doc::Entity>> = store
         .iter()
         .filter(|e| !selected || selection.contains(&e.handle))
         .filter(|e| ty.as_ref().is_none_or(|t| e.kind.type_name().to_ascii_lowercase() == *t || e.kind.dxf_name().to_ascii_lowercase() == *t))
@@ -670,7 +670,7 @@ fn run_texts(s: &mut Session, p: &Value) -> Result<Value> {
         .map(|w| {
             let corners: Option<Vec<Vec2>> = w.as_array().filter(|a| a.len() == 2).and_then(|a| a.iter().map(point_value).collect());
             match corners.as_deref() {
-                Some([a, b]) => Ok(cadcraft_geom::Bounds2::new(*a, *b)),
+                Some([a, b]) => Ok(forja_geom::Bounds2::new(*a, *b)),
                 _ => Err(bad(CMD, "`window` must be two corner points [[x0, y0], [x1, y1]]")),
             }
         })
@@ -684,7 +684,7 @@ fn run_texts(s: &mut Session, p: &Value) -> Result<Value> {
         if layer.as_ref().is_some_and(|l| e.common.layer.to_lowercase() != *l) {
             continue;
         }
-        let mut push = |ty: &str, value: String, at: cadcraft_geom::Vec3, height: f64, rotation: f64, style: &str, tag: Option<&str>| {
+        let mut push = |ty: &str, value: String, at: forja_geom::Vec3, height: f64, rotation: f64, style: &str, tag: Option<&str>| {
             let value = value.trim().to_string();
             if value.is_empty()
                 || contains.as_ref().is_some_and(|c| !value.to_lowercase().contains(c.as_str()))
@@ -703,7 +703,7 @@ fn run_texts(s: &mut Session, p: &Value) -> Result<Value> {
         };
         match &e.kind {
             EntityKind::Text(t) => push("Text", t.value.clone(), t.insert, t.height, t.rotation, &t.style, None),
-            EntityKind::MText(t) => push("MText", cadcraft_fonts::plain_mtext(&t.contents), t.insert, t.height, t.rotation, &t.style, None),
+            EntityKind::MText(t) => push("MText", forja_fonts::plain_mtext(&t.contents), t.insert, t.height, t.rotation, &t.style, None),
             EntityKind::Insert(i) => {
                 for a in i.attribs.iter().filter(|a| !a.invisible) {
                     push("Attribute", a.text.value.clone(), a.text.insert, a.text.height, a.text.rotation, &a.text.style, Some(&a.tag));
@@ -711,7 +711,7 @@ fn run_texts(s: &mut Session, p: &Value) -> Result<Value> {
             }
             EntityKind::MLeader(m) => {
                 if let Some(t) = &m.text {
-                    push("MLeader", cadcraft_fonts::plain_mtext(&t.contents), t.insert, t.height, t.rotation, &t.style, None);
+                    push("MLeader", forja_fonts::plain_mtext(&t.contents), t.insert, t.height, t.rotation, &t.style, None);
                 }
             }
             _ => {}
@@ -1270,7 +1270,7 @@ impl Interactive for AreaM {
 
 #[cfg(test)]
 mod tests {
-    use cadcraft_doc::Handle;
+    use forja_doc::Handle;
 
     use super::*;
 

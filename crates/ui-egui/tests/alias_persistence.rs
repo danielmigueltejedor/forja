@@ -4,11 +4,11 @@
 
 use std::sync::Mutex;
 
-use cadcraft_engine::Session;
-use cadcraft_engine::cmd::file::MAX_ALIASES;
-use cadcraft_engine::cmd::resolve_alias;
-use cadcraft_ui_egui::options::MAX_PROFILE_BYTES;
-use cadcraft_ui_egui::{CadApp, Services};
+use forja_engine::Session;
+use forja_engine::cmd::file::MAX_ALIASES;
+use forja_engine::cmd::resolve_alias;
+use forja_ui_egui::options::MAX_PROFILE_BYTES;
+use forja_ui_egui::{CadApp, Services};
 use serde_json::{Value, json};
 
 static ONE_AT_A_TIME: Mutex<()> = Mutex::new(());
@@ -152,7 +152,7 @@ fn a_profile_one_byte_over_the_limit_is_refused_safely() {
 #[test]
 fn a_loaded_alias_file_survives_with_its_path_and_reinit_rereads_it() {
     let _one = lock();
-    let dir = std::env::temp_dir().join(format!("cadcraft-alias-profile-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("forja-alias-profile-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let file = dir.join("mine.pgp").to_string_lossy().into_owned();
     std::fs::write(&file, "ZZPROFILE, *RECTANG\n").unwrap();

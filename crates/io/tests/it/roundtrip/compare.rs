@@ -6,7 +6,7 @@
 
 use std::fmt::Debug;
 
-use cadcraft_doc::{Arc, Attrib, Block, Circle, Common, Drawing, Entity, EntityKind, EntityStore, Insert, Line, MText, Text};
+use forja_doc::{Arc, Attrib, Block, Circle, Common, Drawing, Entity, EntityKind, EntityStore, Insert, Line, MText, Text};
 
 fn equal<T: PartialEq + Debug>(expected: &T, actual: &T, context: &str, field: &str) {
     assert_eq!(actual, expected, "{context}.{field}");
@@ -123,18 +123,18 @@ fn linetype_reference(expected: &Drawing, actual: &Drawing, name: &str, context:
     }
 }
 
-fn linetype(expected: Option<&cadcraft_doc::Linetype>, actual: Option<&cadcraft_doc::Linetype>, context: &str) {
+fn linetype(expected: Option<&forja_doc::Linetype>, actual: Option<&forja_doc::Linetype>, context: &str) {
     let (Some(a), Some(b)) = (expected, actual) else {
         equal(&expected, &actual, context, "presence");
         return;
     };
-    let cadcraft_doc::Linetype { name, description, pattern } = a;
+    let forja_doc::Linetype { name, description, pattern } = a;
     equal(name, &b.name, context, "name");
     equal(description, &b.description, context, "description");
     equal(&pattern.len(), &b.pattern.len(), context, "pattern.len");
     for (index, (a, b)) in pattern.iter().zip(&b.pattern).enumerate() {
         let path = format!("{context}.element[{index}]");
-        let cadcraft_doc::DashElement { length, text, shape, style, scale, rotation, offset, absolute } = a;
+        let forja_doc::DashElement { length, text, shape, style, scale, rotation, offset, absolute } = a;
         equal(length, &b.length, &path, "length");
         equal(text, &b.text, &path, "text");
         equal(shape, &b.shape, &path, "shape");
@@ -281,14 +281,14 @@ fn insert(expected: &Insert, actual: &Insert, context: &str) {
 
 #[test]
 fn comparison_rejects_lost_fields_and_changed_handles() {
-    use cadcraft_doc::Handle;
-    use cadcraft_geom::Vec3;
+    use forja_doc::Handle;
+    use forja_geom::Vec3;
 
     let original = Entity::new(Handle(0x123), EntityKind::Line(Line { a: Vec3::ZERO, b: Vec3::new(2.0, 3.0, 4.0) }));
     let mutations: [fn(&mut Entity); 4] = [
         |e| e.handle = Handle(0x456),
         |e| e.common.visible = false,
-        |e| e.common.xdata.push(cadcraft_doc::RawTag { code: 1000, value: "unexpected".into() }),
+        |e| e.common.xdata.push(forja_doc::RawTag { code: 1000, value: "unexpected".into() }),
         |e| e.kind = EntityKind::Circle(Circle { center: Vec3::ZERO, radius: 2.0 }),
     ];
     for mutate in mutations {
@@ -300,8 +300,8 @@ fn comparison_rejects_lost_fields_and_changed_handles() {
 
 #[test]
 fn comparison_rejects_lost_or_changed_referenced_linetypes() {
-    use cadcraft_doc::{Linetype, Space};
-    use cadcraft_geom::Vec3;
+    use forja_doc::{Linetype, Space};
+    use forja_geom::Vec3;
 
     for (name, entity_linetype, layer_linetype) in [
         ("direct", "ReviewDashed", "Continuous"),
@@ -343,7 +343,7 @@ fn comparison_rejects_block_and_attribute_dependency_losses() {
             d.blocks.remove("Z_Leaf");
         },
         |d| std::sync::Arc::make_mut(d.blocks.get_mut("Z_Leaf").unwrap()).base.x += 1.0,
-        |d| d.layer_mut("Survey_Ä").unwrap().color = cadcraft_color::Color::Index(5),
+        |d| d.layer_mut("Survey_Ä").unwrap().color = forja_color::Color::Index(5),
         |d| {
             let handle = d.model.iter().next().unwrap().handle;
             d.model.modify(handle, |e| {

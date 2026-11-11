@@ -1,7 +1,7 @@
 //! Block Description (blocks.description): a block's description changes in the drawing, and in
 //! the Block Editor BSAVE saves the edited block's new description.
 
-use cadcraft_engine::Session;
+use forja_engine::Session;
 use serde_json::{Value, json};
 
 /// A drawing with block "Door" (one line, described "Hinged door") and one reference to it, which

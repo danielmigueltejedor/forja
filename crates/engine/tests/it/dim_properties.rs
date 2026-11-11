@@ -1,9 +1,9 @@
 //! A dimension's text height, arrow size, overall scale and precision set from Properties
 //! (`properties.set`) are per-dimension overrides, as in AutoCAD's Properties palette (#1259).
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::{Dimension, EntityKind};
-use cadcraft_engine::render::DimGeometry;
+use forja_engine::Session;
+use forja_engine::doc::{Dimension, EntityKind};
+use forja_engine::render::DimGeometry;
 use serde_json::json;
 
 fn dims(s: &Session) -> Vec<(String, Dimension, DimGeometry)> {
@@ -11,7 +11,7 @@ fn dims(s: &Session) -> Vec<(String, Dimension, DimGeometry)> {
     d.model
         .iter()
         .filter_map(|e| match &e.kind {
-            EntityKind::Dimension(dm) => Some((e.handle.hex(), dm.clone(), cadcraft_engine::render::dimension_in(d, dm))),
+            EntityKind::Dimension(dm) => Some((e.handle.hex(), dm.clone(), forja_engine::render::dimension_in(d, dm))),
             _ => None,
         })
         .collect()

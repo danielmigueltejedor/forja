@@ -4,10 +4,10 @@
 
 use std::sync::Arc;
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::color::{Color, Rgb};
-use cadcraft_engine::doc::geom::Vec3;
-use cadcraft_engine::doc::{Block, CellStyle, Common, Drawing, Entity, EntityKind, Handle, Insert, Layer, MLeader, Space};
+use forja_engine::Session;
+use forja_engine::doc::color::{Color, Rgb};
+use forja_engine::doc::geom::Vec3;
+use forja_engine::doc::{Block, CellStyle, Common, Drawing, Entity, EntityKind, Handle, Insert, Layer, MLeader, Space};
 use serde_json::json;
 
 fn insert(block: &str) -> Insert {
@@ -26,7 +26,7 @@ fn insert(block: &str) -> Insert {
 }
 
 fn line(x: f64) -> EntityKind {
-    EntityKind::Line(cadcraft_engine::doc::Line { a: Vec3::ZERO, b: Vec3::new(x, 0.0, 0.0) })
+    EntityKind::Line(forja_engine::doc::Line { a: Vec3::ZERO, b: Vec3::new(x, 0.0, 0.0) })
 }
 
 fn handle_of(s: &Session, ty: &str) -> String {
@@ -295,7 +295,7 @@ fn a_named_block_defined_differently_in_the_other_drawing_shows_the_other_defini
 
 #[test]
 fn a_named_block_whose_dimension_draws_another_block_shows_the_other_definition() {
-    use cadcraft_engine::doc::{DimKind, Dimension};
+    use forja_engine::doc::{DimKind, Dimension};
     // PART holds a dimension with the same parameters in both drawings; the block it draws, `*D1`,
     // holds a line of another length in the other drawing.
     let dim = Dimension {
@@ -381,7 +381,7 @@ fn a_named_block_whose_dimension_draws_another_block_shows_the_other_definition(
 
 #[test]
 fn a_named_block_whose_dimension_block_has_another_generated_name_keeps_this_drawings_definition() {
-    use cadcraft_engine::doc::{DimKind, Dimension};
+    use forja_engine::doc::{DimKind, Dimension};
     // PART holds the same dimension in both drawings; the block it draws holds the same line but
     // is named `*D1` here and `*D3` in the other drawing.
     let blocks = |drawn_name: &str, first: u64| {
@@ -498,7 +498,7 @@ fn a_named_block_with_the_same_relative_image_path_from_another_folder_shows_the
 
 #[test]
 fn a_dimension_block_copy_keeps_its_geometry_when_the_snapshot_is_saved() {
-    use cadcraft_engine::doc::{DimKind, Dimension};
+    use forja_engine::doc::{DimKind, Dimension};
     // The dimension's block holds a line its parameters would not draw: a block read from a file.
     let dim = Dimension {
         kind: DimKind::Linear { rotation: 0.0 },
@@ -528,7 +528,7 @@ fn a_dimension_block_copy_keeps_its_geometry_when_the_snapshot_is_saved() {
     s.execute("document.switch", &json!({"index": 0})).unwrap();
     s.execute("compare", &json!({"document": "Other"})).unwrap();
     s.execute("compareexport", &json!({})).unwrap();
-    let read = cadcraft_io::read_dxf(cadcraft_io::write_dxf(s.doc().unwrap()).as_bytes()).unwrap();
+    let read = forja_io::read_dxf(forja_io::write_dxf(s.doc().unwrap()).as_bytes()).unwrap();
     let block = read
         .model
         .iter()
@@ -640,7 +640,7 @@ fn colors_carried_apart_from_the_object_color_are_replaced() {
 
 #[test]
 fn inline_colors_of_multiline_attributes_are_replaced() {
-    use cadcraft_engine::doc::Attrib;
+    use forja_engine::doc::Attrib;
     let attrib = |contents: &str| -> Attrib {
         let at = serde_json::to_value(Vec3::ZERO).unwrap();
         serde_json::from_value(json!({
@@ -719,14 +719,14 @@ fn copies_drop_associations_to_the_source_objects() {
 
 #[test]
 fn relative_xref_paths_become_paths_from_the_source_folder() {
-    let folder = std::env::temp_dir().join("cadcraft-compareexport");
+    let folder = std::env::temp_dir().join("forja-compareexport");
     let host = folder.join("host.dxf");
     let mut d = Drawing::new_imperial();
     let mut x = Block::new("X");
     x.xref_path = Some("parts/x.dwg".into());
     d.blocks.insert("X".into(), Arc::new(x));
     d.add(&Space::Model, Common::default(), EntityKind::Insert(insert("X"))).unwrap();
-    let image = cadcraft_engine::doc::Image { path: "img/a.png".into(), ..Default::default() };
+    let image = forja_engine::doc::Image { path: "img/a.png".into(), ..Default::default() };
     d.add(&Space::Model, Common::default(), EntityKind::Image(image.clone())).unwrap();
     let mut b = Block::new("PIC");
     b.entities.push(Entity::new(Handle(0x900), EntityKind::Image(image)));
@@ -812,7 +812,7 @@ fn says_when_blocks_both_drawings_define_differently_were_left_out() {
 
 #[test]
 fn a_dimension_whose_block_is_past_the_nesting_limit_is_drawn_again() {
-    use cadcraft_engine::doc::{DimKind, Dimension, MAX_BLOCK_DEPTH};
+    use forja_engine::doc::{DimKind, Dimension, MAX_BLOCK_DEPTH};
     // B1 holds B2, …, and the innermost block holds a dimension: its `*D1` copy would be past
     // the nesting limit.
     let mut s = Session::new();

@@ -26,7 +26,7 @@ pub(super) fn trim_for_fillet(k: &EntityKind, pick: Vec2, t: Vec2) -> Option<(Op
             let ap = g.center.angle_to(pick);
             let keep_start_side = if g.contains_angle(ta) {
                 // Keep the side of the tangent point that holds the pick.
-                cadcraft_geom::angle_in_sweep(ap, g.start, ta)
+                forja_geom::angle_in_sweep(ap, g.start, ta)
             } else {
                 // Extend the nearer end.
                 ccw_sweep(g.end, ta) <= ccw_sweep(ta, g.start)
@@ -67,7 +67,7 @@ pub(crate) fn fillet_curves(s: &mut Session, h1: Handle, p1: Vec2, h2: Handle, p
         let hits: Vec<Vec2> = match (o1, o2) {
             (TanObj::Line(a), TanObj::Line(b)) => line_line_infinite(a.a, a.b, b.a, b.b).map(|x| vec![x.0]).unwrap_or_default(),
             (TanObj::Line(l), TanObj::Circle(c)) | (TanObj::Circle(c), TanObj::Line(l)) => line_circle(&l, &c).into_iter().map(|x| x.0).collect(),
-            (TanObj::Circle(a), TanObj::Circle(b)) => cadcraft_geom::circle_circle(&a, &b),
+            (TanObj::Circle(a), TanObj::Circle(b)) => forja_geom::circle_circle(&a, &b),
         };
         let x = hits
             .into_iter()
@@ -174,7 +174,7 @@ pub(crate) fn fillet_polyline(s: &mut Session, h: Handle, r: f64) -> Result<usiz
         let next = at(i + 1).p;
         let t1 = v.p + (prev - v.p).normalized() * c;
         let t2 = v.p + (next - v.p).normalized() * c;
-        let b = cadcraft_geom::arc_to_bulge(turn.get(i).copied().unwrap_or(0.0));
+        let b = forja_geom::arc_to_bulge(turn.get(i).copied().unwrap_or(0.0));
         out.push(PolyVertex { p: t1, bulge: b, ..v });
         out.push(PolyVertex { p: t2, bulge: 0.0, ..v });
         count += 1;

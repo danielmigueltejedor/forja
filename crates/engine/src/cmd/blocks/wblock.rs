@@ -3,8 +3,8 @@
 
 use std::collections::BTreeMap;
 
-use cadcraft_doc::{Drawing, Entity, Handle};
-use cadcraft_geom::{Mat3, Vec2, Vec3};
+use forja_doc::{Drawing, Entity, Handle};
+use forja_geom::{Mat3, Vec2, Vec3};
 use serde_json::{Value, json};
 
 use super::super::curves::KW;
@@ -132,7 +132,7 @@ fn with_objects(src: &Drawing, ents: impl Iterator<Item = Entity>) -> Drawing {
     d.mline_styles = src.mline_styles.clone();
     d.scales = src.scales.clone();
     d.blocks = src.blocks.clone();
-    d.header.set("INSBASE", cadcraft_doc::HVal::Point(Vec3::ZERO));
+    d.header.set("INSBASE", forja_doc::HVal::Point(Vec3::ZERO));
     // The copied blocks keep their objects' handles, so the new ones start above them.
     let kept: Vec<Handle> = d.blocks.values().flat_map(|b| b.entities.iter().map(|e| e.handle)).collect();
     for h in kept {

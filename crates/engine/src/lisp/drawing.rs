@@ -9,9 +9,9 @@
 
 use std::sync::{Arc, Mutex};
 
-use cadcraft_doc::{Entity, Handle, Space};
-use cadcraft_dxf::Tag;
-use cadcraft_geom::Vec2;
+use forja_doc::{Entity, Handle, Space};
+use forja_dxf::Tag;
+use forja_geom::Vec2;
 
 use super::LispError;
 use super::builtins::args_err;
@@ -191,7 +191,7 @@ fn to_json_bounded(v: &Value, depth: usize, budget: &mut u64) -> Option<serde_js
     })
 }
 
-/// Angle variables CADCraft reports and takes in degrees, as the SETVAR command shows them, which
+/// Angle variables Forja reports and takes in degrees, as the SETVAR command shows them, which
 /// AutoLISP's `getvar` and `setvar` give and take in radians, as AutoCAD 2024's do: each of these
 /// set to 30 by the SETVAR command, or to `(/ pi 6)` by `setvar`, reads 0.5235987755982987.
 const RADIAN_VARS: [&str; 6] = ["ANGBASE", "CHAMFERD", "DIMJOGANG", "HPANG", "POLARANG", "SNAPANG"];
@@ -248,20 +248,20 @@ fn convert_angles(kind: &str, tags: &mut [Tag], f: fn(f64) -> f64) {
             continue;
         }
         let v = match t.value {
-            cadcraft_dxf::Value::Real(r) => r,
-            cadcraft_dxf::Value::Int(i) => i as f64,
+            forja_dxf::Value::Real(r) => r,
+            forja_dxf::Value::Int(i) => i as f64,
             _ => continue,
         };
-        t.value = cadcraft_dxf::Value::Real(f(v));
+        t.value = forja_dxf::Value::Real(f(v));
     }
 }
 
 fn tag_value(t: &Tag) -> Value {
     match &t.value {
-        cadcraft_dxf::Value::Str(s) | cadcraft_dxf::Value::Hex(s) => Value::str(s),
-        cadcraft_dxf::Value::Real(r) => Value::Real(*r),
-        cadcraft_dxf::Value::Int(i) => Value::Int(i32::try_from(*i).unwrap_or(if *i < 0 { i32::MIN } else { i32::MAX })),
-        cadcraft_dxf::Value::Bool(b) => Value::Int(i32::from(*b)),
+        forja_dxf::Value::Str(s) | forja_dxf::Value::Hex(s) => Value::str(s),
+        forja_dxf::Value::Real(r) => Value::Real(*r),
+        forja_dxf::Value::Int(i) => Value::Int(i32::try_from(*i).unwrap_or(if *i < 0 { i32::MIN } else { i32::MAX })),
+        forja_dxf::Value::Bool(b) => Value::Int(i32::from(*b)),
     }
 }
 
@@ -336,7 +336,7 @@ fn codec() -> Result<&'static crate::cmd::file::EntityCodec, LispError> {
     crate::cmd::file::entity_codec().ok_or_else(|| LispError::new("entity lists are not available in this build"))
 }
 
-fn space_of(d: &cadcraft_doc::Drawing, h: Handle) -> Option<Space> {
+fn space_of(d: &forja_doc::Drawing, h: Handle) -> Option<Space> {
     d.space_of(h)
 }
 
@@ -366,7 +366,7 @@ pub fn entget(ctx: &mut Ctx<'_>, a: Vec<Value>) -> Result<Flow, LispError> {
 }
 
 /// The entity a list describes, as the reader makes it; a missing layer (8) is the current one.
-fn entity_from_list(ctx: &Ctx<'_>, list: &Value) -> Result<(String, cadcraft_doc::Common, cadcraft_doc::EntityKind), LispError> {
+fn entity_from_list(ctx: &Ctx<'_>, list: &Value) -> Result<(String, forja_doc::Common, forja_doc::EntityKind), LispError> {
     let (kind, mut tags) = list_to_groups(list)?;
     convert_angles(&kind, &mut tags, f64::to_degrees);
     if !tags.iter().any(|t| t.code == 8) {
@@ -375,7 +375,7 @@ fn entity_from_list(ctx: &Ctx<'_>, list: &Value) -> Result<(String, cadcraft_doc
     }
     match (codec()?.entity)(&kind, &tags) {
         // A type the reader only carries through (an unknown or invalid name) isn't made.
-        Some((_, cadcraft_doc::EntityKind::Unknown(_))) | None => Err(LispError::new(format!("bad DXF group: {kind} can't be made from this list"))),
+        Some((_, forja_doc::EntityKind::Unknown(_))) | None => Err(LispError::new(format!("bad DXF group: {kind} can't be made from this list"))),
         Some((common, k)) => Ok((kind, common, k)),
     }
 }
@@ -429,13 +429,10 @@ fn begin_block(ctx: &mut Ctx<'_>, list: &Value, tags: &[Tag]) -> Value {
     if flags & 4 != 0 || !(anonymous && name.starts_with('*') || crate::cmd::blocks::valid_block_name(&name)) {
         return Value::Nil;
     }
-    let mut b = cadcraft_doc::Block::new(&name);
+    let mut b = forja_doc::Block::new(&name);
     b.anonymous = anonymous;
-    b.base = cadcraft_geom::Vec3::new(
-        group(10).map(Tag::f64).unwrap_or(0.0),
-        group(20).map(Tag::f64).unwrap_or(0.0),
-        group(30).map(Tag::f64).unwrap_or(0.0),
-    );
+    b.base =
+        forja_geom::Vec3::new(group(10).map(Tag::f64).unwrap_or(0.0), group(20).map(Tag::f64).unwrap_or(0.0), group(30).map(Tag::f64).unwrap_or(0.0));
     if !b.base.is_finite() {
         return Value::Nil;
     }
@@ -646,7 +643,7 @@ pub fn ssget(ctx: &mut Ctx<'_>, a: Vec<Value>) -> Result<Flow, LispError> {
             let (p1, p2) = (point(0)?, point(1)?);
             let s = &*ctx.s;
             let Ok(d) = s.doc() else { return Ok(Flow::Value(Value::Nil)) };
-            crate::select::select_window(d, &space, cadcraft_geom::Bounds2::from_points([p1, p2]), mode.as_deref() == Some("C"))
+            crate::select::select_window(d, &space, forja_geom::Bounds2::from_points([p1, p2]), mode.as_deref() == Some("C"))
         }
         Some("F") | Some("WP") | Some("CP") => {
             let poly: Vec<Vec2> =
@@ -770,7 +767,7 @@ fn parse_filter_item(items: &[Value], i: &mut usize, depth: usize) -> Result<Fil
     })
 }
 
-fn matches_filter(d: &cadcraft_doc::Drawing, e: &Entity, f: &Filter) -> bool {
+fn matches_filter(d: &forja_doc::Drawing, e: &Entity, f: &Filter) -> bool {
     let groups = || match crate::cmd::file::entity_codec() {
         Some(c) => {
             let (kind, mut tags) = (c.groups)(d, e);
@@ -917,17 +914,17 @@ pub fn ssgetfirst(ctx: &mut Ctx<'_>, a: Vec<Value>) -> Result<Flow, LispError> {
 
 // ---------------- symbol tables ----------------
 
-fn color_index(c: cadcraft_color::Color) -> i32 {
+fn color_index(c: forja_color::Color) -> i32 {
     match c {
-        cadcraft_color::Color::Index(i) => i32::from(i),
-        cadcraft_color::Color::ByBlock => 0,
-        cadcraft_color::Color::ByLayer => 256,
-        cadcraft_color::Color::True(_) => 7,
+        forja_color::Color::Index(i) => i32::from(i),
+        forja_color::Color::ByBlock => 0,
+        forja_color::Color::ByLayer => 256,
+        forja_color::Color::True(_) => 7,
     }
 }
 
 /// The records of a symbol table, as `tblsearch` lists them.
-fn table_records(d: &cadcraft_doc::Drawing, table: &str) -> Vec<Value> {
+fn table_records(d: &forja_doc::Drawing, table: &str) -> Vec<Value> {
     let pair = |c: i32, v: Value| Value::cons(Value::Int(c), v);
     match table {
         "LAYER" => d

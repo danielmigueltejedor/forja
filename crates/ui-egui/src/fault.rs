@@ -1,5 +1,5 @@
 //! What happens when the interface panics. Commands already run under their own guard
-//! (`cadcraft_engine::guard`); this one covers the rest of the frame, so a panic in a panel keeps
+//! (`forja_engine::guard`); this one covers the rest of the frame, so a panic in a panel keeps
 //! the user's work: every drawing with unsaved changes is autosaved at once and the app says so.
 //! A panic that keeps coming back leaves a plain window that only closes, with the recovery copies
 //! kept for the next start. A panic hook writes a report for each, which stays on this machine.
@@ -98,9 +98,9 @@ fn notice(app: &mut CadApp, ctx: &egui::Context) {
         .anchor(egui::Align2::CENTER_TOP, vec2(0.0, 48.0))
         .show(ctx, |ui| {
             ui.set_width(440.0);
-            ui.label("Part of CADCraft failed, and the app kept running.");
+            ui.label("Part of Forja failed, and the app kept running.");
             ui.label(saved_text(app.fault.autosaved));
-            ui.label(RichText::new("Save your work and restart CADCraft.").strong());
+            ui.label(RichText::new("Save your work and restart Forja.").strong());
             ui.add_space(4.0);
             details(ui, t, &message);
             // A row just as tall as the button (a plain right-to-left layout takes the rest).
@@ -118,14 +118,14 @@ fn notice(app: &mut CadApp, ctx: &egui::Context) {
 /// All that's left once the interface keeps panicking.
 fn broken_window(app: &CadApp, ctx: &egui::Context) {
     let t = Tokens::get();
-    egui::Window::new("CADCraft has to close")
+    egui::Window::new("Forja has to close")
         .id(egui::Id::unique("cc_fault_broken"))
         .collapsible(false)
         .resizable(false)
         .anchor(egui::Align2::CENTER_CENTER, vec2(0.0, 0.0))
         .show(ctx, |ui| {
             ui.set_width(440.0);
-            ui.label("Part of CADCraft keeps failing, so it can't continue.");
+            ui.label("Part of Forja keeps failing, so it can't continue.");
             ui.label(saved_text(app.fault.autosaved));
             ui.label(RichText::new("Drawing Recovery offers them at the next start.").strong());
             ui.add_space(4.0);
@@ -133,7 +133,7 @@ fn broken_window(app: &CadApp, ctx: &egui::Context) {
                 details(ui, t, message);
             }
             ui.allocate_ui_with_layout(vec2(ui.available_width(), 0.0), egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if ui.button("Close CADCraft").clicked() {
+                if ui.button("Close Forja").clicked() {
                     ctx.send_viewport_cmd(egui::ViewportCommand::Close);
                 }
             });
@@ -203,7 +203,7 @@ mod report {
         std::fs::create_dir_all(dir)?;
         let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap_or_default();
         let mut text = String::new();
-        let _ = writeln!(text, "CADCraft {} on {} {}", env!("CARGO_PKG_VERSION"), std::env::consts::OS, std::env::consts::ARCH);
+        let _ = writeln!(text, "Forja {} on {} {}", env!("CARGO_PKG_VERSION"), std::env::consts::OS, std::env::consts::ARCH);
         let _ = writeln!(text, "Time: {} UTC", crate::autosave::utc(now.as_secs()));
         let _ = writeln!(text, "Thread: {}", std::thread::current().name().unwrap_or("unnamed"));
         if let Some(l) = info.location() {
@@ -212,7 +212,7 @@ mod report {
         let _ = writeln!(text, "Message: {}", info.payload_as_str().unwrap_or("(not text)"));
         let _ = writeln!(text, "\n{}", std::backtrace::Backtrace::force_capture());
         let path = dir.join(format!("crash-{:012x}-{}.txt", now.as_millis(), std::process::id()));
-        cadcraft_engine::atomic_write::write_atomic(&path, text.as_bytes())?;
+        forja_engine::atomic_write::write_atomic(&path, text.as_bytes())?;
         prune(dir);
         Ok(path)
     }

@@ -6,7 +6,7 @@
 //! ([`register`]: the web build's files opened alongside a drawing, tests); then the app's
 //! [`FontProvider`]; then, natively, the folders of opened drawings ([`add_drawing_dir`], most
 //! recent first), the user's font folders ([`set_font_dirs`], from Options) and the support
-//! search path ([`set_search_path`], from `CADCRAFT_SHXPATH` at start). Results, found or not, are cached until one of these changes ([`generation`]
+//! search path ([`set_search_path`], from `FORJA_SHXPATH` at start). Results, found or not, are cached until one of these changes ([`generation`]
 //! counts the changes, so a viewer knows to regenerate).
 
 use std::collections::HashMap;
@@ -16,7 +16,7 @@ use std::sync::{Arc, Mutex, MutexGuard, OnceLock, PoisonError};
 use super::parse::MAX_FILE_BYTES;
 use super::{ShxError, ShxFont};
 
-/// Where an app finds font files CADCraft can't reach itself (a web page's file store, an
+/// Where an app finds font files Forja can't reach itself (a web page's file store, an
 /// app's own font folder). Called with the normalised file name (`romans.shx`); returns the
 /// file's bytes. Called without the font table's lock held.
 pub trait FontProvider: Send + Sync {
@@ -57,7 +57,7 @@ fn table() -> MutexGuard<'static, Table> {
     static T: OnceLock<Mutex<Table>> = OnceLock::new();
     T.get_or_init(|| {
         #[cfg(not(target_arch = "wasm32"))]
-        let search_path = std::env::var_os("CADCRAFT_SHXPATH")
+        let search_path = std::env::var_os("FORJA_SHXPATH")
             .map(|p| std::env::split_paths(&p).filter(|d| !d.as_os_str().is_empty()).take(MAX_DIRS).collect())
             .unwrap_or_default();
         #[cfg(target_arch = "wasm32")]
@@ -191,7 +191,7 @@ pub fn generation() -> u64 {
     table().generation
 }
 
-/// The SHX font file a style or linetype names, if CADCraft can find and read it.
+/// The SHX font file a style or linetype names, if Forja can find and read it.
 pub fn find(name: &str) -> Option<Arc<ShxFont>> {
     let mut k = key(name)?;
     let (provider, dirs, generation) = {

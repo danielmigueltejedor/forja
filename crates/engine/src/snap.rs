@@ -7,8 +7,8 @@ mod viewport;
 
 pub use viewport::ViewportPoint;
 
-use cadcraft_doc::{Drawing, EntityKind, Insert, MAX_BLOCK_DEPTH, Prim, Space};
-use cadcraft_geom::{Bounds2, Circle, EPS, Ellipse, Mat3, PI, Segment, Vec2, intersect_ext};
+use forja_doc::{Drawing, EntityKind, Insert, MAX_BLOCK_DEPTH, Prim, Space};
+use forja_geom::{Bounds2, Circle, EPS, Ellipse, Mat3, PI, Segment, Vec2, intersect_ext};
 use serde::Serialize;
 
 /// OSMODE bits.
@@ -94,7 +94,7 @@ impl SnapCurve {
         match self {
             // A zero sweep is how a full circle is stored (see `fix_circle`): the whole circle.
             SnapCurve::Arc { center, radius, start, end } => {
-                (*start - *end).abs() < 1e-12 || cadcraft_geom::Arc::new(*center, *radius, *start, *end).contains_angle(center.angle_to(p))
+                (*start - *end).abs() < 1e-12 || forja_geom::Arc::new(*center, *radius, *start, *end).contains_angle(center.angle_to(p))
             }
             _ => true,
         }
@@ -120,7 +120,7 @@ impl SnapCurve {
                     [*center + u * *radius, *center - u * *radius].into_iter().filter(|q| self.contains(*q)).collect()
                 }
             }
-            SnapCurve::Line { a, b } => line_dir(*a, *b).map(|_| vec![cadcraft_geom::Line::new(*a, *b).project(p)]).unwrap_or_default(),
+            SnapCurve::Line { a, b } => line_dir(*a, *b).map(|_| vec![forja_geom::Line::new(*a, *b).project(p)]).unwrap_or_default(),
         }
     }
 }
@@ -152,7 +152,7 @@ pub fn tangent_point_in_direction(curve: &SnapCurve, dir: f64, hint: Vec2) -> Op
             let n = dir + std::f64::consts::FRAC_PI_2;
             let c1 = *center + Vec2::new(n.cos(), n.sin()) * *radius;
             let c2 = *center - Vec2::new(n.cos(), n.sin()) * *radius;
-            let on = cadcraft_geom::Arc::new(*center, *radius, *start, *end);
+            let on = forja_geom::Arc::new(*center, *radius, *start, *end);
             let ok = |c: Vec2| on.contains_angle(center.angle_to(c));
             let (c1, c2) = (ok(c1).then_some(c1), ok(c2).then_some(c2));
             match (c1, c2) {
@@ -178,20 +178,20 @@ fn name_of(m: u32) -> &'static str {
 fn prim_segments(p: &Prim) -> Vec<Segment> {
     match p {
         Prim::Seg(s) => vec![*s],
-        Prim::Circle(c) => vec![Segment::Arc { arc: cadcraft_geom::Arc::new(c.center, c.radius, 0.0, 0.0), ccw: true }],
-        Prim::Infinite { base, dir, .. } => vec![Segment::Line(cadcraft_geom::Line::new(*base - *dir * 1e7, *base + *dir * 1e7))],
+        Prim::Circle(c) => vec![Segment::Arc { arc: forja_geom::Arc::new(c.center, c.radius, 0.0, 0.0), ccw: true }],
+        Prim::Infinite { base, dir, .. } => vec![Segment::Line(forja_geom::Line::new(*base - *dir * 1e7, *base + *dir * 1e7))],
         Prim::Ellipse(e) => {
             let mut pts = Vec::new();
             e.tessellate(e.major.len() * 1e-3, &mut pts);
-            pts.windows(2).filter_map(|w| Some(Segment::Line(cadcraft_geom::Line::new(*w.first()?, *w.get(1)?)))).collect()
+            pts.windows(2).filter_map(|w| Some(Segment::Line(forja_geom::Line::new(*w.first()?, *w.get(1)?)))).collect()
         }
         Prim::Spline(s) => {
             let pts = s.tessellate(1e-3);
-            pts.windows(2).filter_map(|w| Some(Segment::Line(cadcraft_geom::Line::new(*w.first()?, *w.get(1)?)))).collect()
+            pts.windows(2).filter_map(|w| Some(Segment::Line(forja_geom::Line::new(*w.first()?, *w.get(1)?)))).collect()
         }
         Prim::Fill(f) => {
             let n = f.len();
-            (0..n).filter_map(|i| Some(Segment::Line(cadcraft_geom::Line::new(*f.get(i)?, *f.get((i + 1) % n)?)))).collect()
+            (0..n).filter_map(|i| Some(Segment::Line(forja_geom::Line::new(*f.get(i)?, *f.get((i + 1) % n)?)))).collect()
         }
         Prim::Point(_) => Vec::new(),
     }
@@ -639,7 +639,7 @@ impl Sink<'_> {
                     // Only the quadrant points the arc passes through.
                     for k in 0..4 {
                         let t = k as f64 * PI / 2.0;
-                        if cadcraft_geom::angle_in_sweep(t, el.start, el.end) {
+                        if forja_geom::angle_in_sweep(t, el.start, el.end) {
                             cands.push((mode::QUA, el.at_param(t)));
                         }
                     }
@@ -685,7 +685,7 @@ impl Sink<'_> {
         // The centroid of the area a closed polyline or spline encloses.
         let pts = match kind {
             EntityKind::LwPolyline(pl) if pl.closed => {
-                cadcraft_geom::Polyline { vertices: pl.vertices.clone(), closed: true }.tessellate(self.aperture / 10.0)
+                forja_geom::Polyline { vertices: pl.vertices.clone(), closed: true }.tessellate(self.aperture / 10.0)
             }
             EntityKind::Spline(s) if s.closed => s.tessellate(1e-3),
             _ => Vec::new(),
@@ -700,14 +700,14 @@ impl Sink<'_> {
     /// A dimension snaps to what it draws, as in AutoCAD (into its block): the objects of its
     /// block when the drawing has one (read from a file), else the lines generated from it
     /// (Endpoint on their ends); Node on its definition points.
-    fn dimension(&mut self, d: &Drawing, dm: &cadcraft_doc::Dimension, budget: &mut usize, frozen: &[String]) {
+    fn dimension(&mut self, d: &Drawing, dm: &forja_doc::Dimension, budget: &mut usize, frozen: &[String]) {
         match dm.block.as_ref().and_then(|n| d.block(n)) {
             Some(blk) => {
                 // The block holds world geometry: a reference at its own base point places it as is.
                 let ins = Insert {
                     block: blk.name.clone(),
                     insert: blk.base,
-                    scale: cadcraft_geom::Vec3::new(1.0, 1.0, 1.0),
+                    scale: forja_geom::Vec3::new(1.0, 1.0, 1.0),
                     rotation: 0.0,
                     attribs: Vec::new(),
                     cols: 1,
@@ -719,7 +719,7 @@ impl Sink<'_> {
                 block_leaves(d, &ins, &Mat3::IDENTITY, 0, budget, frozen, &mut |k, m| self.object(k, Some(m)));
             }
             None => {
-                let g = cadcraft_render::dimension_in(d, dm);
+                let g = forja_render::dimension_in(d, dm);
                 for line in &g.lines {
                     let (Some(a), Some(b)) = (line.first(), line.last()) else { continue };
                     if self.osmode & mode::END != 0 {
@@ -730,7 +730,7 @@ impl Sink<'_> {
                     }
                     for w in line.windows(2) {
                         if let [p, q] = w {
-                            let s = Prim::Seg(Segment::Line(cadcraft_geom::Line::new(*p, *q)));
+                            let s = Prim::Seg(Segment::Line(forja_geom::Line::new(*p, *q)));
                             if prim_near(&s, &self.probe, self.aperture) {
                                 self.near.push(s);
                             }
@@ -746,8 +746,8 @@ impl Sink<'_> {
 }
 
 /// The definition points of a dimension that its kind uses.
-fn dim_def_points(dm: &cadcraft_doc::Dimension) -> Vec<Vec2> {
-    use cadcraft_doc::DimKind;
+fn dim_def_points(dm: &forja_doc::Dimension) -> Vec<Vec2> {
+    use forja_doc::DimKind;
     let pts = match dm.kind {
         DimKind::Linear { .. } | DimKind::Aligned | DimKind::ArcLength => vec![dm.defpt, dm.p13, dm.p14],
         DimKind::Radius | DimKind::Diameter => vec![dm.defpt, dm.p15],
@@ -819,13 +819,13 @@ fn prim_near(p: &Prim, probe: &Bounds2, aperture: f64) -> bool {
 fn xform_prim(p: &Prim, m: &Mat3) -> Prim {
     let mirror = m.is_mirroring();
     match p {
-        Prim::Seg(Segment::Line(l)) => Prim::Seg(Segment::Line(cadcraft_geom::Line::new(m.apply(l.a), m.apply(l.b)))),
+        Prim::Seg(Segment::Line(l)) => Prim::Seg(Segment::Line(forja_geom::Line::new(m.apply(l.a), m.apply(l.b)))),
         Prim::Seg(Segment::Arc { arc, ccw }) => match m.similarity_scale() {
             Some(s) => {
                 let c = m.apply(arc.center);
                 let (a0, a1) = (c.angle_to(m.apply(arc.start_point())), c.angle_to(m.apply(arc.end_point())));
                 let (start, end) = if mirror { (a1, a0) } else { (a0, a1) };
-                Prim::Seg(Segment::Arc { arc: cadcraft_geom::Arc::new(c, arc.radius * s, start, end), ccw: *ccw != mirror })
+                Prim::Seg(Segment::Arc { arc: forja_geom::Arc::new(c, arc.radius * s, start, end), ccw: *ccw != mirror })
             }
             None => {
                 let e = Ellipse { center: arc.center, major: Vec2::X * arc.radius, ratio: 1.0, start: arc.start, end: arc.end };
@@ -867,14 +867,14 @@ fn deferred_hit(prims: &[Prim], cursor: Vec2, aperture: f64, osmode: u32, clip: 
                 (mode::PER, "Deferred Perpendicular", Circle::new(center, radius).closest(cursor))
             }
             SnapCurve::Arc { center, radius, start, end } if osmode & mode::TAN != 0 => {
-                (mode::TAN, "Deferred Tangent", cadcraft_geom::Arc::new(center, radius, start, end).closest(cursor))
+                (mode::TAN, "Deferred Tangent", forja_geom::Arc::new(center, radius, start, end).closest(cursor))
             }
             SnapCurve::Arc { center, radius, start, end } if osmode & mode::PER != 0 => {
-                (mode::PER, "Deferred Perpendicular", cadcraft_geom::Arc::new(center, radius, start, end).closest(cursor))
+                (mode::PER, "Deferred Perpendicular", forja_geom::Arc::new(center, radius, start, end).closest(cursor))
             }
             SnapCurve::Line { a, b } if osmode & mode::PER != 0 => {
                 // Pick on the drawn extent: a segment's own span, an xline/ray anywhere.
-                let l = cadcraft_geom::Line::new(a, b);
+                let l = forja_geom::Line::new(a, b);
                 (mode::PER, "Deferred Perpendicular", if matches!(p, Prim::Seg(_)) { l.closest(cursor) } else { l.project(cursor) })
             }
             _ => continue,
@@ -939,7 +939,7 @@ fn deferred_pairs(d1: &Deferred, d2: &Deferred) -> Option<Vec<(Vec2, Vec2)>> {
         // Perpendicular to a line: the tangent runs along the line's normal.
         ((mode::TAN, C { center, radius }), (mode::PER, L { a, b })) => {
             let Some(v) = line_dir(a, b) else { return Some(Vec::new()) };
-            let l = cadcraft_geom::Line::new(a, b);
+            let l = forja_geom::Line::new(a, b);
             [center + v * radius, center - v * radius].into_iter().map(|t| (t, l.project(t))).collect()
         }
         ((mode::PER, C { center: k1, radius: r1 }), (mode::PER, C { center: k2, radius: r2 })) => {
@@ -957,8 +957,8 @@ fn deferred_pairs(d1: &Deferred, d2: &Deferred) -> Option<Vec<(Vec2, Vec2)>> {
         }
         ((mode::PER, C { center: k, radius: rk }), (mode::PER, L { a, b })) => {
             let Some(v) = line_dir(a, b) else { return Some(Vec::new()) };
-            let f = cadcraft_geom::Line::new(a, b).project(k);
-            let u = if f.dist(k) > cadcraft_geom::EPS { (f - k).normalized() } else { v.perp() };
+            let f = forja_geom::Line::new(a, b).project(k);
+            let u = if f.dist(k) > forja_geom::EPS { (f - k).normalized() } else { v.perp() };
             vec![(k + u * rk, f), (k - u * rk, f)]
         }
         ((mode::PER, L { a: a1, b: b1 }), (mode::PER, L { a: a2, b: b2 })) => {
@@ -967,8 +967,8 @@ fn deferred_pairs(d1: &Deferred, d2: &Deferred) -> Option<Vec<(Vec2, Vec2)>> {
             if v1.cross(v2).abs() > 1e-9 {
                 return Some(Vec::new());
             }
-            let p = cadcraft_geom::Line::new(a1, b1).project(d1.at);
-            vec![(p, cadcraft_geom::Line::new(a2, b2).project(p))]
+            let p = forja_geom::Line::new(a1, b1).project(d1.at);
+            vec![(p, forja_geom::Line::new(a2, b2).project(p))]
         }
         _ => return None,
     };
@@ -986,7 +986,7 @@ fn line_dir(a: Vec2, b: Vec2) -> Option<Vec2> {
 /// The finite, non-degenerate candidate closest to the picks.
 fn pick_best(cands: impl Iterator<Item = (Vec2, Vec2)>, at1: Vec2, at2: Option<Vec2>) -> Option<(Vec2, Vec2)> {
     cands
-        .filter(|(p, q)| p.is_finite() && q.is_finite() && p.dist(*q) > cadcraft_geom::EPS)
+        .filter(|(p, q)| p.is_finite() && q.is_finite() && p.dist(*q) > forja_geom::EPS)
         .map(|(p, q)| (p.dist(at1) + at2.map_or(0.0, |a| q.dist(a)), (p, q)))
         .filter(|(cost, _)| cost.is_finite())
         .min_by(|x, y| x.0.total_cmp(&y.0))
@@ -997,7 +997,7 @@ fn pick_best(cands: impl Iterator<Item = (Vec2, Vec2)>, at1: Vec2, at2: Option<V
 fn fix_circle(s: &Segment) -> Segment {
     match *s {
         Segment::Arc { arc, ccw } if (arc.start - arc.end).abs() < 1e-15 => {
-            Segment::Arc { arc: cadcraft_geom::Arc { start: 0.0, end: cadcraft_geom::TAU - 1e-12, ..arc }, ccw }
+            Segment::Arc { arc: forja_geom::Arc { start: 0.0, end: forja_geom::TAU - 1e-12, ..arc }, ccw }
         }
         other => other,
     }
@@ -1041,7 +1041,7 @@ pub fn polar(base: Vec2, p: Vec2, inc: f64, tol: f64) -> Option<(Vec2, f64)> {
     let snapped = k * inc;
     if (a - snapped).abs() <= tol {
         let dir = Vec2::from_angle(snapped);
-        Some((base + dir * d.dot(dir), cadcraft_geom::norm_angle(snapped)))
+        Some((base + dir * d.dot(dir), forja_geom::norm_angle(snapped)))
     } else {
         None
     }
@@ -1067,15 +1067,15 @@ pub fn grid_frame(d: &Drawing) -> (Vec2, f64) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cadcraft_doc::{Common, Line};
-    use cadcraft_geom::Vec3;
+    use forja_doc::{Common, Line};
+    use forja_geom::Vec3;
 
     fn drawing() -> Drawing {
         let mut d = Drawing::new_imperial();
         let l = |a: (f64, f64), b: (f64, f64)| EntityKind::Line(Line { a: Vec3::new(a.0, a.1, 0.0), b: Vec3::new(b.0, b.1, 0.0) });
         d.add(&Space::Model, Common::default(), l((0.0, 0.0), (10.0, 0.0))).unwrap();
         d.add(&Space::Model, Common::default(), l((5.0, -5.0), (5.0, 5.0))).unwrap();
-        d.add(&Space::Model, Common::default(), EntityKind::Circle(cadcraft_doc::Circle { center: Vec3::new(20.0, 0.0, 0.0), radius: 2.0 })).unwrap();
+        d.add(&Space::Model, Common::default(), EntityKind::Circle(forja_doc::Circle { center: Vec3::new(20.0, 0.0, 0.0), radius: 2.0 })).unwrap();
         d
     }
 
@@ -1244,7 +1244,7 @@ mod tests {
         d.add(
             &Space::Model,
             Common::default(),
-            EntityKind::Arc(cadcraft_doc::Arc { center: Vec3::new(20.0, 0.0, 0.0), radius: 2.0, start: 0.0, end: std::f64::consts::FRAC_PI_2 }),
+            EntityKind::Arc(forja_doc::Arc { center: Vec3::new(20.0, 0.0, 0.0), radius: 2.0, start: 0.0, end: std::f64::consts::FRAC_PI_2 }),
         )
         .unwrap();
         d
@@ -1252,7 +1252,7 @@ mod tests {
 
     fn on_arc(p: Vec2) -> bool {
         let a = Vec2::new(20.0, 0.0).angle_to(p);
-        cadcraft_geom::angle_in_sweep(a, 0.0, std::f64::consts::FRAC_PI_2) && (p.dist(Vec2::new(20.0, 0.0)) - 2.0).abs() < 1e-9
+        forja_geom::angle_in_sweep(a, 0.0, std::f64::consts::FRAC_PI_2) && (p.dist(Vec2::new(20.0, 0.0)) - 2.0).abs() < 1e-9
     }
 
     #[test]

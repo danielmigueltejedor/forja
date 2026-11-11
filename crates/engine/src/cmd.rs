@@ -55,8 +55,8 @@ pub mod helpers;
 pub mod machines;
 pub mod options;
 
-use cadcraft_doc::Handle;
-use cadcraft_geom::Vec2;
+use forja_doc::Handle;
+use forja_geom::Vec2;
 use serde::Serialize;
 use serde_json::Value;
 

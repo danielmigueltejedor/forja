@@ -2,7 +2,7 @@
 //! European, Greek, Japanese, Chinese and Korean drawings open with their layer names, block names
 //! and text intact, in ASCII and binary DXF, and a hostile file never panics.
 
-use cadcraft_doc::{Drawing, EntityKind};
+use forja_doc::{Drawing, EntityKind};
 
 /// An ASCII DXF of `version` declaring `code_page`, with a layer, a block and a TEXT whose names
 /// and value are the raw bytes given.
@@ -70,7 +70,7 @@ fn reads_text_in_its_code_page() {
     for (cp, layer_bytes, layer, text_bytes, text) in cases {
         let mut block_bytes = b"B_".to_vec();
         block_bytes.extend_from_slice(layer_bytes);
-        let d = cadcraft_io::read_dxf(&ascii_dxf("AC1015", cp, layer_bytes, &block_bytes, text_bytes)).unwrap();
+        let d = forja_io::read_dxf(&ascii_dxf("AC1015", cp, layer_bytes, &block_bytes, text_bytes)).unwrap();
         assert_eq!(names(&d), (layer.to_string(), format!("B_{layer}"), text.to_string()), "{cp}");
     }
 }
@@ -79,7 +79,7 @@ fn reads_text_in_its_code_page() {
 /// keeps it a kanji instead of starting a `\U+` escape; real escapes still decode.
 #[test]
 fn shift_jis_backslash_trail_byte_is_not_an_escape() {
-    let d = cadcraft_io::read_dxf(&ascii_dxf("AC1015", "ANSI_932", b"L", b"B", b"\x95\x5CU+0041 \\U+00E9 \\M+5BCFE")).unwrap();
+    let d = forja_io::read_dxf(&ascii_dxf("AC1015", "ANSI_932", b"L", b"B", b"\x95\x5CU+0041 \\U+00E9 \\M+5BCFE")).unwrap();
     assert_eq!(text_of(&d), "表U+0041 é 件");
 }
 
@@ -88,19 +88,19 @@ fn shift_jis_backslash_trail_byte_is_not_an_escape() {
 /// falls back to the declared code page.
 #[test]
 fn utf8_wins_when_valid() {
-    let d = cadcraft_io::read_dxf(&ascii_dxf("AC1015", "ANSI_1251", "Слой".as_bytes(), b"B", "Привет".as_bytes())).unwrap();
+    let d = forja_io::read_dxf(&ascii_dxf("AC1015", "ANSI_1251", "Слой".as_bytes(), b"B", "Привет".as_bytes())).unwrap();
     assert_eq!(names(&d), ("Слой".into(), "B".into(), "Привет".into()));
-    let d = cadcraft_io::read_dxf(&ascii_dxf("AC1032", "ANSI_1252", "图层".as_bytes(), b"B", "Café".as_bytes())).unwrap();
+    let d = forja_io::read_dxf(&ascii_dxf("AC1032", "ANSI_1252", "图层".as_bytes(), b"B", "Café".as_bytes())).unwrap();
     assert_eq!(names(&d), ("图层".into(), "B".into(), "Café".into()));
-    let d = cadcraft_io::read_dxf(&ascii_dxf("AC1021", "ANSI_1251", b"\xD1\xEB\xEE\xE9", b"B", b"x")).unwrap();
+    let d = forja_io::read_dxf(&ascii_dxf("AC1021", "ANSI_1251", b"\xD1\xEB\xEE\xE9", b"B", b"x")).unwrap();
     assert_eq!(names(&d).0, "Слой");
 }
 
-/// A code page CADCraft doesn't know (or none) reads as ANSI_1252, as before.
+/// A code page Forja doesn't know (or none) reads as ANSI_1252, as before.
 #[test]
 fn unknown_code_page_falls_back_to_ansi_1252() {
     for cp in ["ANSI_1361", "EBCDIC", "", "\u{1}"] {
-        let d = cadcraft_io::read_dxf(&ascii_dxf("AC1015", cp, b"Caf\xE9", b"B", b"\x80 \xD8")).unwrap();
+        let d = forja_io::read_dxf(&ascii_dxf("AC1015", cp, b"Caf\xE9", b"B", b"\x80 \xD8")).unwrap();
         assert_eq!(names(&d), ("Café".into(), "B".into(), "€ Ø".into()), "{cp:?}");
     }
 }
@@ -109,10 +109,10 @@ fn unknown_code_page_falls_back_to_ansi_1252() {
 /// same.
 #[test]
 fn code_page_text_survives_a_round_trip() {
-    let d = cadcraft_io::read_dxf(&ascii_dxf("AC1015", "ANSI_1251", b"\xD1\xEB\xEE\xE9", b"\xC1\xEB\xEE\xEA", b"\xCF\xF0\xE8\xE2\xE5\xF2")).unwrap();
-    let out = cadcraft_io::write_dxf(&d);
+    let d = forja_io::read_dxf(&ascii_dxf("AC1015", "ANSI_1251", b"\xD1\xEB\xEE\xE9", b"\xC1\xEB\xEE\xEA", b"\xCF\xF0\xE8\xE2\xE5\xF2")).unwrap();
+    let out = forja_io::write_dxf(&d);
     assert!(out.is_ascii());
-    let back = cadcraft_io::read_dxf(out.as_bytes()).unwrap();
+    let back = forja_io::read_dxf(out.as_bytes()).unwrap();
     assert_eq!(names(&back), ("Слой".into(), "Блок".into(), "Привет".into()));
 }
 
@@ -122,7 +122,7 @@ fn code_page_text_survives_a_round_trip() {
 /// page lacks are still escaped. ASCII and binary, R2000 and R2004, read back the same.
 #[test]
 fn saving_writes_text_in_the_code_page() {
-    use cadcraft_io::{SaveOptions, Version};
+    use forja_io::{SaveOptions, Version};
     let pt = ascii_dxf("AC1015", "ANSI_1252", b"El\xE9trica", b"A\xE7\xE3o", b"Fun\xE7\xE3o \\U+56FE");
     let ru = ascii_dxf("AC1015", "ANSI_1251", b"\xD1\xEB\xEE\xE9", b"\xC1\xEB\xEE\xEA", b"\xCF\xF0\xE8\xE2\xE5\xF2 \\U+00E9");
     let cases: [(&[u8], (&str, &str, &str), &[&[u8]]); 2] = [
@@ -130,16 +130,16 @@ fn saving_writes_text_in_the_code_page() {
         (&ru, ("Слой", "Блок", "Привет é"), &[b"\xD1\xEB\xEE\xE9", b"\xC1\xEB\xEE\xEA", b"\xCF\xF0\xE8\xE2\xE5\xF2 \\U+00E9"]),
     ];
     for (file, want, raw) in cases {
-        let d = cadcraft_io::read_dxf(file).unwrap();
+        let d = forja_io::read_dxf(file).unwrap();
         assert_eq!(names(&d), (want.0.into(), want.1.into(), want.2.into()));
         for version in [Version::R2000, Version::R2004] {
             for binary in [false, true] {
-                let out = cadcraft_io::write_with(&d, "x.dxf", &SaveOptions { version: Some(version), binary }).unwrap();
+                let out = forja_io::write_with(&d, "x.dxf", &SaveOptions { version: Some(version), binary }).unwrap();
                 for r in raw {
                     assert!(out.windows(r.len()).any(|w| w == *r), "{version} binary={binary}: {}", String::from_utf8_lossy(r));
                 }
                 assert!(!out.windows(7).any(|w| w == b"\\U+00E7"), "{version} binary={binary}: ç is written as its byte");
-                let back = cadcraft_io::read_dxf(&out).unwrap();
+                let back = forja_io::read_dxf(&out).unwrap();
                 assert_eq!(names(&back), (want.0.into(), want.1.into(), want.2.into()), "{version} binary={binary}");
             }
         }
@@ -150,17 +150,17 @@ fn saving_writes_text_in_the_code_page() {
 /// non-ASCII text is written as `\U+` escapes, not as Windows-1252 bytes.
 #[test]
 fn saving_an_ascii_file_keeps_it_ascii() {
-    use cadcraft_io::{SaveOptions, Version};
-    let d = cadcraft_io::read_dxf(&ascii_dxf("AC1015", "ASCII", b"El\\U+00E9trica", b"B", b"Eletrica \\U+00E9")).unwrap();
+    use forja_io::{SaveOptions, Version};
+    let d = forja_io::read_dxf(&ascii_dxf("AC1015", "ASCII", b"El\\U+00E9trica", b"B", b"Eletrica \\U+00E9")).unwrap();
     assert_eq!(names(&d), ("Elétrica".into(), "B".into(), "Eletrica é".into()));
     for version in [Version::R2000, Version::R2004] {
-        let ascii = cadcraft_io::write_with(&d, "x.dxf", &SaveOptions { version: Some(version), binary: false }).unwrap();
+        let ascii = forja_io::write_with(&d, "x.dxf", &SaveOptions { version: Some(version), binary: false }).unwrap();
         assert!(ascii.is_ascii(), "{version}");
-        let binary = cadcraft_io::write_with(&d, "x.dxf", &SaveOptions { version: Some(version), binary: true }).unwrap();
+        let binary = forja_io::write_with(&d, "x.dxf", &SaveOptions { version: Some(version), binary: true }).unwrap();
         for out in [&ascii, &binary] {
             assert!(out.windows(14).any(|w| w == b"El\\U+00E9trica"), "{version}");
             assert!(out.windows(5).any(|w| w == b"ASCII"), "{version}: the header keeps its code page");
-            assert_eq!(names(&cadcraft_io::read_dxf(out).unwrap()), ("Elétrica".into(), "B".into(), "Eletrica é".into()), "{version}");
+            assert_eq!(names(&forja_io::read_dxf(out).unwrap()), ("Elétrica".into(), "B".into(), "Eletrica é".into()), "{version}");
         }
     }
 }
@@ -202,7 +202,7 @@ fn binary_dxf_honours_the_code_page() {
         s(0, b"EOF");
         b
     };
-    let read = |b: &[u8]| text_of(&cadcraft_io::read_dxf(b).unwrap());
+    let read = |b: &[u8]| text_of(&forja_io::read_dxf(b).unwrap());
     assert_eq!(read(&bin("AC1015", "ANSI_1251", b"\xCF\xF0\xE8\xE2\xE5\xF2")), "Привет");
     assert_eq!(read(&bin("AC1018", "ANSI_932", b"\x95\x5C\\U+00E9")), "表é");
     // A short Cyrillic string that is also valid UTF-8 (D1 B2) is still read in the code page:
@@ -217,28 +217,23 @@ fn binary_dxf_honours_the_code_page() {
 #[test]
 fn hostile_multibyte_never_panics() {
     // A lead byte cut off by the line end, a lone trail byte, an invalid pair.
-    let d = cadcraft_io::read_dxf(&ascii_dxf("AC1015", "ANSI_932", b"\x90", b"\x81", b"A\x90")).unwrap();
+    let d = forja_io::read_dxf(&ascii_dxf("AC1015", "ANSI_932", b"\x90", b"\x81", b"A\x90")).unwrap();
     assert_eq!(names(&d), ("\u{FFFD}".into(), "\u{FFFD}".into(), "A\u{FFFD}".into()));
-    let d = cadcraft_io::read_dxf(&ascii_dxf("AC1015", "ANSI_936", b"\xFF\xFF", b"B", b"\xA1")).unwrap();
+    let d = forja_io::read_dxf(&ascii_dxf("AC1015", "ANSI_936", b"\xFF\xFF", b"B", b"\xA1")).unwrap();
     assert_eq!(text_of(&d), "\u{FFFD}");
     // A file cut off inside a double-byte character, garbage after the header, every byte value.
     let mut cut = ascii_dxf("AC1015", "ANSI_949", b"L", b"B", b"x");
     cut.truncate(cut.len() - 10);
     cut.push(0xB5);
-    let _ = cadcraft_io::read_dxf(&cut);
+    let _ = forja_io::read_dxf(&cut);
     let all: Vec<u8> = (0..=255u8).collect();
     for cp in ["ANSI_932", "ANSI_936", "ANSI_949", "ANSI_950", "ANSI_1251", "DOS437", "DOS852", "MACINTOSH"] {
-        let d = cadcraft_io::read_dxf(&ascii_dxf(
-            "AC1015",
-            cp,
-            b"L",
-            b"B",
-            &all.iter().copied().filter(|&b| b != b'\n' && b != b'\r').collect::<Vec<_>>(),
-        ));
+        let d =
+            forja_io::read_dxf(&ascii_dxf("AC1015", cp, b"L", b"B", &all.iter().copied().filter(|&b| b != b'\n' && b != b'\r').collect::<Vec<_>>()));
         assert!(d.is_ok(), "{cp}");
         let mut junk = ascii_dxf("AC1015", cp, b"L", b"B", b"x");
         junk.extend_from_slice(&all);
-        let _ = cadcraft_io::read_dxf(&junk);
+        let _ = forja_io::read_dxf(&junk);
     }
 }
 
@@ -248,7 +243,7 @@ fn hostile_multibyte_never_panics() {
 #[test]
 fn pre_2007_dwg_text_decodes_through_the_bridge() {
     let dxf = ascii_dxf("AC1015", "ANSI_1251", b"\xD1\xEB\xEE\xE9", b"\xC1\xEB\xEE\xEA", b"\xCF\xF0\xE8\xE2\xE5\xF2");
-    let dwg = cadcraft_dwg::dxf_to_dwg(&dxf).unwrap();
-    let d = cadcraft_io::read(&dwg, "x.dwg").unwrap();
+    let dwg = forja_dwg::dxf_to_dwg(&dxf).unwrap();
+    let d = forja_io::read(&dwg, "x.dwg").unwrap();
     assert_eq!(names(&d), ("Слой".into(), "Блок".into(), "Привет".into()));
 }

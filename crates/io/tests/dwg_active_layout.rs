@@ -6,11 +6,11 @@
 #[cfg(not(any(target_arch = "wasm32", all(target_os = "freebsd", target_arch = "aarch64"))))]
 use std::io::Cursor;
 
-use cadcraft_doc::{Common, Drawing, EntityKind, Layout, Line, Space};
-use cadcraft_geom::Vec3;
+use forja_doc::{Common, Drawing, EntityKind, Layout, Line, Space};
+use forja_geom::Vec3;
 #[cfg(not(any(target_arch = "wasm32", all(target_os = "freebsd", target_arch = "aarch64"))))]
-use cadcraft_io::Version;
-use cadcraft_io::{SaveOptions, read, write_with};
+use forja_io::Version;
+use forja_io::{SaveOptions, read, write_with};
 
 fn three_sheets() -> Drawing {
     let mut d = Drawing::new_metric();

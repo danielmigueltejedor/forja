@@ -8,10 +8,10 @@
 </p>
 
 <p align="center">
-  <img src="assets/app-icon/hicolor/256x256/apps/ai.storyteller.cadcraft.png" width="128" height="128" alt="CADCraft icon: a drafting set square and compass arc on a blue grid tile">
+  <img src="assets/app-icon/hicolor/256x256/apps/dev.danielmiguelt.Forja.png" width="128" height="128" alt="Forja icon: a drafting set square and compass arc on a blue grid tile">
 </p>
 
-<h1 align="center">CADCraft</h1>
+<h1 align="center">Forja</h1>
 
 <p align="center">
   <b>Computer-aided design and drafting; an open-source, modern 2D and 3D CAD application, built in pure Rust.</b>
@@ -40,7 +40,7 @@
 </p>
 
 <p align="center">
-  <a href="https://getartcraft.com/apps/cadcraft"><b>CADCraft on getartcraft.com</b></a> ·
+  <a href="https://getartcraft.com/apps/cadcraft"><b>Forja on getartcraft.com</b></a> ·
   <a href="https://getartcraft.com/">ArtCraft</a> ·
   <a href="https://getartcraft.com/apps">All Crafting Apps</a>
 </p>
@@ -48,8 +48,8 @@
 <br>
 
 <p align="center">
-  <img src="docs/images/ui-apartment.png" alt="CADCraft with an apartment floor plan open: hatched grey walls, blue windows, green door swings, furniture outlines, yellow room names with areas, a yellow room schedule table, a multileader note and cyan dimensions with architectural ticks; Tool Sets on the left, Layers and Properties on the right, the command line at the bottom" width="100%">
-  <br><sub><b>Apartment plan</b> (<a href="examples/apartment.dxf">examples/apartment.dxf</a>): walls with pick-point hatching, TrueType MTEXT room labels, a TABLE, a multileader and architectural dimensions — built entirely from CADCraft commands.</sub>
+  <img src="docs/images/ui-apartment.png" alt="Forja with an apartment floor plan open: hatched grey walls, blue windows, green door swings, furniture outlines, yellow room names with areas, a yellow room schedule table, a multileader note and cyan dimensions with architectural ticks; Tool Sets on the left, Layers and Properties on the right, the command line at the bottom" width="100%">
+  <br><sub><b>Apartment plan</b> (<a href="examples/apartment.dxf">examples/apartment.dxf</a>): walls with pick-point hatching, TrueType MTEXT room labels, a TABLE, a multileader and architectural dimensions — built entirely from Forja commands.</sub>
 </p>
 
 > [!NOTE]
@@ -59,7 +59,7 @@
 
 <p align="center">
   <a href="#screenshots">Screenshots</a> ·
-  <a href="#why-cadcraft">Why CADCraft</a> ·
+  <a href="#why-forja">Why Forja</a> ·
   <a href="#what-works-today">What works today</a> ·
   <a href="#quick-start">Quick start</a> ·
   <a href="#drive-it-from-agents-mcp-and-the-cli">Agents, MCP and the CLI</a> ·
@@ -74,8 +74,8 @@
 
 <table>
   <tr>
-    <td width="50%"><img src="docs/images/ui-layout.png" alt="A paper-space layout in CADCraft: a white sheet with a dashed printable area and a viewport showing the apartment plan at scale, the status bar showing the A1 Plan layout tab and a PAPER toggle"></td>
-    <td width="50%"><img src="docs/images/ui-bracket.png" alt="CADCraft with a mounting bracket part drawing: front view with bolt holes, centre lines and dimensions, a hatched section view, notes and a title block"></td>
+    <td width="50%"><img src="docs/images/ui-layout.png" alt="A paper-space layout in Forja: a white sheet with a dashed printable area and a viewport showing the apartment plan at scale, the status bar showing the A1 Plan layout tab and a PAPER toggle"></td>
+    <td width="50%"><img src="docs/images/ui-bracket.png" alt="Forja with a mounting bracket part drawing: front view with bolt holes, centre lines and dimensions, a hatched section view, notes and a title block"></td>
   </tr>
   <tr>
     <td><sub><b>Layouts</b>: paper space with viewports, page setups and PLOT to PDF. Double-click a viewport to work in model space through it.</sub></td>
@@ -83,7 +83,7 @@
   </tr>
 </table>
 
-## Why CADCraft
+## Why Forja
 
 - **The workflow you know.** Type `L`, click two points, type `@5<45`, press Enter. The command
   line, prompts with clickable `[Keywords]`, AutoComplete, object snaps, polar tracking, ortho,
@@ -101,7 +101,7 @@
 
 ## What works today
 
-CADCraft is in early, fast development. Honest status (see [ROADMAP.md](ROADMAP.md) for parity
+Forja is in early, fast development. Honest status (see [ROADMAP.md](ROADMAP.md) for parity
 numbers):
 
 | Area | Status |
@@ -114,21 +114,21 @@ numbers):
 | Layers & properties | Layers palette and Layer Properties Manager (on/off, freeze, lock, plot, colour, linetype), layer tools (isolate, freeze, off, lock, match, previous), Properties palette with per-object editing, linetypes, lineweights, colour index and true colour |
 | Annotation | All DIM* commands with full DIMSTYLE variables, overrides and every arrowhead, associative dimensions that follow geometry, MLEADER, TABLE, TrueType fonts (`.ttf`, `.otf`, `.ttc` collections), MTEXT formatting codes (fonts, heights, colours, stacked fractions), our own single-stroke drafting font |
 | Hatch & blocks | Pick-point hatch boundaries with islands, pattern, solid and gradient fills from our own pattern library, BLOCK/INSERT, attributes and nested blocks |
-| Files | DXF read (R12–2018, ASCII and binary) and write (R2000), including dimension styles, associativity, tables and constraints; DWG read (via the acadrust library) and write (R2000); PDF plotting, SVG and PNG export. Entities CADCraft doesn't model yet are not kept on save: see [file-format parity](docs/file-format-parity.md) |
+| Files | DXF read (R12–2018, ASCII and binary) and write (R2000), including dimension styles, associativity, tables and constraints; DWG read (via the acadrust library) and write (R2000); PDF plotting, SVG and PNG export. Entities Forja doesn't model yet are not kept on save: see [file-format parity](docs/file-format-parity.md) |
 | Layouts & plotting | Paper-space layouts, viewports (scale, lock, per-viewport layer freeze), MSPACE/PSPACE through viewports, page setups, PLOT and EXPORTPDF |
 | Parametric | Geometric and dimensional constraints, AUTOCONSTRAIN, PARAMETERS with expressions, conflict detection; constraints re-solve after every edit |
 | Grips | Hot grips with Space to cycle Stretch, Move, Rotate, Scale and Mirror |
 | Interface languages | English, Ukrainian (Українська), Brazilian Portuguese (Português (Brasil)), German (Deutsch), Spanish (Español), Czech (Čeština), Russian (Русский), French (Français), Simplified Chinese (简体中文, with an installed CJK font), Italian (Italiano), Korean (한국어, with an installed Hangul font), Swedish (Svenska), Arabic (العربية, with an installed Arabic font), Hungarian (Magyar), Turkish (Türkçe), Greek (Ελληνικά), Bosnian (Bosanski) and Georgian (ქართული), live switching and a remembered Auto/system-language choice; [details](docs/localization.md) |
-| Automation | MCP server, JSON control channel, `cadcraft-cli` (info, convert, run, commands, mcp) |
+| Automation | MCP server, JSON control channel, `forja-cli` (info, convert, run, commands, mcp) |
 
 ## Quick start
 
-CADCraft requires Rust 1.95 or later.
+Forja requires Rust 1.95 or later.
 
 ```sh
 git clone https://github.com/storytold/cadcraft
-cd cadcraft
-cargo run --release -p cadcraft -- --sample       # opens the sample drawing
+cd forja
+cargo run --release -p forja -- --sample       # opens the sample drawing
 ```
 
 Then try typing at the command line:
@@ -140,11 +140,11 @@ offset 0.25                     then pick the circle and a side
 zoom e                          zoom to extents
 ```
 
-The web build: `cd apps/cadcraft-web && trunk serve` (needs [trunk](https://github.com/trunk-rs/trunk)).
+The web build: `cd apps/forja-web && trunk serve` (needs [trunk](https://github.com/trunk-rs/trunk)).
 
 ### Fonts
 
-CADCraft has no fonts in its repository; it uses the TrueType/OpenType fonts installed on your
+Forja has no fonts in its repository; it uses the TrueType/OpenType fonts installed on your
 system. Builds made with the optional [craft-fonts](https://github.com/storytold/craft-fonts)
 input (`CRAFT_FONTS_DIR=<absolute path to a checkout> cargo build --release`) also embed its
 fonts: BIZ UDPGothic, BIZ UDMincho and Shippori Mincho (Japanese) and Noto Sans Arabic (the web
@@ -159,8 +159,8 @@ run) an environment variable, steer this:
 
 | Variable | Environment | Meaning |
 |---|---|---|
-| `FONTALT` | `CADCRAFT_FONTALT` | Font used instead of a text style font that can't be found (an SHX file, a missing TTF), by file or family name, e.g. `Noto Sans CJK TC`. Empty (default) = our stroke font. |
-| `FONTFALLBACK` | `CADCRAFT_FONTFALLBACK` | Fonts tried first for characters a text's font lacks, comma-separated, e.g. `Noto Sans CJK TC, msjh.ttc`. |
+| `FONTALT` | `FORJA_FONTALT` | Font used instead of a text style font that can't be found (an SHX file, a missing TTF), by file or family name, e.g. `Noto Sans CJK TC`. Empty (default) = our stroke font. |
+| `FONTFALLBACK` | `FORJA_FONTFALLBACK` | Fonts tried first for characters a text's font lacks, comma-separated, e.g. `Noto Sans CJK TC, msjh.ttc`. |
 
 `.` clears either one.
 
@@ -169,7 +169,7 @@ run) an environment variable, steer this:
 Linux and the BSDs `/usr/share/fonts`, `/usr/local/share/fonts`, `~/.local/share/fonts` or
 `~/.fonts`) and name it in a text style (`STYLE`, or `style {"name":"FA","font":"Vazirmatn"}`)
 by file name (`Vazirmatn-Regular.ttf`) or family name (`Vazirmatn`), or inline in MTEXT with
-`\fVazirmatn;`. Restart CADCraft after installing a font: the font folders are scanned once.
+`\fVazirmatn;`. Restart Forja after installing a font: the font folders are scanned once.
 
 **Right-to-left text (Persian, Arabic, Urdu, Hebrew).** TEXT and MTEXT lines are laid out with the
 Unicode Bidirectional Algorithm (the paragraph direction comes from its first letter, so numbers
@@ -180,47 +180,47 @@ Our stroke font has no Arabic letters, so Persian in a stroke-font style is draw
 installed font that has them: Vazirmatn, Noto Naskh Arabic, Noto Sans Arabic, Segoe UI, Tahoma,
 Arial and DejaVu Sans are looked for first. To choose the font, install a free Persian font such
 as [Vazirmatn](https://github.com/rastikerdar/vazirmatn) (SIL Open Font License) and either use it
-in the text style or set `FONTFALLBACK` (`CADCRAFT_FONTFALLBACK="Vazirmatn"`). Formatting changes
+in the text style or set `FONTFALLBACK` (`FORJA_FONTFALLBACK="Vazirmatn"`). Formatting changes
 inside a word (an MTEXT colour change in the middle of a Persian word) break the joining at that
 point.
 
 ### Logs
 
-The desktop app writes its `log` records to standard error and to `logs/cadcraft.log` in the
-settings directory (Linux and the BSDs `~/.config/cadcraft/logs/`, or
-`$XDG_CONFIG_HOME/cadcraft/logs/`; macOS `~/Library/Application Support/CADCraft/logs/`; Windows
-`%APPDATA%\CADCraft\logs\`; or under `CADCRAFT_CONFIG_DIR`). A start from a desktop menu or the
+The desktop app writes its `log` records to standard error and to `logs/forja.log` in the
+settings directory (Linux and the BSDs `~/.config/forja/logs/`, or
+`$XDG_CONFIG_HOME/forja/logs/`; macOS `~/Library/Application Support/Forja/logs/`; Windows
+`%APPDATA%\Forja\logs\`; or under `FORJA_CONFIG_DIR`). A start from a desktop menu or the
 Dock has no terminal, so this file is what to attach to a bug report. Each launch moves the
-previous log to `cadcraft.1.log` (and that one to `cadcraft.2.log`), so the log of a run that
+previous log to `forja.1.log` (and that one to `forja.2.log`), so the log of a run that
 crashed survives the next start. The file stops growing at 16 MiB. `--version` writes no file.
 
 | Variable | Effect |
 |---|---|
-| `CADCRAFT_CONFIG_DIR` | Use this directory instead of the platform settings directory (the log goes to its `logs/`); empty means no settings folder (no log file, autosave, workspace or plotters) |
-| `RUST_LOG` | Log levels for standard error and the log file. Default: `info` for CADCraft's own crates, `warn` for everything else. env_logger-style directives replace that, e.g. `RUST_LOG=debug`, `RUST_LOG=warn,cadcraft_io=trace` or `RUST_LOG=info,wgpu_core=warn`; a directive ending in `*` covers every target starting with it (`cadcraft*=debug`). `cadcraft_engine=debug` also logs every command-line message. |
+| `FORJA_CONFIG_DIR` | Use this directory instead of the platform settings directory (the log goes to its `logs/`); empty means no settings folder (no log file, autosave, workspace or plotters) |
+| `RUST_LOG` | Log levels for standard error and the log file. Default: `info` for Forja's own crates, `warn` for everything else. env_logger-style directives replace that, e.g. `RUST_LOG=debug`, `RUST_LOG=warn,forja_io=trace` or `RUST_LOG=info,wgpu_core=warn`; a directive ending in `*` covers every target starting with it (`forja*=debug`). `forja_engine=debug` also logs every command-line message. |
 
-The logger is `apps/cadcraft/src/logging.rs`; the web build logs to the browser console instead.
+The logger is `apps/forja/src/logging.rs`; the web build logs to the browser console instead.
 
 ## Drive it from agents, MCP and the CLI
 
 ```sh
 # MCP server on stdio, headless:
-cadcraft-cli mcp
+forja-cli mcp
 # …or bridged to the running app (start it with --control 7979):
-cadcraft-cli mcp --connect 127.0.0.1:7979
+forja-cli mcp --connect 127.0.0.1:7979
 
 # One-shot headless runs:
-cadcraft-cli run --sample --script 'CIRCLE 22,3 1\n' --save out.dxf --export out.png
-cadcraft-cli info drawing.dxf
-cadcraft-cli convert drawing.dxf drawing.svg
+forja-cli run --sample --script 'CIRCLE 22,3 1\n' --save out.dxf --export out.png
+forja-cli info drawing.dxf
+forja-cli convert drawing.dxf drawing.svg
 
 # Frame part of the drawing (model space, drawing units, lower-left corner first):
-cadcraft-cli convert drawing.dwg detail.png --window 0,0,20000,15000
-cadcraft-cli run drawing.dwg --cmd 'zoom {"mode":"window","p1":[0,0],"p2":[20000,15000]}' --export detail.png
-cadcraft-cli run drawing.dwg --cmd 'select {"window":[[0,0],[20000,15000]]}' --cmd 'zoom {"mode":"object"}' --export sel.png
+forja-cli convert drawing.dwg detail.png --window 0,0,20000,15000
+forja-cli run drawing.dwg --cmd 'zoom {"mode":"window","p1":[0,0],"p2":[20000,15000]}' --export detail.png
+forja-cli run drawing.dwg --cmd 'select {"window":[[0,0],[20000,15000]]}' --cmd 'zoom {"mode":"object"}' --export sel.png
 
 # Act on what an earlier --cmd made: {last} is the last handle it returned.
-cadcraft-cli run --metric --cmd 'layout.set {"name":"Layout1"}' \
+forja-cli run --metric --cmd 'layout.set {"name":"Layout1"}' \
   --cmd 'mview {"p1":[20,20],"p2":[200,150]}' --cmd 'viewport.set {"handle":"{last}","scale":1}'
 ```
 
@@ -240,10 +240,10 @@ MCP tools include `command_line` (type at the prompt), `execute` (any command wi
 `screenshot` and `ui_click`. The desktop app's JSON control channel is documented in
 [docs/control-protocol.md](docs/control-protocol.md).
 
-To run LISP routines, scripts and alias files, or to drive CADCraft from your own programs, see
+To run LISP routines, scripts and alias files, or to drive Forja from your own programs, see
 [docs/customization.md](docs/customization.md).
 
-`cadcraft-cli --help` documents every subcommand and flag; exit codes, streams, environment
+`forja-cli --help` documents every subcommand and flag; exit codes, streams, environment
 variables and its RFC-0012 conventions are in [docs/cli.md](docs/cli.md).
 
 ## Architecture
@@ -257,16 +257,16 @@ fonts ┤ render               stroke font + TEXT/MTEXT layout │ display lists
 io    ┤                       DXF mapping, SVG/PNG export
 engine┤                       sessions, commands, command line + prompts, snaps, selection, undo
 ui-egui · mcp                 the swappable egui front end · MCP server
-apps: cadcraft · cadcraft-cli · cadcraft-web
+apps: forja · forja-cli · forja-web
 ```
 
 Nothing below `ui-egui` knows about egui, so the front end can be replaced. `cargo xtask ci`
 checks formatting, clippy, tests, asset attribution, the crate layering and the wasm build.
 
 Drafting and layer-palette icon buttons use the pinned `craft-ui` button component for interaction,
-accessible labels and keyboard focus. CADCraft keeps its multicolor icon painter, dark palette,
+accessible labels and keyboard focus. Forja keeps its multicolor icon painter, dark palette,
 disabled tint and tool commands. The native host saves workspace visibility and toolset choices
-atomically; `CADCRAFT_CONFIG_DIR` selects an isolated profile. Compact toolbar groups move into a
+atomically; `FORJA_CONFIG_DIR` selects an isolated profile. Compact toolbar groups move into a
 More menu, and status readouts truncate with a full-value tooltip before they reach layout tabs.
 Painted toolbar and tab controls
 have accessible labels and visible keyboard focus. Property controls remain application-specific.
@@ -275,11 +275,11 @@ have accessible labels and visible keyboard focus. Property controls remain appl
 
 ### System cursor
 
-Over the drawing area CADCraft hides the system cursor and draws its own crosshair. Tools that follow the system cursor (Windows Magnifier set to follow or centre the mouse pointer, other screen magnifiers, screen recorders, remote desktops) lose track of it there. Turn on **View ▸ Accessibility ▸ Show System Cursor** to keep a small system crosshair visible at the centre of the drawn one, or start CADCraft with the environment variable `CADCRAFT_SYSTEM_CURSOR=1` (on Windows, set it once with `setx CADCRAFT_SYSTEM_CURSOR 1` and start CADCraft again). Agents can switch it with the control channel: `ui.set {"systemCursor": true}`.
+Over the drawing area Forja hides the system cursor and draws its own crosshair. Tools that follow the system cursor (Windows Magnifier set to follow or centre the mouse pointer, other screen magnifiers, screen recorders, remote desktops) lose track of it there. Turn on **View ▸ Accessibility ▸ Show System Cursor** to keep a small system crosshair visible at the centre of the drawn one, or start Forja with the environment variable `FORJA_SYSTEM_CURSOR=1` (on Windows, set it once with `setx FORJA_SYSTEM_CURSOR 1` and start Forja again). Agents can switch it with the control channel: `ui.set {"systemCursor": true}`.
 
 ### Animation effects
 
-CADCraft follows the operating system's animation setting. When the system is set to show no animations, dialogs, menus and tooltips appear at once instead of fading in, collapsing sections and scroll bars change at once, and the mouse wheel scrolls lists a whole step at a time instead of gliding. Zooming the drawing with the wheel always moves a whole step; with Ctrl held (a touchpad pinch, on Windows) it glides to the new zoom only while animation effects show.
+Forja follows the operating system's animation setting. When the system is set to show no animations, dialogs, menus and tooltips appear at once instead of fading in, collapsing sections and scroll bars change at once, and the mouse wheel scrolls lists a whole step at a time instead of gliding. Zooming the drawing with the wheel always moves a whole step; with Ctrl held (a touchpad pinch, on Windows) it glides to the new zoom only while animation effects show.
 
 | System | Where the setting is |
 |---|---|
@@ -288,7 +288,7 @@ CADCraft follows the operating system's animation setting. When the system is se
 | Linux, BSD | the desktop's reduced-motion (or animations) setting, read through the XDG Desktop Portal |
 | Web | the browser's `prefers-reduced-motion` |
 
-A change to the system setting is picked up while CADCraft runs, within a few seconds. To choose for CADCraft alone, use **View ▸ Accessibility ▸ Animation Effects**: **Use System Setting** (the default), **On** or **Off**. Options ▸ Display has the same choice. Agents can set it with the control channel: `ui.set {"animations": "off"}` (`"system"`, `"on"` or `"off"`), and `ui.inspect` reports whether animations show (`animations`).
+A change to the system setting is picked up while Forja runs, within a few seconds. To choose for Forja alone, use **View ▸ Accessibility ▸ Animation Effects**: **Use System Setting** (the default), **On** or **Off**. Options ▸ Display has the same choice. Agents can set it with the control channel: `ui.set {"animations": "off"}` (`"system"`, `"on"` or `"off"`), and `ui.inspect` reports whether animations show (`animations`).
 
 Drafting feedback is not an animation effect and stays as it is: rubber bands and previews, snap markers, the pause that acquires an object snap tracking point, the text cursor's blink, the spinner shown while a drawing opens, and pan and zoom, which follow the pointer and the wheel directly.
 
@@ -298,27 +298,27 @@ See [ROADMAP.md](ROADMAP.md) for the stage, measured parity and the estimate of 
 
 ## Downloads
 
-**Download CADCraft** from GitHub: the [latest release](https://github.com/storytold/cadcraft/releases/latest) has every build listed below, and [all releases](https://github.com/storytold/cadcraft/releases) has earlier versions and their notes. `<ver>` in the file names is the version number, and `SHA256SUMS.txt` lists a checksum for every file.
+**Download Forja** from GitHub: the [latest release](https://github.com/storytold/cadcraft/releases/latest) has every build listed below, and [all releases](https://github.com/storytold/cadcraft/releases) has earlier versions and their notes. `<ver>` in the file names is the version number, and `SHA256SUMS.txt` lists a checksum for every file.
 
 > [!WARNING]
-> Download official CADCraft builds from the [storytold/cadcraft releases](https://github.com/storytold/cadcraft/releases). Verify that the repository owner is `storytold`. Before you run a download, check that its checksum matches the line for that file in the release's `SHA256SUMS.txt`:
+> Download official Forja builds from the [storytold/cadcraft releases](https://github.com/storytold/cadcraft/releases). Verify that the repository owner is `storytold`. Before you run a download, check that its checksum matches the line for that file in the release's `SHA256SUMS.txt`:
 >
 > ```sh
-> shasum -a 256 cadcraft-<ver>-macos-universal.dmg     # macOS (on Linux: sha256sum FILE)
-> Get-FileHash .\cadcraft-<ver>-windows-x64.msi        # Windows PowerShell
+> shasum -a 256 forja-<ver>-macos-universal.dmg     # macOS (on Linux: sha256sum FILE)
+> Get-FileHash .\forja-<ver>-windows-x64.msi        # Windows PowerShell
 > ```
 
 ### Windows
 
 | Build | Installer | Portable |
 |---|---|---|
-| x64 (64-bit Intel/AMD) | `cadcraft-<ver>-windows-x64.msi` | `cadcraft-<ver>-windows-x64-portable.zip` |
-| arm64 (Snapdragon and other ARM PCs) | `cadcraft-<ver>-windows-arm64.msi` | `cadcraft-<ver>-windows-arm64-portable.zip` |
-| x86 (32-bit) | `cadcraft-<ver>-windows-x86.msi` | `cadcraft-<ver>-windows-x86-portable.zip` |
+| x64 (64-bit Intel/AMD) | `forja-<ver>-windows-x64.msi` | `forja-<ver>-windows-x64-portable.zip` |
+| arm64 (Snapdragon and other ARM PCs) | `forja-<ver>-windows-arm64.msi` | `forja-<ver>-windows-arm64-portable.zip` |
+| x86 (32-bit) | `forja-<ver>-windows-x86.msi` | `forja-<ver>-windows-x86-portable.zip` |
 
 Installers and executables are code-signed.
 
-The installer adds CADCraft to the Start menu and asks whether to add a desktop shortcut too (unticked by default). For a silent install with the desktop shortcut: `msiexec /i cadcraft-<ver>-windows-x64.msi /qn DESKTOPSHORTCUT=1`.
+The installer adds Forja to the Start menu and asks whether to add a desktop shortcut too (unticked by default). For a silent install with the desktop shortcut: `msiexec /i forja-<ver>-windows-x64.msi /qn DESKTOPSHORTCUT=1`.
 A silent install is per-user by default; add `ALLUSERS=1`, from an elevated terminal or deployment tool, for an all-users install.
 
 **If the app doesn't open on Windows:** the desktop app initializes only DirectX 12 by default.
@@ -329,7 +329,7 @@ PowerShell, from the folder containing the executable:
 
 ```powershell
 $env:WGPU_BACKEND = "vulkan"
-& .\cadcraft.exe
+& .\forja.exe
 Remove-Item Env:WGPU_BACKEND                     # restore the default for later launches
 ```
 
@@ -340,36 +340,36 @@ and web backend defaults are unchanged.
 
 | Build | File | Notes |
 |---|---|---|
-| App, universal (Apple silicon + Intel) | `cadcraft-<ver>-macos-universal.dmg` | Signed and notarized |
-| Command-line tool, universal | `cadcraft-cli-<ver>-macos-universal.zip` | Signed and notarized |
+| App, universal (Apple silicon + Intel) | `forja-<ver>-macos-universal.dmg` | Signed and notarized |
+| Command-line tool, universal | `forja-cli-<ver>-macos-universal.zip` | Signed and notarized |
 
 ### Linux
 
 | Format | x86_64 | aarch64 (ARM64) | Notes |
 |---|---|---|---|
-| AppImage | `cadcraft-<ver>-linux-x86_64.AppImage` | `cadcraft-<ver>-linux-aarch64.AppImage` | Runs anywhere; updates itself with [AppImageUpdate](https://github.com/AppImageCommunity/AppImageUpdate) (`.zsync` files) |
-| Flatpak | `cadcraft-<ver>-linux-x86_64.flatpak` | `cadcraft-<ver>-linux-aarch64.flatpak` | Sandboxed; `flatpak install --user <file>` |
-| Debian/Ubuntu | `cadcraft-<ver>-linux-x86_64.deb` | `cadcraft-<ver>-linux-aarch64.deb` | |
-| Fedora/RHEL/openSUSE | `cadcraft-<ver>-linux-x86_64.rpm` | `cadcraft-<ver>-linux-aarch64.rpm` | |
-| Tarball | `cadcraft-<ver>-linux-x86_64.tar.gz` | `cadcraft-<ver>-linux-aarch64.tar.gz` | Unpack anywhere |
+| AppImage | `forja-<ver>-linux-x86_64.AppImage` | `forja-<ver>-linux-aarch64.AppImage` | Runs anywhere; updates itself with [AppImageUpdate](https://github.com/AppImageCommunity/AppImageUpdate) (`.zsync` files) |
+| Flatpak | `forja-<ver>-linux-x86_64.flatpak` | `forja-<ver>-linux-aarch64.flatpak` | Sandboxed; `flatpak install --user <file>` |
+| Debian/Ubuntu | `forja-<ver>-linux-x86_64.deb` | `forja-<ver>-linux-aarch64.deb` | |
+| Fedora/RHEL/openSUSE | `forja-<ver>-linux-x86_64.rpm` | `forja-<ver>-linux-aarch64.rpm` | |
+| Tarball | `forja-<ver>-linux-x86_64.tar.gz` | `forja-<ver>-linux-aarch64.tar.gz` | Unpack anywhere |
 
-RISC-V (riscv64): `cadcraft-<ver>-linux-riscv64.tar.gz`, cross-compiled; needs glibc 2.39 or newer (Ubuntu 24.04+, Debian 13+).
+RISC-V (riscv64): `forja-<ver>-linux-riscv64.tar.gz`, cross-compiled; needs glibc 2.39 or newer (Ubuntu 24.04+, Debian 13+).
 
 ### FreeBSD
 
 | Build | File |
 |---|---|
-| x86_64 | `cadcraft-<ver>-freebsd-x86_64.tar.gz` |
+| x86_64 | `forja-<ver>-freebsd-x86_64.tar.gz` |
 
 ### Web (WebAssembly)
 
 | Build | File | Notes |
 |---|---|---|
-| Static site | `cadcraft-web-<ver>.zip` | Runs in a modern browser; host it on any static server |
+| Static site | `forja-web-<ver>.zip` | Runs in a modern browser; host it on any static server |
 
 ## The Crafting Apps
 
-CADCraft is one of the **Crafting Apps**: free, open-source creative tools from the
+Forja is one of the **Crafting Apps**: free, open-source creative tools from the
 [ArtCraft](https://getartcraft.com/) team, each written from scratch in Rust and each able to
 stand on its own.
 
@@ -386,7 +386,7 @@ stand on its own.
 | <img src="https://raw.githubusercontent.com/storytold/wordcraft/main/assets/app-icon/hicolor/64x64/apps/ai.storyteller.wordcraft.png" alt="" width="32" height="32"> | **WordCraft** | Word processing and documents | [GitHub](https://github.com/storytold/wordcraft) | [Website](https://getartcraft.com/apps/wordcraft) |
 | <img src="https://raw.githubusercontent.com/storytold/soundcraft/main/assets/app-icon/hicolor/64x64/apps/ai.storyteller.soundcraft.png" alt="" width="32" height="32"> | **SoundCraft** | Audio recording and editing | [GitHub](https://github.com/storytold/soundcraft) | [Website](https://getartcraft.com/apps/soundcraft) |
 | <img src="https://raw.githubusercontent.com/storytold/deckcraft/main/assets/app-icon/hicolor/64x64/apps/ai.storyteller.deckcraft.png" alt="" width="32" height="32"> | **DeckCraft** | Presentations and slide decks | [GitHub](https://github.com/storytold/deckcraft) | [Website](https://getartcraft.com/apps/deckcraft) |
-| <img src="https://raw.githubusercontent.com/storytold/cadcraft/main/assets/app-icon/hicolor/64x64/apps/ai.storyteller.cadcraft.png" alt="" width="32" height="32"> | **CADCraft** | Computer-aided design | [GitHub](https://github.com/storytold/cadcraft) | [Website](https://getartcraft.com/apps/cadcraft) |
+| <img src="https://raw.githubusercontent.com/storytold/cadcraft/main/assets/app-icon/hicolor/64x64/apps/ai.storyteller.cadcraft.png" alt="" width="32" height="32"> | **Forja** | Computer-aided design | [GitHub](https://github.com/storytold/cadcraft) | [Website](https://getartcraft.com/apps/cadcraft) |
 | <img src="https://raw.githubusercontent.com/storytold/gridcraft/main/assets/app-icon/hicolor/64x64/apps/ai.storyteller.gridcraft.png" alt="" width="32" height="32"> | **GridCraft** | Spreadsheets and data | [GitHub](https://github.com/storytold/gridcraft) | [Website](https://getartcraft.com/apps/gridcraft) |
 | <img src="https://raw.githubusercontent.com/storytold/texturecraft/main/assets/app-icon/hicolor/64x64/apps/ai.storyteller.texturecraft.png" alt="" width="32" height="32"> | **TextureCraft** | 3D texture painting | [GitHub](https://github.com/storytold/texturecraft) | [Website](https://getartcraft.com/apps/texturecraft) |
 | <img src="https://raw.githubusercontent.com/storytold/craft-anything/main/assets/app-icon/hicolor/64x64/apps/ai.storyteller.craft-anything.png" alt="" width="32" height="32"> | **Craft Anything** | See how any software works, then build your own | [GitHub](https://github.com/storytold/craft-anything) | [Website](https://getartcraft.com/apps/craft-anything) |
@@ -413,23 +413,23 @@ And [**ArtCraft**](https://getartcraft.com/) itself, our AI image and video stud
   <a href="https://discord.gg/artcraft"><b>discord.gg/artcraft</b></a> ·
   <a href="https://getartcraft.com/">getartcraft.com</a> ·
   <a href="https://getartcraft.com/apps">The Crafting Apps</a> ·
-  <a href="https://getartcraft.com/apps/cadcraft">CADCraft</a>
+  <a href="https://getartcraft.com/apps/cadcraft">Forja</a>
 </p>
 
 ## License and credits
 
-CADCraft is dual-licensed under [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE), at your option.
+Forja is dual-licensed under [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE), at your option.
 Copyright (c) 2026 ArtCraft Team and the CADCraft contributors. Required notices are in [NOTICE](NOTICE).
 
 Bundled fonts, icons, images and other assets keep their own open licenses; each one is listed
 with its author, source and license in [ATTRIBUTION.md](ATTRIBUTION.md).
 
-CADCraft's icons, its single-stroke drafting font, its hatch patterns and its linetypes are all
+Forja's icons, its single-stroke drafting font, its hatch patterns and its linetypes are all
 original work, drawn or defined in code. The sample drawings are generated in code too.
 
 The ArtCraft name, wordmark and logos in [`docs/brand/`](docs/brand/) are trademarks of the
 ArtCraft Team and are not covered by this license. They may be used only unmodified, and only as
-part of this repository and CADCraft, under [`docs/brand/LICENSE-brand.txt`](docs/brand/LICENSE-brand.txt).
+part of this repository and Forja, under [`docs/brand/LICENSE-brand.txt`](docs/brand/LICENSE-brand.txt).
 Forks and modified versions must remove them.
 
 <p align="center">

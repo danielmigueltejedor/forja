@@ -2,10 +2,10 @@
 //! step), and dragged interactively the way a click on a grip starts it, with a preview and a
 //! typed distance. The drawing is the synthetic DOOR block of the io tests, with grips added.
 
-use cadcraft_engine::doc::dynblock::GripPart;
-use cadcraft_engine::doc::{Handle, Space};
-use cadcraft_engine::geom::Vec2;
-use cadcraft_engine::{Input, Session};
+use forja_engine::doc::dynblock::GripPart;
+use forja_engine::doc::{Handle, Space};
+use forja_engine::geom::Vec2;
+use forja_engine::{Input, Session};
 use serde_json::{Value, json};
 
 /// DXF text from lines of `code value`.
@@ -36,7 +36,7 @@ fn session_with(edit: impl Fn(String) -> String) -> (Session, Handle) {
         .replace("91 5\n93 32\n95 6\n360 67", "91 5\n93 32\n95 6\n360 67\n92 -1\n92 -1\n92 -1\n92 -1\n91 6\n93 32\n95 9\n360 68")
         .replace("95 1\n333 63\n", "95 2\n333 63\n333 68\n")
         .replace("0 BLOCKFLIPGRIP", &format!("{grip}0 BLOCKFLIPGRIP"));
-    let d = cadcraft_io::read_dxf(dxf(&edit(src)).as_bytes()).unwrap();
+    let d = forja_io::read_dxf(dxf(&edit(src)).as_bytes()).unwrap();
     let mut s = Session::empty();
     s.open_drawing(d, "door", None);
     let r = s.execute("insert", &json!({ "name": "Door", "at": [100, 0] })).unwrap();
@@ -142,6 +142,6 @@ fn a_grip_drag_previews_the_reference_in_its_own_colours() {
     let layers: Vec<&str> = preview.iter().map(|e| e.common.layer.as_str()).collect();
     let n = layers.iter().take_while(|l| **l == "Doors").count();
     assert!(n > 0 && n < layers.len() && layers[n..].iter().all(|l| *l == "0"), "{layers:?}");
-    let blue = cadcraft_engine::doc::color::Color::True(cadcraft_engine::doc::color::Rgb(0x2f, 0x6b, 0xff));
+    let blue = forja_engine::doc::color::Color::True(forja_engine::doc::color::Rgb(0x2f, 0x6b, 0xff));
     assert!(preview[n..].iter().all(|e| e.common.color == blue));
 }

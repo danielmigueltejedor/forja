@@ -2,8 +2,8 @@
 //! dashing the whole object made one shape per 10 points of it on screen. Zoomed to the limit
 //! that was billions of shapes, so the app froze and then ran out of memory.
 
-use cadcraft_engine::Session;
-use cadcraft_ui_egui::{CadApp, Services};
+use forja_engine::Session;
+use forja_ui_egui::{CadApp, Services};
 use serde_json::json;
 
 /// One frame of the app; the number of shapes it painted.

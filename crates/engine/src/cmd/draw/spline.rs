@@ -32,7 +32,7 @@ pub(super) struct SplineM {
     /// `Method` > `CV` hands over to the control-vertex machine (`spline.cv`).
     delegate: Option<Box<dyn Interactive>>,
     /// Knots, end tangents and fit tolerance chosen so far.
-    opts: cadcraft_geom::FitOptions,
+    opts: forja_geom::FitOptions,
     /// An option asking a further question (Knots, Tangency, toLerance, Object).
     ask: Option<crate::cmd::spline_opts::SplineAsk>,
 }

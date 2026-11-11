@@ -1,13 +1,13 @@
 //! Data that used to be lost only when a drawing is saved as DWG and reopened (the DWG bridge
 //! converts our DXF with acadrust), and the paper-space viewport the DXF writer adds for it.
 
-use cadcraft_color::{Color, Rgb};
-use cadcraft_doc::*;
-use cadcraft_geom::{Vec2, Vec3};
+use forja_color::{Color, Rgb};
+use forja_doc::*;
+use forja_geom::{Vec2, Vec3};
 
 fn through_dwg(d: &Drawing) -> Drawing {
-    let dwg = cadcraft_io::write(d, "x.dwg").unwrap();
-    cadcraft_io::read(&dwg, "x.dwg").unwrap()
+    let dwg = forja_io::write(d, "x.dwg").unwrap();
+    forja_io::read(&dwg, "x.dwg").unwrap()
 }
 
 fn line(d: &mut Drawing, space: &Space, common: Common) -> Handle {
@@ -70,12 +70,12 @@ fn dwg_keeps_true_colours_and_transparency() {
         Common { layer: "Fancy".into(), color: Color::True(Rgb(1, 2, 3)), transparency: Transparency::Percent(40), ..Common::default() },
     );
 
-    let dwg = cadcraft_io::write(&d, "x.dwg").unwrap();
-    assert_eq!(cadcraft_dwg::version(&dwg).as_deref(), Some("AC1032"));
-    let header = records(&cadcraft_io::write_dxf(&d), "SECTION");
+    let dwg = forja_io::write(&d, "x.dwg").unwrap();
+    assert_eq!(forja_dwg::version(&dwg).as_deref(), Some("AC1032"));
+    let header = records(&forja_io::write_dxf(&d), "SECTION");
     assert_eq!(header.first().and_then(|h| group(h, "1")), Some("AC1015"), "the DXF stays R2000");
 
-    let back = cadcraft_io::read(&dwg, "x.dwg").unwrap();
+    let back = forja_io::read(&dwg, "x.dwg").unwrap();
     let e = back.entity(h).unwrap();
     assert_eq!(e.common.color, Color::True(Rgb(1, 2, 3)));
     assert_eq!(e.common.transparency, Transparency::Percent(40));
@@ -105,7 +105,7 @@ fn dwg_keeps_table_styles() {
 
 /// DWG doesn't store viewport ids; readers number a layout's viewports in order, and id 1 is the
 /// paper-space viewport (the sheet, not drawn). The writer puts that viewport ahead of a layout's
-/// own viewports, so a viewport made in CADCraft (id 2) keeps its id instead of becoming the
+/// own viewports, so a viewport made in Forja (id 2) keeps its id instead of becoming the
 /// sheet; our reader drops the added viewport again, so a DXF round trip is unchanged.
 #[test]
 fn viewport_ids_survive_dwg_and_the_paper_viewport_stays_implicit() {
@@ -114,7 +114,7 @@ fn viewport_ids_survive_dwg_and_the_paper_viewport_stays_implicit() {
     let h = d.add(&first, Common::default(), viewport(2)).unwrap();
     d.add(&first, Common::default(), viewport(3)).unwrap();
 
-    let text = cadcraft_io::write_dxf(&d);
+    let text = forja_io::write_dxf(&d);
     let vps = records(&text, "VIEWPORT");
     assert_eq!(vps.len(), 3, "{text}");
     assert_eq!(group(&vps[0], "69"), Some("1"));
@@ -123,7 +123,7 @@ fn viewport_ids_survive_dwg_and_the_paper_viewport_stays_implicit() {
     assert_eq!(group(&vps[1], "68"), Some("2"));
     assert_eq!(group(&vps[1], "90"), Some("32768"));
 
-    let back = cadcraft_io::read_dxf(text.as_bytes()).unwrap();
+    let back = forja_io::read_dxf(text.as_bytes()).unwrap();
     assert_eq!(viewport_ids(&back.layouts[0]), [2, 3]);
     assert_eq!(back.layouts[0].entities.len(), 2);
 
@@ -135,9 +135,9 @@ fn viewport_ids_survive_dwg_and_the_paper_viewport_stays_implicit() {
     let mut d = Drawing::new_metric();
     d.add(&first, Common::default(), viewport(1)).unwrap();
     d.add(&first, Common::default(), viewport(2)).unwrap();
-    let text = cadcraft_io::write_dxf(&d);
+    let text = forja_io::write_dxf(&d);
     assert!(!text.contains("PAPERVIEW"));
-    assert_eq!(viewport_ids(&cadcraft_io::read_dxf(text.as_bytes()).unwrap().layouts[0]), [1, 2]);
+    assert_eq!(viewport_ids(&forja_io::read_dxf(text.as_bytes()).unwrap().layouts[0]), [1, 2]);
 }
 
 /// The paper-space viewport (id 1) of a drawing from another program can come after a model
@@ -173,7 +173,7 @@ fn the_added_paper_viewport_follows_the_plot_scale() {
         (page.scale, page.scale_to_fit) = (scale, fit);
         let first = Space::Paper(d.layouts[0].name.clone());
         d.add(&first, Common::default(), viewport(2)).unwrap();
-        let text = cadcraft_io::write_dxf(&d);
+        let text = forja_io::write_dxf(&d);
         let vps = records(&text, "VIEWPORT");
         assert_eq!(group(&vps[0], "1000"), Some("PAPERVIEW"), "{text}");
         group(&vps[0], "40").unwrap().parse::<f64>().unwrap()
@@ -211,11 +211,11 @@ fn viewport_twist_survives_dxf_and_dwg() {
             .unwrap()
     };
 
-    let dxf = cadcraft_io::write(&d, "x.dxf").unwrap();
+    let dxf = forja_io::write(&d, "x.dxf").unwrap();
     let text = String::from_utf8_lossy(&dxf).to_string();
     let rec = records(&text, "VIEWPORT").into_iter().find(|r| group(r, "5") == Some(h.hex().as_str())).unwrap();
     assert_eq!(group(&rec, "51").and_then(|v| v.parse::<f64>().ok()).map(f64::round), Some(30.0), "{rec:?}");
-    assert!((twist_of(&cadcraft_io::read(&dxf, "x.dxf").unwrap()) - twist).abs() < 1e-9);
+    assert!((twist_of(&forja_io::read(&dxf, "x.dxf").unwrap()) - twist).abs() < 1e-9);
     assert!((twist_of(&through_dwg(&d)) - twist).abs() < 1e-9);
 
     // An untwisted viewport writes no group 51; a hostile twist (from JSON or MCP) writes a finite
@@ -225,7 +225,7 @@ fn viewport_twist_survives_dxf_and_dwg() {
         let EntityKind::Viewport(mut vp) = viewport(2) else { unreachable!() };
         vp.twist = value;
         let h = d.add(&space, Common::default(), EntityKind::Viewport(vp)).unwrap();
-        let text = String::from_utf8_lossy(&cadcraft_io::write(&d, "x.dxf").unwrap()).to_string();
+        let text = String::from_utf8_lossy(&forja_io::write(&d, "x.dxf").unwrap()).to_string();
         let rec = records(&text, "VIEWPORT").into_iter().find(|r| group(r, "5") == Some(h.hex().as_str())).unwrap();
         let written = group(&rec, "51").map(|v| v.parse::<f64>().unwrap());
         assert_eq!(written.map(|_| ()), want, "{value}: {rec:?}");
@@ -240,7 +240,7 @@ fn viewport_twist_survives_dxf_and_dwg() {
         let at = lines.windows(2).position(|w| w[0].trim() == "51" && Some(w[1].trim()) == group(&rec, "51")).unwrap();
         lines[at + 1] = value.to_string();
         let bad = lines.join("\n");
-        let back = twist_of(&cadcraft_io::read(bad.as_bytes(), "x.dxf").unwrap());
+        let back = twist_of(&forja_io::read(bad.as_bytes(), "x.dxf").unwrap());
         assert!(back.is_finite() && (0.0..std::f64::consts::TAU).contains(&back), "{value}: {back}");
         if let Some(w) = want {
             assert!((back - w).abs() < 1e-9, "{value}: {back}");

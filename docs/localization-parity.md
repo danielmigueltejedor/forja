@@ -2,7 +2,7 @@
 
 > **Last reviewed:** 2026-10-10 · **Last updated:** 2026-10-30 · **Change:** minor (Bosnian added; previously: catalog row counts and English-fallback counts re-measured for all fifteen catalogs; previously minor: the command line enables the OS IME and handles composition/commit, so single-line TEXT edits accept CJK input; previously: Brazilian Portuguese row updated and terminology reviewed; previously: Swedish catalog completed with the 95 strings added since; previously: Swedish catalog added: complete catalog, menu headings, native-speaker terminology review; previously: complete current Korean catalog with Hangul font coverage) · **Target:** Autodesk AutoCAD 2027 for Mac (26.0)
 
-How far CADCraft's interface and drawing text are from AutoCAD's languages. Summarised in
+How far Forja's interface and drawing text are from AutoCAD's languages. Summarised in
 [ROADMAP.md](../ROADMAP.md#languages); work items in [gaps.md](gaps.md#localization).
 
 ## What the target ships
@@ -18,7 +18,7 @@ language-pack list, not measured here). AutoCAD's spell checker ships about 20 d
 Drawing text in AutoCAD: TrueType and SHX big fonts (CJK), Unicode `\U+` escapes, complex-script
 shaping and right-to-left text through TrueType, vertical SHX text styles.
 
-## What CADCraft has
+## What Forja has
 
 - **A display-time string catalog** (`crates/ui-egui/src/i18n/`, landed with #36): a TSV per
   language (context, English source, translation, `@plural` rows), Edit → Interface Language with
@@ -78,10 +78,10 @@ plus native review by a human; extending the catalog to the remaining English-on
 | Turkish | tr | 1,330 catalog rows; reference catalog, marked UI literals and menu headings covered (no gaps reported) | dialogs and tooltips yes; contextual menu headings (Ölçülendirme / Ölçü); command reference searchable in Turkish | Latin: yes (bundled egui proportional and monospace fonts; Ç Ğ İ Ö Ş Ü ç ğ ı ö ş ü tested) | AI-assisted by @ogzhnklvz, written from the English strings with Turkish desktop-CAD vocabulary; the running app reviewed by a native speaker | complete current catalog; English-only interface gaps remain | line-by-line proofreading + shared English-only UI work |
 | Bosnian | bs | 1,442 catalog rows; reference catalog and marked UI literals covered | dialogs and tooltips yes | Latin: yes (bundled egui fonts) | AI-assisted; independent native proofreading pending | complete current catalog; English-only interface gaps remain | native proofreading + shared English-only UI work |
 
-Other languages shipped: Ukrainian, Brazilian Portuguese, German, Czech, Russian, French, Italian, Korean, Swedish, Hungarian, Turkish, Bosnian, Georgian and Vietnamese. The per-language cells above keep the counts of the dated audit that wrote them (2026-10-24 or earlier, as stated); only the row totals in "What CADCraft has" and the Vietnamese and Georgian rows are from 2026-11-07, and the English-fallback counts have not been re-measured since 2026-10-24.
+Other languages shipped: Ukrainian, Brazilian Portuguese, German, Czech, Russian, French, Italian, Korean, Swedish, Hungarian, Turkish, Bosnian, Georgian and Vietnamese. The per-language cells above keep the counts of the dated audit that wrote them (2026-10-24 or earlier, as stated); only the row totals in "What Forja has" and the Vietnamese and Georgian rows are from 2026-11-07, and the English-fallback counts have not been re-measured since 2026-10-24.
 Czech, Swedish, Hungarian, Brazilian Portuguese and Bosnian (1,442 rows, AI-assisted, not yet native-reviewed) cover the reference catalog and every marked UI literal; engine diagnostics and uncatalogued text
 remain English. AutoCAD for Mac ships 7
-non-English languages (zh-Hans, es, fr, ja, de, ko, it); of those, CADCraft now ships German and Korean,
+non-English languages (zh-Hans, es, fr, ja, de, ko, it); of those, Forja now ships German and Korean,
 and additionally Ukrainian, which AutoCAD for Mac doesn't ship.
 
 **Total to put the languages at `full`:** about 62–102 Opus 5.5 hours, summed from the table's estimates (catalog extension 4–6 h,

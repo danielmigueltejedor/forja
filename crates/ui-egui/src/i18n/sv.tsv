@@ -1,6 +1,6 @@
-# CADCraft Swedish interface catalog — original translations by the CADCraft contributors.
+# Forja Swedish interface catalog — original translations by the CADCraft contributors.
 # License: MIT OR Apache-2.0 (the repository LICENSE-MIT and LICENSE-APACHE).
-# Written from CADCraft's English strings; no proprietary translations were copied.
+# Written from Forja's English strings; no proprietary translations were copied.
 # Clean room: every entry is written from the plain meaning of the English label in ordinary
 # computing vocabulary. No other product's Swedish interface, string table or terminology
 # database was consulted, and no other catalog is used as a source.
@@ -34,7 +34,7 @@
 	A drawing opened from a file keeps that file's format.	En ritning som öppnats från en fil behåller filens format.
 	A variable name starts with a letter and has only letters, digits and _	Ett variabelnamn börjar med en bokstav och innehåller bara bokstäver, siffror och _
 	About	Om
-	About CADCraft	Om CADCraft
+	About Forja	Om Forja
 	Absolute	Absolut
 	Add Current Scale	Lägg till aktuell skala
 	Add Leader	Lägg till hänvisningslinje
@@ -110,9 +110,9 @@
 	ByBlock	Enligt block
 	ByColor	Enligt färg
 	ByLayer	Enligt lager
-	CADCraft	CADCraft
-	CADCraft Help	Hjälp för CADCraft
-	CADCraft keeps these preferences, object snap modes and drafting toggles for your user account and restores them when it starts.	CADCraft sparar de här inställningarna, objektfästena och ritlägena för ditt användarkonto och återställer dem när programmet startar.
+	Forja	Forja
+	Forja Help	Hjälp för Forja
+	Forja keeps these preferences, object snap modes and drafting toggles for your user account and restores them when it starts.	Forja sparar de här inställningarna, objektfästena och ritlägena för ditt användarkonto och återställer dem när programmet startar.
 	Cancel	Avbryt
 	Cartesian (x, y)	Kartesisk (x, y)
 	Center	Centrum
@@ -798,7 +798,7 @@
 	Quick Select Properties	Egenskaper för snabbmarkering
 	Quick Select...	Snabbmarkering...
 	QuickCalc	Snabbkalkyl
-	Quit CADCraft	Avsluta CADCraft
+	Quit Forja	Avsluta Forja
 	Radius	Radie
 	Raster Image	Rasterbild
 	Ray	Stråle
@@ -1216,7 +1216,7 @@
 @plural	{n} contributor	{n} bidragsgivare|{n} bidragsgivare
 	Drawing as bytes	Ritningen som byte
 	Services	Tjänster
-	Hide CADCraft	Dölj CADCraft
+	Hide Forja	Dölj Forja
 	Hide Others	Dölj övriga
 	Accessibility	Tillgänglighet
 	Show System Cursor	Visa systemets muspekare
@@ -1446,7 +1446,7 @@ menu	Modify	Ändra
 	Yards	Yard
 	Your changes will be lost if you don't save them.	Dina ändringar går förlorade om du inte sparar dem.
 	Check for Updates…	Sök efter uppdateringar…
-	CADCraft is up to date.	CADCraft är uppdaterat.
+	Forja is up to date.	Forja är uppdaterat.
 	Could not check for updates.	Det gick inte att söka efter uppdateringar.
 	Find All	Find All
 	Find what:	Find what:

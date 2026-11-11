@@ -1,7 +1,7 @@
 //! Table breaking (`table.break`) and data links (DATALINK, DATALINKUPDATE: cells filled from a
 //! CSV file).
 
-use cadcraft_doc::{BreakDirection, DataLink, EntityKind, Handle, Table, TableBreak, TableCell};
+use forja_doc::{BreakDirection, DataLink, EntityKind, Handle, Table, TableBreak, TableCell};
 use serde_json::{Value, json};
 
 use super::cells::cell_of;
@@ -47,7 +47,7 @@ fn run_break(s: &mut Session, p: &Value) -> Result<Value> {
         None | Some(Value::Null) => None,
         Some(Value::Array(a)) => Some(
             a.iter()
-                .take(cadcraft_doc::MAX_TABLE_PARTS)
+                .take(forja_doc::MAX_TABLE_PARTS)
                 .map(|v| v.as_f64().filter(|x| x.is_finite() && *x >= 0.0 && *x <= 1e12))
                 .collect::<Option<Vec<f64>>>()
                 .ok_or_else(|| bad(id, "`heights` must be non-negative numbers"))?,
@@ -386,7 +386,7 @@ mod tests {
     #[cfg(not(target_arch = "wasm32"))]
     #[test]
     fn link_strips_utf8_bom() {
-        let path = std::env::temp_dir().join(format!("cadcraft_bom_link_{}.csv", std::process::id()));
+        let path = std::env::temp_dir().join(format!("forja_bom_link_{}.csv", std::process::id()));
         let mut bytes = vec![0xEF, 0xBB, 0xBF];
         bytes.extend_from_slice(b"\"Item, name\",Qty\r\nBolt,4\r\n");
         std::fs::write(&path, bytes).expect("write temp csv");

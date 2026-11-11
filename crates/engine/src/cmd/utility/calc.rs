@@ -3,7 +3,7 @@
 
 use std::collections::HashMap;
 
-use cadcraft_geom::Vec2;
+use forja_geom::Vec2;
 use serde_json::{Map, Value, json};
 
 /// Longest expression accepted.

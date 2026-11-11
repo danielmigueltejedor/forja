@@ -1,8 +1,8 @@
 //! Groups (#417) survive a DWG round trip through the DXF bridge (the DXF round trip is in
 //! `tables_objects_roundtrip`).
 
-use cadcraft_doc::{Common, Drawing, EntityKind, Group, Line, Space};
-use cadcraft_geom::Vec3;
+use forja_doc::{Common, Drawing, EntityKind, Group, Line, Space};
+use forja_geom::Vec3;
 
 #[cfg(not(target_arch = "wasm32"))]
 #[test]
@@ -14,8 +14,8 @@ fn groups_survive_dwg_round_trip() {
     let (a, b) = (line(0.0), line(5.0));
     d.groups.push(Group { name: "Doors".into(), description: "front".into(), selectable: false, members: vec![b, a] });
     d.groups.push(Group { name: "*A1".into(), description: String::new(), selectable: true, members: vec![a] });
-    let bytes = cadcraft_io::write(&d, "groups.dwg").expect("write dwg");
-    let r = cadcraft_io::read(&bytes, "groups.dwg").expect("read dwg");
+    let bytes = forja_io::write(&d, "groups.dwg").expect("write dwg");
+    let r = forja_io::read(&bytes, "groups.dwg").expect("read dwg");
     let got: Vec<(&str, &str, bool, Vec<f64>)> = r
         .groups
         .iter()
@@ -56,7 +56,7 @@ fn groups_dxf(n: usize, named: &[(&str, &str, &str)]) -> String {
 fn many_anonymous_groups_read_and_names_merge_case_insensitively() {
     const N: usize = 20_000;
     let dxf = groups_dxf(N, &[("Doors", "100", "first"), ("DOORS", "101", "second")]);
-    let d = cadcraft_io::read_dxf(dxf.as_bytes()).expect("read");
+    let d = forja_io::read_dxf(dxf.as_bytes()).expect("read");
     assert_eq!(d.groups.len(), N + 1);
     assert!(d.groups.iter().take(N).enumerate().all(|(i, g)| g.name == format!("*A{}", i + 1) && g.members.is_empty()));
     let doors: Vec<(&str, &str, usize)> = d
@@ -79,7 +79,7 @@ fn reading_groups_scales_linearly() {
         (0..3)
             .map(|_| {
                 let t = std::time::Instant::now();
-                let d = cadcraft_io::read_dxf(dxf.as_bytes()).expect("read");
+                let d = forja_io::read_dxf(dxf.as_bytes()).expect("read");
                 assert_eq!(d.groups.len(), n);
                 t.elapsed()
             })

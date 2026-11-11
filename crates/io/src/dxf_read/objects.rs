@@ -9,7 +9,7 @@ pub(super) struct Objects {
     /// Dictionary entry handle (upper case) → entry name.
     names: HashMap<String, String>,
     /// SCALE objects (the annotation scale list), in file order.
-    scales: Vec<cadcraft_doc::AnnoScale>,
+    scales: Vec<forja_doc::AnnoScale>,
     /// XRECORD handle (upper case) → its groups.
     xrecords: HashMap<String, Vec<Tag>>,
     /// TABLESTYLE objects: (handle, groups).
@@ -34,7 +34,7 @@ impl Objects {
     pub(super) fn add(&mut self, kind: &str, tags: &[Tag]) {
         let h = T(tags).s(5).map(|h| h.trim().to_ascii_uppercase()).unwrap_or_default();
         match kind {
-            "SCALE" if self.scales.len() < cadcraft_doc::MAX_SCALES => {
+            "SCALE" if self.scales.len() < forja_doc::MAX_SCALES => {
                 if let Some(s) = crate::dxf_ext::read_scale(tags)
                     && !self.scales.iter().any(|x| x.name.eq_ignore_ascii_case(&s.name))
                 {
@@ -80,7 +80,7 @@ impl Objects {
         }
     }
 
-    /// The text of the CADCraft XRECORD stored under `key` in a dictionary (its 1/3 strings).
+    /// The text of the Forja XRECORD stored under `key` in a dictionary (its 1/3 strings).
     pub(super) fn xrecord_text(&self, key: &str) -> Option<String> {
         let h = self.names.iter().find(|(_, n)| n.as_str() == key).map(|(h, _)| h)?;
         let tags = self.xrecords.get(h)?;
@@ -116,7 +116,7 @@ impl Objects {
                 d.table_styles
                     .iter()
                     .find(|s| s.name.eq_ignore_ascii_case(style))
-                    .map_or(cadcraft_doc::TableStyle::default().text_height, |s| s.text_height)
+                    .map_or(forja_doc::TableStyle::default().text_height, |s| s.text_height)
             };
             let _ = d.modify_entity(*h, |e| {
                 if let EntityKind::Table(t) = &mut e.kind {
@@ -199,11 +199,11 @@ impl Objects {
             d.parametric = p;
         }
         // The annotation scale list (a metric drawing without one gets the metric defaults),
-        // then CADCraft's annotative scaling record.
+        // then Forja's annotative scaling record.
         if !self.scales.is_empty() {
             d.scales = self.scales.clone();
         } else if d.header.i64("MEASUREMENT", 0) == 1 {
-            d.scales = cadcraft_doc::metric_scales();
+            d.scales = forja_doc::metric_scales();
         }
         if let Some(p) = self.xrecord_text(crate::dxf_ext::ANNOTATION_KEY).and_then(|t| crate::dxf_ext::parse_anno(&t)) {
             crate::dxf_ext::apply_anno(d, p);
@@ -224,7 +224,7 @@ impl Objects {
             }
         }
         self.apply_groups(d);
-        // Standard associativity, for dimensions without CADCraft's exact links.
+        // Standard associativity, for dimensions without Forja's exact links.
         for tags in &self.dimassocs {
             dimassoc(d, tags);
         }
@@ -244,7 +244,7 @@ pub(super) fn page_setup(t: &T) -> PageSetup {
         p.height_mm = w.max(h);
     }
     p.margins_mm = [mm(40, p.margins_mm[0]), mm(41, p.margins_mm[1]), mm(42, p.margins_mm[2]), mm(43, p.margins_mm[3])];
-    // Plot paper units 1: millimetres. 0 (inches) is left to MEASUREMENT: earlier CADCraft
+    // Plot paper units 1: millimetres. 0 (inches) is left to MEASUREMENT: earlier Forja
     // versions wrote 0 for every layout.
     p.paper_mm = t.i(72) == Some(1);
     // Plot rotation 1 or 3 turns the media a quarter turn; media defined wider than tall is
@@ -295,7 +295,7 @@ pub(super) fn page_setup(t: &T) -> PageSetup {
     p
 }
 
-/// A layout's saved paper-space view (centre, height) from CADCraft xdata.
+/// A layout's saved paper-space view (centre, height) from Forja xdata.
 fn layout_view(tags: &[Tag]) -> Option<(Vec2, f64)> {
     let list = crate::dxf_ext::xdata_list(crate::dxf_ext::xdata(tags, crate::dxf_ext::APP), "PSVIEW");
     let g = |c: i32| list.iter().find(|t| t.code == c).map(Tag::f64).filter(|v| v.is_finite());

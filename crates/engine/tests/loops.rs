@@ -1,8 +1,8 @@
 //! LOOPS: implied closed loops from loose LINE and ARC chains (#1437).
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::geom::{PolyVertex, Vec2, Vec3};
-use cadcraft_engine::doc::{Arc, Common, EntityKind, Line, LwPolyline, Space};
+use forja_engine::Session;
+use forja_engine::doc::geom::{PolyVertex, Vec2, Vec3};
+use forja_engine::doc::{Arc, Common, EntityKind, Line, LwPolyline, Space};
 use serde_json::{Value, json};
 
 fn handle(v: &Value) -> String {

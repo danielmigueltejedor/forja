@@ -38,7 +38,7 @@ pub(crate) fn polyline_vertex_ref(p: &LwPolyline, index: usize) -> Option<(i64, 
 /// Standard DIMASSOC point references of an associative dimension: the extension-line
 /// origins of linear/aligned dimensions, both ends of both lines of an angular dimension, the
 /// feature point of ordinate dimensions and the circle of a radial/diametric dimension, linked
-/// to objects that exist ([`whole_object_ref`]). CADCraft's exact links travel in xdata as well.
+/// to objects that exist ([`whole_object_ref`]). Forja's exact links travel in xdata as well.
 pub(super) fn std_assoc_refs(d: &Drawing, dm: &Dimension) -> (i64, Vec<OsnapRef>) {
     if matches!(dm.kind, DimKind::Radius | DimKind::Diameter) {
         return radial_ref(d, &dm.assoc);

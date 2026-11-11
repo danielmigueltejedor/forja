@@ -232,7 +232,7 @@ pub(super) fn sub_polyline(segs: &[Segment], a: f64, b: f64) -> Vec<PolyVertex> 
             Segment::Line(_) => 0.0,
             Segment::Arc { arc, ccw } => {
                 let sw = arc.sweep() * (t1 - t0);
-                cadcraft_geom::arc_to_bulge(if *ccw { sw } else { -sw })
+                forja_geom::arc_to_bulge(if *ccw { sw } else { -sw })
             }
         };
         if out.last().is_none_or(|l| !l.p.near(p0, 1e-9)) {
@@ -245,7 +245,7 @@ pub(super) fn sub_polyline(segs: &[Segment], a: f64, b: f64) -> Vec<PolyVertex> 
     out
 }
 
-fn trim_polyline(p: &cadcraft_doc::LwPolyline, cut: &[Segment], pick: Vec2) -> Result<Vec<EntityKind>> {
+fn trim_polyline(p: &forja_doc::LwPolyline, cut: &[Segment], pick: Vec2) -> Result<Vec<EntityKind>> {
     let pl = Polyline { vertices: p.vertices.clone(), closed: p.closed };
     let segs = pl.segments();
     let total: f64 = segs.iter().map(Segment::len).sum();
@@ -330,7 +330,7 @@ fn extend_arc_segment(ga: &Arc, end: Vec2, sweep: f64, cut: &[Segment]) -> Optio
         .filter(|(_, more)| *more > 1e-9 && *more + sweep.abs() < TAU - 1e-9)
         .min_by(|a, b| a.1.total_cmp(&b.1))?;
     let total = sweep.abs() + more;
-    Some((x, cadcraft_geom::arc_to_bulge(if ccw { total } else { -total })))
+    Some((x, forja_geom::arc_to_bulge(if ccw { total } else { -total })))
 }
 
 /// Extend the end of `h` nearest `pick` to the nearest boundary edge.
@@ -380,7 +380,7 @@ pub(crate) fn extend(s: &mut Session, h: Handle, pick: Vec2, edges: Edges) -> Re
             let i_seg = if from_end { i_prev } else { i_end };
             let bulge = vs.get(i_seg).map_or(0.0, |v| if from_end { v.bulge } else { -v.bulge });
             let none = || EngineError::Other("Object does not intersect an edge.".into());
-            if let Some((ga, _)) = cadcraft_geom::bulge_to_arc(prev, end, bulge) {
+            if let Some((ga, _)) = forja_geom::bulge_to_arc(prev, end, bulge) {
                 // An arc end segment runs on round its circle, as an arc does.
                 let (np, b) = extend_arc_segment(&ga, end, 4.0 * bulge.atan(), &cut).ok_or_else(none)?;
                 if let Some(v) = vs.get_mut(i_end) {
@@ -403,7 +403,7 @@ pub(crate) fn extend(s: &mut Session, h: Handle, pick: Vec2, edges: Edges) -> Re
                 }
             }
             // Width, elevation and linetype generation stay as they were.
-            EntityKind::LwPolyline(cadcraft_doc::LwPolyline { vertices: vs, ..p.clone() })
+            EntityKind::LwPolyline(forja_doc::LwPolyline { vertices: vs, ..p.clone() })
         }
         k => crate::cmd::modify2::extend_other(k, &cut, pick)?,
     };

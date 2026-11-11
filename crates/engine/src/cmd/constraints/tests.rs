@@ -1,5 +1,5 @@
-use cadcraft_doc::{ConstraintKind, EntityKind, Handle};
-use cadcraft_geom::Vec2;
+use forja_doc::{ConstraintKind, EntityKind, Handle};
+use forja_geom::Vec2;
 use serde_json::json;
 
 use crate::{Input, Session, command_specs};
@@ -65,7 +65,7 @@ fn renaming_a_parameter_rewrites_the_expressions_that_use_it() {
     s.execute("dcaligned", &json!({ "h1": a, "expr": "user1*2" })).unwrap();
     s.execute("dcaligned", &json!({ "h1": b, "expr": "d1+1" })).unwrap();
     let names = |s: &Session| -> Vec<(String, String)> {
-        cadcraft_constraints::parameter_table(s.doc().unwrap()).into_iter().map(|r| (r.name, r.expr)).collect()
+        forja_constraints::parameter_table(s.doc().unwrap()).into_iter().map(|r| (r.name, r.expr)).collect()
     };
 
     s.execute("parameters", &json!({ "name": "user1", "rename": "width" })).unwrap();
@@ -272,7 +272,7 @@ fn delconstraint_rejects_referenced_dimension() {
 /// DCANGULAR draws.
 fn drawn_angle(s: &Session, a: &str, b: &str) -> f64 {
     let ((a0, a1), (b0, b1)) = (ends(s, a), ends(s, b));
-    let (o, _, _) = cadcraft_geom::line_line_infinite(a0, a1, b0, b1).unwrap();
+    let (o, _, _) = forja_geom::line_line_infinite(a0, a1, b0, b1).unwrap();
     let far = |p: Vec2, q: Vec2| if p.dist(o) > q.dist(o) { p } else { q };
     let (u, v) = (far(a0, a1) - o, far(b0, b1) - o);
     u.cross(v).atan2(u.dot(v)).abs().to_degrees()

@@ -2,15 +2,15 @@
 
 use std::collections::HashMap;
 
-use cadcraft_color::{Color, Rgb};
-use cadcraft_doc::{
+use forja_color::{Color, Rgb};
+use forja_doc::{
     Arc, AssocSnap, Attrib, AttribModes, AttribProps, Block, Circle, Common, DashElement, DimAssoc, DimKind, DimStyle, Dimension, Drawing, Ellipse,
     Entity, EntityKind, Face3d, Gradient, Group, HAlign, HVal, Handle, Hatch, HatchLoop, Helix, HelixConstrain, Insert, Layer, Layout, Leader, Line,
     Linetype, Lineweight, LwPolyline, MAX_FRAME_CHARS, MLeaderStyle, MText, MultilineAttrib, NamedView, PageSetup, Point, Polyline3d, RawTag,
     RayLine, Solid, Table, TableCell, Text, TextStyle, Tolerance, Transparency, Ucs, Unknown, VAlign, Viewport, VportConfig, VportTile, Wipeout,
 };
-use cadcraft_dxf::{Tag, records, sections};
-use cadcraft_geom::{PolyVertex, Spline, Vec2, Vec3};
+use forja_dxf::{Tag, records, sections};
+use forja_geom::{PolyVertex, Spline, Vec2, Vec3};
 
 use crate::{IoError, Result};
 
@@ -59,7 +59,7 @@ struct Rx {
     /// Plot style name placeholder handle (upper case) → plot style name (`ACAD_PLOTSTYLENAME`).
     pstyles: HashMap<String, String>,
     /// Upper-case block name → associative array parameters from its BLOCK_RECORD.
-    block_arrays: HashMap<String, cadcraft_doc::ArrayParams>,
+    block_arrays: HashMap<String, forja_doc::ArrayParams>,
     /// LAYER record handle (upper case) → layer name (VIEWPORT group 331/341 frozen layers).
     layers: HashMap<String, String>,
     /// Owner handle, paper flag and enclosing block (upper case) of each generated sheet viewport
@@ -84,7 +84,7 @@ type LayoutDef = (String, u32, String, PageSetup, Option<(Vec2, Vec2)>);
 
 /// Import DXF sections while sharing one materialized-table-cell budget across blocks and entity sections.
 fn read_budgeted(bytes: &[u8], mut table_cells_left: usize) -> Result<Drawing> {
-    let tags = cadcraft_dxf::parse(bytes).map_err(|e| IoError::Format(e.to_string()))?;
+    let tags = forja_dxf::parse(bytes).map_err(|e| IoError::Format(e.to_string()))?;
     let secs = sections(&tags);
     if secs.is_empty() {
         return Err(IoError::Format("no sections found".into()));
@@ -101,7 +101,7 @@ fn read_budgeted(bytes: &[u8], mut table_cells_left: usize) -> Result<Drawing> {
     // Every handle another program's file already uses is taken before anything gets a new one:
     // its $HANDSEED can be lower than its handles, and entities made while reading (the faces of
     // a polygon mesh) would otherwise get handles that records further on still have. A file
-    // CADCraft wrote names its own next handle, above which its rebuilt records are numbered
+    // Forja wrote names its own next handle, above which its rebuilt records are numbered
     // (#495), so it is left to that.
     let ours = secs.iter().any(|s| s.name == "OBJECTS" && s.tags.iter().any(|t| t.code == 3 && t.str() == crate::dxf_ext::HANDSEED_KEY));
     for t in secs.iter().filter(|_| !ours).flat_map(|s| s.tags.iter()).filter(|t| t.code == 5 || t.code == 105) {
@@ -126,7 +126,7 @@ fn read_budgeted(bytes: &[u8], mut table_cells_left: usize) -> Result<Drawing> {
             _ => {}
         }
     }
-    // A file CADCraft wrote names its own next handle (#495): its table records and objects
+    // A file Forja wrote names its own next handle (#495): its table records and objects
     // are numbered above it and rebuilt on save, so following $HANDSEED would drift every save.
     let own_seed = objs.xrecord_text(crate::dxf_ext::HANDSEED_KEY).and_then(|t| Handle::parse_hex(t.trim()));
     let (paper_block_for, first_layout) = setup_layouts(&mut d, &mut layout_objs, &rx);

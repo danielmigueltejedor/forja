@@ -1,13 +1,13 @@
 //! The drafting toggles on the status bar are transparent, as F7-F12 are: clicking Grid or Snap
 //! while drawing a line changes the setting and leaves LINE running (#1108).
 
-use cadcraft_engine::doc::{Drawing, EntityKind, Space};
-use cadcraft_engine::geom::Vec2;
-use cadcraft_engine::{Input, Session};
-use cadcraft_ui_egui::{CadApp, Services};
 use egui::vec2;
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
+use forja_engine::doc::{Drawing, EntityKind, Space};
+use forja_engine::geom::Vec2;
+use forja_engine::{Input, Session};
+use forja_ui_egui::{CadApp, Services};
 
 fn harness() -> Harness<'static, CadApp> {
     let mut session = Session::empty();

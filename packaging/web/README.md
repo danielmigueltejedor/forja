@@ -1,20 +1,20 @@
-# Hosting CADCraft for the web
+# Hosting Forja for the web
 
-`cadcraft-web-<version>.zip` (from the GitHub release, or `packaging/web/package.sh`) holds a
-static site in `cadcraft-web-<version>/`:
+`forja-web-<version>.zip` (from the GitHub release, or `packaging/web/package.sh`) holds a
+static site in `forja-web-<version>/`:
 
 | File | What it is |
 |---|---|
 | `index.html` | The page. It loads everything through relative URLs. |
-| `cadcraft-web-<hash>.js` | wasm-bindgen glue (generated, ES module) |
-| `cadcraft-web-<hash>_bg.wasm` | The app, about 13 MB, or 5 MB with compression |
+| `forja-web-<hash>.js` | wasm-bindgen glue (generated, ES module) |
+| `forja-web-<hash>_bg.wasm` | The app, about 13 MB, or 5 MB with compression |
 | `_headers`, `.htaccess` | Sample header rules for Netlify/Cloudflare Pages and Apache |
 
 There is no server-side code. Upload the folder's contents anywhere that serves static files.
 
 ## Any path works
 
-All URLs in `index.html` are relative (`public_url = "./"` in `apps/cadcraft-web/Trunk.toml`),
+All URLs in `index.html` are relative (`public_url = "./"` in `apps/forja-web/Trunk.toml`),
 so the site works at a domain root (`https://example.com/`), under a prefix
 (`https://example.com/tools/cadcraft/`) and from a CDN bucket. The asset names carry a content
 hash, so they can be cached forever. Only `index.html` needs revalidation.
@@ -31,7 +31,7 @@ hash, so they can be cached forever. Only `index.html` needs revalidation.
   `.js` files, and `no-cache` on `index.html`.
 - **HTTPS:** WebGPU (and the clipboard) only work in a secure context, which means `https://`
   or `http://localhost`. Over plain HTTP elsewhere, the app falls back to WebGL2.
-- **No special isolation headers:** CADCraft doesn't use `SharedArrayBuffer`, so it doesn't
+- **No special isolation headers:** Forja doesn't use `SharedArrayBuffer`, so it doesn't
   need `Cross-Origin-Opener-Policy` or `Cross-Origin-Embedder-Policy`. If your site already sends
   COEP `require-corp`, also send `Cross-Origin-Resource-Policy: same-origin` (or `cross-origin`
   when the files live on a CDN) on the app's files.
@@ -39,7 +39,7 @@ hash, so they can be cached forever. Only `index.html` needs revalidation.
 nginx example:
 
 ```nginx
-location /cadcraft/ {
+location /forja/ {
     types { application/wasm wasm; text/javascript js; text/html html; }
     gzip on;
     gzip_types application/wasm text/javascript text/html;
@@ -57,7 +57,7 @@ preferences in its local storage. Floating palettes remain embedded in the brows
 they do not become native operating-system windows. Window > Reset Palettes restores the
 default arrangement. This record contains panel placement and visibility, not drawing data.
 
-The optional `cadcraft.panel-layout` record uses the shared docking layout version and is
+The optional `forja.panel-layout` record uses the shared docking layout version and is
 limited to 64 KiB. Malformed, incompatible or invalid arrangements are ignored atomically,
 leaving the startup defaults usable. Storage availability and autosave follow the browser
 host's existing eframe persistence; clearing site data removes the saved layout.
@@ -67,7 +67,7 @@ host's existing eframe persistence; clearing site data removes the saved layout.
 ```html
 <iframe
   src="https://example.com/cadcraft/"
-  title="CADCraft image editor"
+  title="Forja image editor"
   style="width: 100%; height: 720px; border: 0;"
   allow="fullscreen; clipboard-read; clipboard-write"
   allowfullscreen>
@@ -94,86 +94,86 @@ page over `postMessage`, with plain window messages that carry a `type`:
 
 | Message | Direction | Fields |
 |---|---|---|
-| `cadcraft:ready` | app → page | `version`, `appVersion`: the app is listening; send a drawing now |
-| `cadcraft:open` | page → app | `name`, `bytes` (an `ArrayBuffer` or `Uint8Array`): open like File › Open |
-| `cadcraft:save` | app → page | `name`, `bytes` (a transferred `ArrayBuffer`): every file the app would otherwise download (SAVE, SAVEAS, exports). The page stores it and reports failures itself. |
-| `cadcraft:dirty` | app → page | `dirty`: unsaved changes appeared or went away |
-| `cadcraft:failed` | app → page | `error`: the app couldn't start |
+| `forja:ready` | app → page | `version`, `appVersion`: the app is listening; send a drawing now |
+| `forja:open` | page → app | `name`, `bytes` (an `ArrayBuffer` or `Uint8Array`): open like File › Open |
+| `forja:save` | app → page | `name`, `bytes` (a transferred `ArrayBuffer`): every file the app would otherwise download (SAVE, SAVEAS, exports). The page stores it and reports failures itself. |
+| `forja:dirty` | app → page | `dirty`: unsaved changes appeared or went away |
+| `forja:failed` | app → page | `error`: the app couldn't start |
 
 In host mode the app starts on the Start tab instead of an empty Drawing1, so the page should
-guard leaving it while changes are unsaved (that is what `cadcraft:dirty` reports).
+guard leaving it while changes are unsaved (that is what `forja:dirty` reports).
 
 ### Same-document host mode (no iframe)
 
-A page can also run the app in its own document — its own `<canvas id="cadcraft_canvas">`
+A page can also run the app in its own document — its own `<canvas id="forja_canvas">`
 inside a component, no iframe — by loading the wasm-bindgen module itself. It opts in with
 `data-host="page"` on that canvas — the exact value `page`; anything else, and an unframed
 `?host=parent`, keeps the normal app with downloads. The behaviour is the same as the parent
 bridge, except the transport is DOM `CustomEvent`s on the canvas instead of `postMessage`: the
-app dispatches `cadcraft:ready`, `cadcraft:save`, `cadcraft:dirty` and `cadcraft:failed` on the
+app dispatches `forja:ready`, `forja:save`, `forja:dirty` and `forja:failed` on the
 canvas with the message fields (without the `type`) as the event's `detail`, and the page
-dispatches a `cadcraft:open` event with `detail: { name, bytes }` to open a drawing. Events
+dispatches a `forja:open` event with `detail: { name, bytes }` to open a drawing. Events
 don't bubble, so two editors on one page can't hear each other; listen on the canvas itself.
 
 ```html
-<canvas id="cadcraft_canvas" data-host="page" style="width: 100%; height: 600px; border: 0;"></canvas>
+<canvas id="forja_canvas" data-host="page" style="width: 100%; height: 600px; border: 0;"></canvas>
 ```
 
 ```js
-import init from "./cadcraft-web-<hash>.js"; // the wasm-bindgen glue shipped with the app
+import init from "./forja-web-<hash>.js"; // the wasm-bindgen glue shipped with the app
 
-const canvas = document.getElementById("cadcraft_canvas");
+const canvas = document.getElementById("forja_canvas");
 // The app announces itself while `init` runs, so add the listeners first.
-canvas.addEventListener("cadcraft:ready", () => {
+canvas.addEventListener("forja:ready", () => {
   // The app is listening; hand it a drawing of the page's own now, if you have one.
-  canvas.dispatchEvent(new CustomEvent("cadcraft:open", {
+  canvas.dispatchEvent(new CustomEvent("forja:open", {
     detail: { name: "plan.dxf", bytes: drawingBytes }, // ArrayBuffer or Uint8Array
   }));
 });
 // Every file the app would otherwise download (SAVE, SAVEAS, exports) arrives here.
-canvas.addEventListener("cadcraft:save", (event) => {
+canvas.addEventListener("forja:save", (event) => {
   const { name, bytes } = event.detail; // bytes is an ArrayBuffer
   storeFile(name, bytes);
 });
-canvas.addEventListener("cadcraft:dirty", (event) => {
+canvas.addEventListener("forja:dirty", (event) => {
   warnBeforeLeaving(event.detail.dirty);
 });
-canvas.addEventListener("cadcraft:failed", (event) => {
+canvas.addEventListener("forja:failed", (event) => {
   showError(event.detail.error);
 });
 
 // If the wasm cannot be fetched or instantiated, `init` rejects before the app can post
-// `cadcraft:failed`, so report that here too.
+// `forja:failed`, so report that here too.
 try {
-  await init({ module_or_path: "./cadcraft-web-<hash>_bg.wasm" });
+  await init({ module_or_path: "./forja-web-<hash>_bg.wasm" });
 } catch (error) {
   showError(String(error));
 }
 ```
 
-The messages and both transports are the shared contract of [`craft-web-host`](https://github.com/storytold/craft-libs/tree/main/crates/web-host) (storytold/craft-libs#420), the same for every Craft app: its README lists every message, including `saved`, with the compatibility notes. In `cadcraft:ready`, `version` is the contract's (`"1"`) and `appVersion` is this app's release. CADCraft reads bytes, so a host sends `bytes`, not a `File`.
+The messages and both transports are the shared contract of [`craft-web-host`](https://github.com/storytold/craft-libs/tree/main/crates/web-host) (storytold/craft-libs#420), the same for every Craft app: its README lists every message, including `saved`, with the compatibility notes. In `forja:ready`, `version` is the contract's (`"1"`) and `appVersion` is this app's release. Forja reads bytes, so a host sends `bytes`, not a `File`.
 
 ### Trust and limits
 
-- **Who is trusted.** In page host mode the page and CADCraft share one document, so any script on the page can drive the app: open files in it and receive what it saves. Use this mode only for a page you control. The iframe mode (`?host=parent`) answers only the parent window, on the page's own origin.
+- **Who is trusted.** In page host mode the page and Forja share one document, so any script on the page can drive the app: open files in it and receive what it saves. Use this mode only for a page you control. The iframe mode (`?host=parent`) answers only the parent window, on the page's own origin.
 - **Files from the host are untrusted input.** An opened file goes through the same reading as one picked with File ▸ Open or dropped on the window, with the same format limits; before it is copied into the app's memory, its size is checked against the app's open size limit and a larger drawing is refused, and a name is cut to 255 characters.
-- **The event and message names are the interface.** `cadcraft:ready`, `cadcraft:open`, `cadcraft:save`, `cadcraft:dirty` and `cadcraft:failed`, and the fields they carry (the same as the `?host=parent` messages), stay stable; changing one is a breaking change.
+- **The event and message names are the interface.** `forja:ready`, `forja:open`, `forja:save`, `forja:dirty` and `forja:failed`, and the fields they carry (the same as the `?host=parent` messages), stay stable; changing one is a breaking change.
 
-### Driving it from the page (`window.cadcraft`)
+### Driving it from the page (`window.forja`)
 
-Every CADCraft web build puts `window.cadcraft` on the page, from [`craft-web-api`](https://github.com/storytold/craft-libs/tree/main/crates/web-api) (storytold/craft-libs#413), the same shape in every Craft app. `cadcraft.request(method, params)` calls any method of the control channel the desktop app serves (`docs/control-protocol.md`), and `execute(command, params)`, `commands()`, `docInspect(params)`, `uiInspect(params)` and `screenshot(params)` are shortcuts for the common ones. Each returns a Promise that resolves with the method's result and rejects with an `Error`; a call the app does not answer within 30 seconds rejects, and the app drops it unrun if it had not started it.
+Every Forja web build puts `window.forja` on the page, from [`craft-web-api`](https://github.com/storytold/craft-libs/tree/main/crates/web-api) (storytold/craft-libs#413), the same shape in every Craft app. `forja.request(method, params)` calls any method of the control channel the desktop app serves (`docs/control-protocol.md`), and `execute(command, params)`, `commands()`, `docInspect(params)`, `uiInspect(params)` and `screenshot(params)` are shortcuts for the common ones. Each returns a Promise that resolves with the method's result and rejects with an `Error`; a call the app does not answer within 30 seconds rejects, and the app drops it unrun if it had not started it.
 
 ```js
-const drawing = await cadcraft.docInspect();             // counts, extents, layers, styles, selection
-await cadcraft.execute("ui.theme", { theme: "dark" });
-const { data } = await cadcraft.screenshot();            // the canvas as PNG (base64)
+const drawing = await forja.docInspect();             // counts, extents, layers, styles, selection
+await forja.execute("ui.theme", { theme: "dark" });
+const { data } = await forja.screenshot();            // the canvas as PNG (base64)
 ```
 
 The API is there in every mode, with or without a host. Opening a drawing, handing a saved or exported file to the page, the file name and the unsaved flag stay with the host messages above.
 
 ## Renderer selection and fallback flags
 
-CADCraft renders with wgpu. It uses **WebGPU** when the browser has it and falls back to
+Forja renders with wgpu. It uses **WebGPU** when the browser has it and falls back to
 **WebGL2** on its own. URL query flags override this, and they work on the iframe `src` too:
 
 | Flag | Effect |

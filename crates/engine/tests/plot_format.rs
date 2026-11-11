@@ -1,9 +1,9 @@
 //! PLOT chooses the output format from the extension of `path` when no device is named (#2556),
 //! like EXPORT does; a device that writes another format is refused.
 
-use cadcraft_engine::Session;
-use cadcraft_engine::cmd::file::{IoHooks, set_io};
-use cadcraft_engine::cmd::plotters::{PlotterStore, set_plotter_store};
+use forja_engine::Session;
+use forja_engine::cmd::file::{IoHooks, set_io};
+use forja_engine::cmd::plotters::{PlotterStore, set_plotter_store};
 use serde_json::json;
 
 fn session() -> Session {
@@ -11,7 +11,7 @@ fn session() -> Session {
     set_io(IoHooks {
         read: |_, _| Err("no reader in this test".into()),
         write: |_, _| Err("no writer in this test".into()),
-        plot: Some(|d, space, opts| cadcraft_io::plotter::plot(d, space, opts).map_err(|e| e.to_string())),
+        plot: Some(|d, space, opts| forja_io::plotter::plot(d, space, opts).map_err(|e| e.to_string())),
     });
     let mut s = Session::new();
     s.cmdline("line 0,0 100,0").unwrap();
@@ -26,7 +26,7 @@ fn magic(path: &std::path::Path) -> Vec<u8> {
 #[test]
 fn the_extension_picks_png_svg_or_pdf() {
     let mut s = session();
-    let dir = std::env::temp_dir().join(format!("cadcraft-plot-format-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("forja-plot-format-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let cases: [(&str, &[u8], &str); 4] =
         [("a.png", b"\x89PNG\r", "png"), ("b.svg", b"<svg ", "svg"), ("c.pdf", b"%PDF-", "pdf"), ("D.PNG", b"\x89PNG\r", "png")];
@@ -52,15 +52,15 @@ fn the_extension_picks_png_svg_or_pdf() {
 #[test]
 fn a_device_that_disagrees_with_the_extension_is_refused() {
     let mut s = session();
-    let dir = std::env::temp_dir().join(format!("cadcraft-plot-format-mismatch-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("forja-plot-format-mismatch-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let out = dir.join("m.pdf");
-    let e = s.execute("plot", &json!({ "path": out.to_string_lossy(), "layout": "Model", "device": "CADCraft PNG" })).unwrap_err();
-    assert!(e.to_string().contains("CADCraft PNG") && e.to_string().contains("pdf"), "{e}");
+    let e = s.execute("plot", &json!({ "path": out.to_string_lossy(), "layout": "Model", "device": "Forja PNG" })).unwrap_err();
+    assert!(e.to_string().contains("Forja PNG") && e.to_string().contains("pdf"), "{e}");
     assert!(!out.exists(), "nothing is written");
     // A device that agrees works, and "None" leaves the extension in charge.
     let ok = dir.join("m.png");
-    let r = s.execute("plot", &json!({ "path": ok.to_string_lossy(), "layout": "Model", "device": "CADCraft PNG" })).unwrap();
+    let r = s.execute("plot", &json!({ "path": ok.to_string_lossy(), "layout": "Model", "device": "Forja PNG" })).unwrap();
     assert_eq!((r["format"].as_str(), magic(&ok)), (Some("png"), b"\x89PNG\r".to_vec()));
     let none = dir.join("n.svg");
     s.execute("plot", &json!({ "path": none.to_string_lossy(), "layout": "Model", "device": "None" })).unwrap();

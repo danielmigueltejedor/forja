@@ -458,7 +458,7 @@ impl Session {
 
     /// The multiline text the running command is collecting, for the in-place editor
     /// ([`Interactive::editing_mtext`]).
-    pub fn editing_mtext(&self) -> Option<cadcraft_doc::MText> {
+    pub fn editing_mtext(&self) -> Option<forja_doc::MText> {
         self.running.as_ref().and_then(|r| r.machine.editing_mtext())
     }
 
@@ -523,7 +523,7 @@ impl Session {
             (None, None) => (Vec::new(), Vec::new()),
         };
         if !out.is_empty() {
-            common.color = cadcraft_doc::color::Color::True(cadcraft_doc::color::Rgb(0x2f, 0x6b, 0xff));
+            common.color = forja_doc::color::Color::True(forja_doc::color::Rgb(0x2f, 0x6b, 0xff));
         }
         out.extend(kinds.into_iter().map(|k| Entity { handle: Handle(0), common: common.clone(), kind: k }));
         out

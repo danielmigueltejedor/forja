@@ -1,11 +1,11 @@
 //! DXF save → reopen keeps table and object-section data: complex linetype elements,
 //! multileader styles, layout page setups, named views, UCSs and groups.
 
-use cadcraft_doc::geom::{Vec2, Vec3};
-use cadcraft_doc::{
+use forja_doc::geom::{Vec2, Vec3};
+use forja_doc::{
     Common, DashElement, Drawing, EntityKind, Group, Line, Linetype, MLeaderStyle, NamedView, Space, TableStyle, TextStyle, Ucs, library,
 };
-use cadcraft_io::{read_dxf, write_dxf};
+use forja_io::{read_dxf, write_dxf};
 
 fn round_trip(d: &Drawing) -> Drawing {
     read_dxf(write_dxf(d).as_bytes()).expect("reopen")
@@ -76,8 +76,8 @@ fn multileader_styles_and_current_style_round_trip() {
     d.mleader_styles.push(callout);
     d.header.set_str("CMLEADERSTYLE", "Callout");
     let text = write_dxf(&d);
-    let tags = cadcraft_dxf::parse(text.as_bytes()).expect("parse written DXF");
-    let header = cadcraft_dxf::sections(&tags).into_iter().find(|s| s.name == "HEADER").expect("HEADER");
+    let tags = forja_dxf::parse(text.as_bytes()).expect("parse written DXF");
+    let header = forja_dxf::sections(&tags).into_iter().find(|s| s.name == "HEADER").expect("HEADER");
     assert!(header.tags.iter().all(|t| t.code != 9 || t.str() != "$CMLEADERSTYLE"));
     let r = read_dxf(text.as_bytes()).expect("reopen");
     assert_eq!(r.mleader_styles, d.mleader_styles);
@@ -112,7 +112,7 @@ fn layout_page_setup_and_paper_view_round_trip() {
     for (a, b) in d.layouts.iter().zip(&r.layouts) {
         assert_eq!(a.name, b.name);
         // The groups 44, 45 and 73 the file stored are provenance, not a setting.
-        let read = cadcraft_doc::PageSetup { file_paper: None, ..b.page.clone() };
+        let read = forja_doc::PageSetup { file_paper: None, ..b.page.clone() };
         assert_eq!(a.page, read, "{}", a.name);
         assert_eq!(a.view, b.view, "{}", a.name);
     }

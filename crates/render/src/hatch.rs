@@ -9,10 +9,10 @@
 //! picks pass `min_dash = 0` and `view = None` and get every line.
 
 use super::{Builder, Ctx, Ink, fill, ink, max_scale};
-use cadcraft_color::{Color, Rgb};
-use cadcraft_doc::library::{PatternLine, pattern_for};
-use cadcraft_doc::{Drawing, Entity, Gradient, Hatch};
-use cadcraft_geom::{Bounds2, Polyline, Vec2, point_in_polygon};
+use forja_color::{Color, Rgb};
+use forja_doc::library::{PatternLine, pattern_for};
+use forja_doc::{Drawing, Entity, Gradient, Hatch};
+use forja_geom::{Bounds2, Polyline, Vec2, point_in_polygon};
 use std::sync::atomic::{AtomicBool, Ordering};
 
 /// Draw a hatch entity: `rgb` is its resolved colour, `tol` the chord tolerance.
@@ -580,8 +580,8 @@ fn crossings(local: &[Vec<Vec2>], y: f64) -> Vec<f64> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cadcraft_doc::{Hatch, HatchLoop};
-    use cadcraft_geom::PolyVertex;
+    use forja_doc::{Hatch, HatchLoop};
+    use forja_geom::PolyVertex;
 
     #[test]
     fn fill_loops_deduplicates_coincident_loops() {

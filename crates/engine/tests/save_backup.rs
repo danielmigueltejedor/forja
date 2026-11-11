@@ -1,32 +1,32 @@
 //! Saving over a drawing keeps the previous file as `<name>.bak` (ISAVEBAK, #540), and the
 //! save itself replaces the file atomically: no temporary files are left behind.
 
-use cadcraft_engine::Session;
-use cadcraft_engine::cmd::file::{IoHooks, backup_path, looks_complete, looks_like_drawing, save_keeps_current, set_io};
+use forja_engine::Session;
+use forja_engine::cmd::file::{IoHooks, backup_path, looks_complete, looks_like_drawing, save_keeps_current, set_io};
 use serde_json::json;
 
 fn hooks() {
     set_io(IoHooks {
-        read: |b, n| cadcraft_io::read(b, n).map_err(|e| e.to_string()),
-        write: |d, n| cadcraft_io::write(d, n).map_err(|e| e.to_string()),
+        read: |b, n| forja_io::read(b, n).map_err(|e| e.to_string()),
+        write: |d, n| forja_io::write(d, n).map_err(|e| e.to_string()),
         plot: None,
     });
     // Saves at a chosen version (a DWG 2000), as the app's.
-    cadcraft_engine::cmd::file::set_write_as(|d, n, o| {
-        cadcraft_io::write_with(d, n, &cadcraft_io::SaveOptions { version: o.version, binary: o.binary }).map_err(|e| e.to_string())
+    forja_engine::cmd::file::set_write_as(|d, n, o| {
+        forja_io::write_with(d, n, &forja_io::SaveOptions { version: o.version, binary: o.binary }).map_err(|e| e.to_string())
     });
 }
 
 fn temp_dir(tag: &str) -> std::path::PathBuf {
-    let d = std::env::temp_dir().join(format!("cadcraft-bak-{tag}-{}", std::process::id()));
+    let d = std::env::temp_dir().join(format!("forja-bak-{tag}-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&d);
     std::fs::create_dir_all(&d).unwrap();
     d
 }
 
 fn circles(path: &std::path::Path) -> usize {
-    let d = cadcraft_io::read(&std::fs::read(path).unwrap(), &*path.to_string_lossy()).unwrap();
-    d.model.iter().filter(|e| matches!(e.kind, cadcraft_engine::doc::EntityKind::Circle(_))).count()
+    let d = forja_io::read(&std::fs::read(path).unwrap(), &*path.to_string_lossy()).unwrap();
+    d.model.iter().filter(|e| matches!(e.kind, forja_engine::doc::EntityKind::Circle(_))).count()
 }
 
 /// Only the drawing and its backup are in the folder: atomic saves leave no staging files.
@@ -44,13 +44,13 @@ struct Saving(#[allow(dead_code)] std::sync::MutexGuard<'static, ()>);
 
 impl Drop for Saving {
     fn drop(&mut self) {
-        cadcraft_engine::autosave::set_isavebak(true);
+        forja_engine::autosave::set_isavebak(true);
     }
 }
 
 fn saving() -> Saving {
     let g = SAVES.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
-    cadcraft_engine::autosave::set_isavebak(true);
+    forja_engine::autosave::set_isavebak(true);
     Saving(g)
 }
 
@@ -290,7 +290,7 @@ fn the_backup_a_save_promises_is_the_one_it_writes() {
     s.execute("qsave", &json!({})).unwrap();
     assert_eq!(std::fs::read(backup_path(&path)).unwrap(), old, "cut off: nothing was promised");
 
-    cadcraft_engine::autosave::set_isavebak(false);
+    forja_engine::autosave::set_isavebak(false);
     assert!(!save_keeps_current(&path), "backups off");
     let _ = std::fs::remove_dir_all(&dir);
 }

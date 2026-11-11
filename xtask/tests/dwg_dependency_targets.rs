@@ -17,8 +17,8 @@ fn dwg_test_dependency_matches_the_bridge_targets() {
         let package = packages.iter().find(|p| p["name"] == name).expect("workspace crate");
         package["dependencies"].as_array().expect("crate dependencies").iter().find(|d| d["name"] == "acadrust").expect("DWG decoder dependency")
     };
-    let bridge = dependency("cadcraft-dwg");
-    let tests = dependency("cadcraft-io");
+    let bridge = dependency("forja-dwg");
+    let tests = dependency("forja-io");
     assert_eq!(tests["kind"], "dev", "the IO crate only inspects acadrust output in tests");
     assert_eq!(tests["target"], bridge["target"], "--all-targets must not add acadrust where the native DWG bridge is unavailable");
     assert_eq!(tests["req"], bridge["req"], "tests must inspect the same decoder version as the bridge");

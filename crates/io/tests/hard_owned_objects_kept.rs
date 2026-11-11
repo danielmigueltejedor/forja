@@ -2,7 +2,7 @@
 //! hard owner reference (360), is kept with it, as one application's proxy object held by another.
 //! In DXF and in DWG, save after save.
 
-use cadcraft_io::{read, read_dxf, write, write_dxf};
+use forja_io::{read, read_dxf, write, write_dxf};
 
 /// A named object dictionary entry `OTHER_APP` (a dictionary) with an XRECORD that holds a second
 /// XRECORD by a 360 reference; the second one's owner is null. An object nothing keeps names the
@@ -173,16 +173,16 @@ fn cyclic_hard_owners_with_a_live_holder_stay_kept() {
         let bytes = write(&drawing, name).unwrap();
         drawing = read(&bytes, name).unwrap();
         let text = write_dxf(&drawing);
-        let tags = cadcraft_dxf::parse(text.as_bytes()).unwrap();
-        let objects = cadcraft_dxf::sections(&tags).into_iter().find(|s| s.name == "OBJECTS").unwrap();
-        let records = cadcraft_dxf::records(&objects.tags);
+        let tags = forja_dxf::parse(text.as_bytes()).unwrap();
+        let objects = forja_dxf::sections(&tags).into_iter().find(|s| s.name == "OBJECTS").unwrap();
+        let records = forja_dxf::records(&objects.tags);
         let record = |label: &str| records.iter().find(|(_, tags)| tags.iter().any(|t| t.code == 1 && t.str() == label)).unwrap().1.clone();
         let first = record("first");
         let second = record("second");
         let holder = record("holder");
         let child = record("child");
         assert!(!records.iter().any(|(_, tags)| tags.iter().any(|t| t.code == 1 && t.str() == "stray")), "{name}");
-        let handle = |tags: &[cadcraft_dxf::Tag]| tags.iter().find(|t| t.code == 5).unwrap().str();
+        let handle = |tags: &[forja_dxf::Tag]| tags.iter().find(|t| t.code == 5).unwrap().str();
         assert!(first.iter().any(|t| t.code == 360 && t.str() == handle(&second)), "{name}");
         assert!(second.iter().any(|t| t.code == 360 && t.str() == handle(&first)), "{name}");
         assert!(first.iter().any(|t| t.code == 360 && t.str() == handle(&child)), "{name}");

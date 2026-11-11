@@ -1,6 +1,6 @@
-# CADCraft Vietnamese interface catalog — original translations by @2ez4gcx with Claude Code (AI-assisted).
+# Forja Vietnamese interface catalog — original translations by @2ez4gcx with Claude Code (AI-assisted).
 # SPDX-License-Identifier: MIT OR Apache-2.0
-# Written from the meaning of CADCraft English strings; no proprietary translations copied.
+# Written from the meaning of Forja English strings; no proprietary translations copied.
 # AutoCAD command names, command-line keywords and system variables stay in English.
 # UTF-8: context<TAB>English source<TAB>Vietnamese translation.
 # @plural = one form for every integer count (Vietnamese doesn't inflect a noun for number).
@@ -51,7 +51,7 @@
 	> Greater than	> Lớn hơn
 	A variable name starts with a letter and has only letters, digits and _	Tên biến bắt đầu bằng một chữ cái và chỉ gồm chữ cái, chữ số và _
 	About	Giới thiệu
-	About CADCraft	Giới thiệu CADCraft
+	About Forja	Giới thiệu Forja
 	Absolute	Tuyệt đối
 	Add Leader	Thêm đường dẫn ghi chú
 	Additional angles	Các góc bổ sung
@@ -113,7 +113,7 @@
 	ByBlock	ByBlock
 	ByColor	ByColor
 	ByLayer	ByLayer
-	CADCraft Help	Trợ giúp CADCraft
+	Forja Help	Trợ giúp Forja
 	Cancel	Hủy
 	Cartesian (x, y)	Đề-các (x, y)
 	Center	Tâm
@@ -701,7 +701,7 @@
 	Quick Select...	Chọn nhanh...
 	QuickCalc	QuickCalc
 	QuickCalc Pick	Chọn QuickCalc
-	Quit CADCraft	Thoát CADCraft
+	Quit Forja	Thoát Forja
 	Radius	Bán kính
 	Raster Image	Ảnh raster
 	Ray	Tia
@@ -932,7 +932,7 @@
 	Specify insertion point	Chỉ định điểm chèn
 	A drawing opened from a file keeps that file's format.	Bản vẽ mở từ một tệp sẽ giữ nguyên định dạng của tệp đó.
 	An array that would create more objects than this is refused.	Mảng tạo nhiều đối tượng hơn mức này sẽ bị từ chối.
-	CADCraft keeps these preferences, object snap modes and drafting toggles for your user account and restores them when it starts.	CADCraft lưu các tùy chọn này, chế độ bắt điểm và các chế độ hỗ trợ vẽ cho tài khoản người dùng của bạn, rồi khôi phục khi khởi động.
+	Forja keeps these preferences, object snap modes and drafting toggles for your user account and restores them when it starts.	Forja lưu các tùy chọn này, chế độ bắt điểm và các chế độ hỗ trợ vẽ cho tài khoản người dùng của bạn, rồi khôi phục khi khởi động.
 	Changes apply at once and are kept for next time.	Thay đổi có hiệu lực ngay và được giữ lại cho lần sau.
 	Command line history	Lịch sử dòng lệnh
 	Copy as JSON	Sao chép dưới dạng JSON
@@ -1178,7 +1178,7 @@
 @plural	{n} contributor	{n} người đóng góp
 	Drawing as bytes	Bản vẽ dưới dạng byte
 	Services	Dịch vụ
-	Hide CADCraft	Ẩn CADCraft
+	Hide Forja	Ẩn Forja
 	Hide Others	Ẩn các ứng dụng khác
 	Accessibility	Trợ năng
 	Show System Cursor	Hiển thị con trỏ hệ thống
@@ -1212,7 +1212,7 @@
 	X	X
 	Y	Y
 	B	B
-	CADCraft	CADCraft
+	Forja	Forja
 	More toolbar commands	Thêm lệnh thanh công cụ
 menu	View	Xem
 menu	Draw	Vẽ
@@ -1224,7 +1224,7 @@ menu	Modify	Hiệu chỉnh
 	Query Texts	Truy vấn chữ
 	Analyze Shapes	Phân tích hình dạng
 	Check for Updates…	Kiểm tra cập nhật…
-	CADCraft is up to date.	CADCraft đã là phiên bản mới nhất.
+	Forja is up to date.	Forja đã là phiên bản mới nhất.
 	Could not check for updates.	Không thể kiểm tra cập nhật.
 	3D Mouse	Chuột 3D
 	3D Mouse Navigation	Điều hướng chuột 3D

@@ -1,5 +1,5 @@
-use cadcraft_doc::EntityKind;
-use cadcraft_geom::{Arc, Vec2};
+use forja_doc::EntityKind;
+use forja_geom::{Arc, Vec2};
 use serde_json::json;
 
 use crate::{Input, Session};
@@ -406,7 +406,7 @@ fn divide_and_measure_json() {
     s.execute("block", &json!({"name": "TICK", "base": [0, 0], "handles": [tick], "keep": "delete"})).unwrap();
     let arc = h(&s.execute("arc", &json!({"center": [0, 20], "radius": 2, "start": 0, "end": 180})).unwrap());
     let r = s.execute("divide", &json!({"handle": arc, "segments": 2, "block": "TICK"})).unwrap();
-    let ins = s.doc().unwrap().entity(cadcraft_doc::Handle::parse_hex(r["handles"][0].as_str().unwrap()).unwrap()).unwrap().kind.clone();
+    let ins = s.doc().unwrap().entity(forja_doc::Handle::parse_hex(r["handles"][0].as_str().unwrap()).unwrap()).unwrap().kind.clone();
     assert!(matches!(ins, EntityKind::Insert(i) if near(i.insert.xy(), 0.0, 22.0) && (i.rotation - std::f64::consts::PI).abs() < 1e-6));
     assert!(s.execute("divide", &json!({"handle": l, "segments": 3, "block": "NOPE"})).is_err());
     assert!(s.execute("divide", &json!({"handle": l, "segments": 1})).is_err());
@@ -627,7 +627,7 @@ fn measure_counts_coincident_vertices_and_runs_ellipses_by_parameter() {
         s.execute("measure", &json!({"handle": pl, "length": 3, "from": [7, 0]})).unwrap();
         assert!(pts(&s).iter().any(|p| near(*p, 17.0, 0.0)), "{cmd}: {:?}", pts(&s));
     }
-    // AutoCAD's points. CADCraft measures along a tessellation (1e-4 of the major axis), so its
+    // AutoCAD's points. Forja measures along a tessellation (1e-4 of the major axis), so its
     // points sit within 2e-4 of the axis of AutoCAD's; the other end is 4 to 200 units away.
     type Ellipse = ([f64; 2], [f64; 2], f64, f64, f64);
     let cases: [((Ellipse, f64, [f64; 2]), &[[f64; 2]]); 2] = [
@@ -965,13 +965,13 @@ fn rectang_options_json() {
     s.execute("rectang", &json!({"p1": [0, 0], "p2": [4, 3]})).unwrap();
     assert!(near(rect_pts(&s)[2], 4.0, 3.0));
     s.execute("rectang", &json!({"p1": [0, 0], "dimensions": [3, 2], "p2": [-1, -1]})).unwrap();
-    let b = cadcraft_geom::Bounds2::from_points(rect_pts(&s));
+    let b = forja_geom::Bounds2::from_points(rect_pts(&s));
     assert!(near(b.min, -3.0, -2.0) && near(b.max, 0.0, 0.0));
     s.execute("rectang", &json!({"p1": [0, 0], "area": 20, "length": 5})).unwrap();
-    let b = cadcraft_geom::Bounds2::from_points(rect_pts(&s));
+    let b = forja_geom::Bounds2::from_points(rect_pts(&s));
     assert!(near(b.max, 5.0, 4.0));
     s.execute("rectang", &json!({"p1": [0, 0], "dimensions": [2, 1], "rotation": 90})).unwrap();
-    let b = cadcraft_geom::Bounds2::from_points(rect_pts(&s));
+    let b = forja_geom::Bounds2::from_points(rect_pts(&s));
     assert!(near(b.min, -1.0, 0.0) && near(b.max, 0.0, 2.0), "{b:?}");
     s.execute("rectang", &json!({"p1": [0, 0], "p2": [4, 4], "fillet": 1, "width": 0.1, "thickness": 2})).unwrap();
     assert_eq!(rect_pts(&s).len(), 8);
@@ -985,13 +985,13 @@ fn rectang_options_command_line() {
     let mut s = Session::new();
     s.cmdline("rectang 0,0 a 20 l 5").unwrap();
     assert!(s.running.is_none(), "{}", s.prompt_text());
-    assert!(near(cadcraft_geom::Bounds2::from_points(rect_pts(&s)).max, 5.0, 4.0));
+    assert!(near(forja_geom::Bounds2::from_points(rect_pts(&s)).max, 5.0, 4.0));
     s.cmdline("rectang 0,0 a 12 w 3").unwrap();
-    assert!(near(cadcraft_geom::Bounds2::from_points(rect_pts(&s)).max, 4.0, 3.0));
+    assert!(near(forja_geom::Bounds2::from_points(rect_pts(&s)).max, 4.0, 3.0));
     s.cmdline("rectang 0,0 d 3 2 -1,-1").unwrap();
-    assert!(near(cadcraft_geom::Bounds2::from_points(rect_pts(&s)).min, -3.0, -2.0));
+    assert!(near(forja_geom::Bounds2::from_points(rect_pts(&s)).min, -3.0, -2.0));
     s.cmdline("rectang 0,0 r 90 2,1").unwrap();
-    let b = cadcraft_geom::Bounds2::from_points(rect_pts(&s));
+    let b = forja_geom::Bounds2::from_points(rect_pts(&s));
     assert!(near(b.min, 0.0, 0.0) && near(b.max, 2.0, 1.0), "{b:?}");
     s.cmdline("rectang 0,0 r p 0,0 1,1 d 2 2 5,5").unwrap();
     let pts = rect_pts(&s);
@@ -1017,27 +1017,27 @@ fn rectang_center_mode_json() {
     let mut s = Session::new();
     // The first point is the centre; the second is a corner mirrored about it.
     s.execute("rectang", &json!({"center": true, "p1": [10, 10], "p2": [14, 16]})).unwrap();
-    let b = cadcraft_geom::Bounds2::from_points(rect_pts(&s));
+    let b = forja_geom::Bounds2::from_points(rect_pts(&s));
     assert!(near(b.min, 6.0, 4.0) && near(b.max, 14.0, 16.0), "{b:?}");
     // Dimensions are the rectangle's full size, still centred on the first point.
     s.execute("rectang", &json!({"center": true, "p1": [10, 10], "dimensions": [8, 12]})).unwrap();
-    let b = cadcraft_geom::Bounds2::from_points(rect_pts(&s));
+    let b = forja_geom::Bounds2::from_points(rect_pts(&s));
     assert!(near(b.min, 6.0, 4.0) && near(b.max, 14.0, 16.0), "{b:?}");
     // A second point only picks the quadrant.
     s.execute("rectang", &json!({"center": true, "p1": [10, 10], "dimensions": [8, 12], "p2": [0, 0]})).unwrap();
-    let b = cadcraft_geom::Bounds2::from_points(rect_pts(&s));
+    let b = forja_geom::Bounds2::from_points(rect_pts(&s));
     assert!(near(b.min, 6.0, 4.0) && near(b.max, 14.0, 16.0), "{b:?}");
     // The area is the full area, centred too.
     s.execute("rectang", &json!({"center": true, "p1": [10, 10], "area": 96, "length": 8})).unwrap();
-    let b = cadcraft_geom::Bounds2::from_points(rect_pts(&s));
+    let b = forja_geom::Bounds2::from_points(rect_pts(&s));
     assert!(near(b.min, 6.0, 4.0) && near(b.max, 14.0, 16.0), "{b:?}");
     // Rotation is about the centre.
     s.execute("rectang", &json!({"center": true, "p1": [10, 10], "dimensions": [8, 12], "rotation": 90})).unwrap();
-    let b = cadcraft_geom::Bounds2::from_points(rect_pts(&s));
+    let b = forja_geom::Bounds2::from_points(rect_pts(&s));
     assert!(near(b.min, 4.0, 6.0) && near(b.max, 16.0, 14.0), "{b:?}");
     // The default corner mode is unchanged.
     s.execute("rectang", &json!({"p1": [10, 10], "p2": [14, 16]})).unwrap();
-    let b = cadcraft_geom::Bounds2::from_points(rect_pts(&s));
+    let b = forja_geom::Bounds2::from_points(rect_pts(&s));
     assert!(near(b.min, 10.0, 10.0) && near(b.max, 14.0, 16.0), "{b:?}");
     // Centre mode still needs a size.
     assert!(s.execute("rectang", &json!({"center": true, "p1": [10, 10]})).is_err());
@@ -1054,17 +1054,17 @@ fn rectang_center_mode_honours_options() {
         k => panic!("{k:?}"),
     }
     assert_eq!(s.doc().unwrap().model.last().unwrap().common.thickness, 2.0);
-    let b = cadcraft_geom::Bounds2::from_points(rect_pts(&s));
+    let b = forja_geom::Bounds2::from_points(rect_pts(&s));
     assert!(near(b.min, 6.0, 4.0) && near(b.max, 14.0, 16.0), "{b:?}");
     // Chamfer, still centred.
     s.execute("rectang", &json!({"center": true, "p1": [10, 10], "p2": [14, 16], "chamfer": [1, 1]})).unwrap();
     assert_eq!(rect_pts(&s).len(), 8);
-    let b = cadcraft_geom::Bounds2::from_points(rect_pts(&s));
+    let b = forja_geom::Bounds2::from_points(rect_pts(&s));
     assert!(near(b.min, 6.0, 4.0) && near(b.max, 14.0, 16.0), "{b:?}");
     // A fillet too large for the rectangle falls back to sharp corners, still centred.
     s.execute("rectang", &json!({"center": true, "p1": [10, 10], "p2": [14, 16], "fillet": 5})).unwrap();
     assert_eq!(rect_pts(&s).len(), 4);
-    let b = cadcraft_geom::Bounds2::from_points(rect_pts(&s));
+    let b = forja_geom::Bounds2::from_points(rect_pts(&s));
     assert!(near(b.min, 6.0, 4.0) && near(b.max, 14.0, 16.0), "{b:?}");
 }
 
@@ -1076,7 +1076,7 @@ fn rectang_center_mode_command_line() {
     let mut s = Session::new();
     s.cmdline("rectang ce 10,10 14,16").unwrap();
     assert!(s.running.is_none(), "{}", s.prompt_text());
-    let b = cadcraft_geom::Bounds2::from_points(rect_pts(&s));
+    let b = forja_geom::Bounds2::from_points(rect_pts(&s));
     assert!(near(b.min, 6.0, 4.0) && near(b.max, 14.0, 16.0), "{b:?}");
     // Options before the centre point, and the centre picked after them.
     s.cmdline("rectang center f 1 w 0.1 10,10 14,16").unwrap();
@@ -1084,17 +1084,17 @@ fn rectang_center_mode_command_line() {
         EntityKind::LwPolyline(p) => assert!(p.vertices.len() == 8 && p.const_width == 0.1),
         k => panic!("{k:?}"),
     }
-    let b = cadcraft_geom::Bounds2::from_points(rect_pts(&s));
+    let b = forja_geom::Bounds2::from_points(rect_pts(&s));
     assert!(near(b.min, 6.0, 4.0) && near(b.max, 14.0, 16.0), "{b:?}");
     // Dimensions after the centre: the pick only chooses the quadrant.
     s.cmdline("rectang ce 10,10 d 8 12 14,16").unwrap();
     assert!(s.running.is_none(), "{}", s.prompt_text());
-    let b = cadcraft_geom::Bounds2::from_points(rect_pts(&s));
+    let b = forja_geom::Bounds2::from_points(rect_pts(&s));
     assert!(near(b.min, 6.0, 4.0) && near(b.max, 14.0, 16.0), "{b:?}");
     // Area too: the rectangle of that area is centred on the first point.
     s.cmdline("rectang ce 10,10 a 96 l 8").unwrap();
     assert!(s.running.is_none(), "{}", s.prompt_text());
-    let b = cadcraft_geom::Bounds2::from_points(rect_pts(&s));
+    let b = forja_geom::Bounds2::from_points(rect_pts(&s));
     assert!(near(b.min, 6.0, 4.0) && near(b.max, 14.0, 16.0), "{b:?}");
     // The rubber band is centred while the second point is picked.
     s.start("rectang").unwrap();
@@ -1103,14 +1103,14 @@ fn rectang_center_mode_command_line() {
     s.cmdline("10,10").unwrap();
     let pv = s.preview(Vec2::new(14.0, 16.0));
     let pb = match pv.first().map(|e| &e.kind) {
-        Some(EntityKind::LwPolyline(p)) => cadcraft_geom::Bounds2::from_points(p.vertices.iter().map(|v| v.p).collect::<Vec<_>>()),
+        Some(EntityKind::LwPolyline(p)) => forja_geom::Bounds2::from_points(p.vertices.iter().map(|v| v.p).collect::<Vec<_>>()),
         k => panic!("{k:?}"),
     };
     assert!(near(pb.min, 6.0, 4.0) && near(pb.max, 14.0, 16.0), "{pb:?}");
     s.cancel();
     // The default corner mode is unchanged.
     s.cmdline("rectang 10,10 14,16").unwrap();
-    let b = cadcraft_geom::Bounds2::from_points(rect_pts(&s));
+    let b = forja_geom::Bounds2::from_points(rect_pts(&s));
     assert!(near(b.min, 10.0, 10.0) && near(b.max, 14.0, 16.0), "{b:?}");
 }
 

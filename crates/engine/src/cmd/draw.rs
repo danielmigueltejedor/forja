@@ -1,8 +1,8 @@
 //! Draw commands: LINE, PLINE, CIRCLE, ARC, RECTANG, POLYGON, ELLIPSE, POINT, XLINE, RAY,
 //! SPLINE, DONUT, SOLID, TEXT, MTEXT. Each has a JSON form and an interactive prompt sequence.
 
-use cadcraft_doc::{EntityKind, HAlign, MText, Point, RayLine, Text, VAlign};
-use cadcraft_geom::{Arc, Circle, Ellipse, PolyVertex, Polyline, Spline, Vec2, arc_to_bulge, bulge_to_arc};
+use forja_doc::{EntityKind, HAlign, MText, Point, RayLine, Text, VAlign};
+use forja_geom::{Arc, Circle, Ellipse, PolyVertex, Polyline, Spline, Vec2, arc_to_bulge, bulge_to_arc};
 use serde_json::{Value, json};
 
 use super::helpers::{arc, circle, line, lwpoly, polygon_from_edge, polygon_typed_radius_point, polygon_vertices, v3};
@@ -125,7 +125,7 @@ pub fn specs() -> Vec<CommandSpec> {
     ]
 }
 
-fn added(h: cadcraft_doc::Handle) -> Result<Value> {
+fn added(h: forja_doc::Handle) -> Result<Value> {
     Ok(json!({ "handle": h.hex() }))
 }
 

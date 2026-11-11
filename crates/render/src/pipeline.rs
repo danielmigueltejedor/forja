@@ -27,7 +27,7 @@ pub struct Options {
     pub view_height: f64,
     /// Plot style table to draw with. When `None`, [`build`] of a layout whose page setup has
     /// "Display plot styles" on uses the layout's table; [`build_plot`] uses none.
-    pub plot_style_table: Option<std::sync::Arc<cadcraft_doc::PlotStyleTable>>,
+    pub plot_style_table: Option<std::sync::Arc<forja_doc::PlotStyleTable>>,
     /// The area being looked at (world units of the space being built), for on-screen builds:
     /// hatch patterns are only generated inside it. `None` = everywhere (plots, exports, picks).
     pub view: Option<Bounds2>,
@@ -144,7 +144,7 @@ pub(crate) const PARALLEL_CHUNK: usize = 256;
 /// stopped blocking the UI) and after every edit; one core made both slow on real drawings. Plots, layouts and plot styles keep the one-thread
 /// path (they run once, and their pens and per-primitive layers are built along the way).
 #[cfg(not(target_arch = "wasm32"))]
-fn build_parallel(b: &mut Builder, d: &Drawing, store: &cadcraft_doc::EntityStore) {
+fn build_parallel(b: &mut Builder, d: &Drawing, store: &forja_doc::EntityStore) {
     use rayon::prelude::*;
     let ents: Vec<&std::sync::Arc<Entity>> = store.iter().collect();
     let budget = std::sync::atomic::AtomicUsize::new(0);
@@ -171,12 +171,12 @@ fn build_parallel(b: &mut Builder, d: &Drawing, store: &cadcraft_doc::EntityStor
 
 /// The plot style table a build draws with: the one in `opts`, else (on screen) the layout's
 /// when its page setup has "Display plot styles" on.
-pub(crate) fn style_table(d: &Drawing, space: &Space, opts: &Options, plotting: bool) -> Option<std::sync::Arc<cadcraft_doc::PlotStyleTable>> {
+pub(crate) fn style_table(d: &Drawing, space: &Space, opts: &Options, plotting: bool) -> Option<std::sync::Arc<forja_doc::PlotStyleTable>> {
     opts.plot_style_table.clone().or_else(|| match space {
         Space::Paper(n) if !plotting => d
             .layout(n)
             .filter(|l| l.page.show_plot_styles)
-            .and_then(|l| cadcraft_doc::plot_style_table(d, &l.page.plot_style_table))
+            .and_then(|l| forja_doc::plot_style_table(d, &l.page.plot_style_table))
             .map(std::sync::Arc::new),
         _ => None,
     })

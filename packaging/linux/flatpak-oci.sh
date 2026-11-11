@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build cadcraft as an OCI container layout and push it to GitHub Container Registry (GHCR)
+# Build forja as an OCI container layout and push it to GitHub Container Registry (GHCR)
 # for consumption by Flatpak OCI clients (flatpak-oci-specs).
 #
 # Usage:
@@ -32,7 +32,7 @@ case "$ARCH" in
   *) echo "unsupported architecture $ARCH" >&2; exit 2 ;;
 esac
 
-BASENAME="cadcraft-$VERSION-linux-$ARCH"
+BASENAME="forja-$VERSION-linux-$ARCH"
 OUT_OCI="$DIST/$BASENAME-oci"
 
 echo "==> Building Flatpak OCI layout for $BASENAME"

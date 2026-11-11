@@ -1,6 +1,6 @@
-# CADCraft Russian interface catalog — original translations by @pechnikov2026-star.
+# Forja Russian interface catalog — original translations by @pechnikov2026-star.
 # License: MIT OR Apache-2.0 (the repository LICENSE-MIT and LICENSE-APACHE).
-# Written from CADCraft's English strings; no proprietary translations were copied.
+# Written from Forja's English strings; no proprietary translations were copied.
 # UTF-8: context<TAB>English source<TAB>Russian translation.
 # Empty context = ordinary label; @plural = one|few|many forms with {n}.
 # Command IDs, typed keywords, technology/product names and user data stay unchanged.
@@ -28,7 +28,7 @@
 	= Equals	= Равно
 	> Greater than	> Больше чем
 	About	О программе
-	About CADCraft	О CADCraft
+	About Forja	О Forja
 	Absolute	Абсолютные
 	Add Leader	Добавить выноску
 	Align	Выровнять
@@ -84,7 +84,7 @@
 	ByBlock	Поблоку
 	ByColor	ПоЦвету
 	ByLayer	Послою
-	CADCraft Help	Справка CADCraft
+	Forja Help	Справка Forja
 	Cancel	Отмена
 	Cartesian (x, y)	Декартовы (x, y)
 	Center	Центр
@@ -590,7 +590,7 @@
 	Quick Select Properties	Свойства быстрого выбора
 	Quick Select...	Быстрый выбор...
 	QuickCalc	Быстрокалькулятор
-	Quit CADCraft	Выйти из CADCraft
+	Quit Forja	Выйти из Forja
 	Radius	Радиус
 	Raster Image	Растровое изображение
 	Ray	Луч
@@ -997,7 +997,7 @@
 @plural	{n} contributor	{n} участник|{n} участника|{n} участников
 	Drawing as bytes	Чертеж как байты
 	Services	Службы
-	Hide CADCraft	Скрыть CADCraft
+	Hide Forja	Скрыть Forja
 	Hide Others	Скрыть остальные
 	Accessibility	Специальные возможности
 	Show System Cursor	Показывать системный курсор
@@ -1013,7 +1013,7 @@
 	Query Texts	Запрос текстов
 	Analyze Shapes	Анализ фигур
 	Check for Updates…	Проверить обновления…
-	CADCraft is up to date.	У вас последняя версия CADCraft.
+	Forja is up to date.	У вас последняя версия Forja.
 	Could not check for updates.	Не удалось проверить обновления.
 	Find All	Find All
 	Find what:	Find what:

@@ -1,4 +1,4 @@
-use cadcraft_doc::{EntityKind, MText};
+use forja_doc::{EntityKind, MText};
 use serde_json::json;
 
 use crate::Session;
@@ -16,8 +16,8 @@ fn three_lines(s: &mut Session) -> Vec<String> {
     vec![b, a, c]
 }
 
-fn handles(hs: &[String]) -> Vec<cadcraft_doc::Handle> {
-    hs.iter().map(|h| cadcraft_doc::Handle::parse_hex(h).unwrap()).collect()
+fn handles(hs: &[String]) -> Vec<forja_doc::Handle> {
+    hs.iter().map(|h| forja_doc::Handle::parse_hex(h).unwrap()).collect()
 }
 
 fn mtexts(s: &Session) -> Vec<(String, MText)> {
@@ -119,7 +119,7 @@ fn command_line_settings_and_locked_layers() {
 
 /// The vertical extent of each group of strokes that overlap vertically: one per line of
 /// capitals, top line first.
-fn line_extents(strokes: &[Vec<cadcraft_geom::Vec2>]) -> Vec<f64> {
+fn line_extents(strokes: &[Vec<forja_geom::Vec2>]) -> Vec<f64> {
     let mut spans: Vec<(f64, f64)> = strokes
         .iter()
         .filter(|st| !st.is_empty())
@@ -147,7 +147,7 @@ fn combined_lines_keep_their_own_heights() {
     let [(_, m)] = &ms[..] else { panic!("one MTEXT: {ms:?}") };
     assert_eq!((m.height, m.contents.as_str()), (5.0, "TOP\\P{\\H3.5;MID}\\P{\\H3.5;LOW}"));
     // Drawn, each line is as tall as the TEXT it came from.
-    let drawn = |c: &str, h: f64| cadcraft_fonts::layout_mtext(c, m.insert.xy(), h, 0.0, 1, 0.0, 1.0).strokes;
+    let drawn = |c: &str, h: f64| forja_fonts::layout_mtext(c, m.insert.xy(), h, 0.0, 1, 0.0, 1.0).strokes;
     let got = line_extents(&drawn(&m.contents, m.height));
     let want: Vec<f64> = [("TOP", 5.0), ("MID", 3.5), ("LOW", 3.5)].iter().flat_map(|(t, h)| line_extents(&drawn(t, *h))).collect();
     assert_eq!(got.len(), 3, "{got:?}");

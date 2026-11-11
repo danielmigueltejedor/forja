@@ -1,10 +1,10 @@
 //! Drafting Settings shows the polar increment angle as picked, not its radians round trip (#1237).
 
-use cadcraft_engine::Session;
-use cadcraft_ui_egui::{CadApp, Services, dialogs, theme};
 use egui::accesskit::Role;
 use egui_kittest::Harness;
 use egui_kittest::kittest::{NodeT, Queryable};
+use forja_engine::Session;
+use forja_ui_egui::{CadApp, Services, dialogs, theme};
 use serde_json::json;
 
 fn shown_increment(degrees: f64) -> (String, f64, f64) {

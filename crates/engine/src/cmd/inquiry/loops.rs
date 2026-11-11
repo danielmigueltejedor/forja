@@ -9,8 +9,8 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 
-use cadcraft_doc::{EntityKind, Handle};
-use cadcraft_geom::{Arc as GeoArc, EPS, Vec2};
+use forja_doc::{EntityKind, Handle};
+use forja_geom::{Arc as GeoArc, EPS, Vec2};
 use serde_json::{Value, json};
 
 use super::super::bad;

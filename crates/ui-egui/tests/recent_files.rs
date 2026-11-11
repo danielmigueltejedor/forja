@@ -1,13 +1,13 @@
 //! Recently opened files (#858): File ▸ Open Recent and the Start page list the drawings opened
 //! from a path, newest first, and keep them across restarts.
 
-use cadcraft_engine::Session;
-use cadcraft_engine::cmd::file::{IoHooks, set_io};
-use cadcraft_engine::doc::Drawing;
-use cadcraft_ui_egui::menus::{self, Entry};
-use cadcraft_ui_egui::{CadApp, Services};
 use egui::{Rect, Shape, vec2};
 use egui_kittest::Harness;
+use forja_engine::Session;
+use forja_engine::cmd::file::{IoHooks, set_io};
+use forja_engine::doc::Drawing;
+use forja_ui_egui::menus::{self, Entry};
+use forja_ui_egui::{CadApp, Services};
 
 #[path = "support/temp_dir.rs"]
 mod temp_dir;

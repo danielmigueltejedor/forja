@@ -61,7 +61,7 @@ pub(super) struct TextEditM {
     /// Asking for the edit mode.
     mode: bool,
     /// The MTEXT being edited, for the in-place editor (#842).
-    mtext: Option<cadcraft_doc::MText>,
+    mtext: Option<forja_doc::MText>,
 }
 
 impl Interactive for TextEditM {
@@ -69,7 +69,7 @@ impl Interactive for TextEditM {
         "TEXTEDIT"
     }
     /// An MTEXT asking for its new text opens in the in-place editor with its contents.
-    fn editing_mtext(&self) -> Option<cadcraft_doc::MText> {
+    fn editing_mtext(&self) -> Option<forja_doc::MText> {
         self.h.as_ref().and(self.mtext.clone())
     }
     fn prompt(&self, _s: &Session) -> Prompt {

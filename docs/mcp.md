@@ -1,35 +1,35 @@
-# CADCraft and AI agents (MCP)
+# Forja and AI agents (MCP)
 
-CADCraft speaks the [Model Context Protocol](https://modelcontextprotocol.io) over stdio.
+Forja speaks the [Model Context Protocol](https://modelcontextprotocol.io) over stdio.
 
 ## Start it
 
 ```sh
 # Headless: an in-process drawing session, no window.
-cadcraft-cli mcp
+forja-cli mcp
 
 # Bridged to the running app (watch the agent draw):
-cadcraft --control 7979 &
-cadcraft-cli mcp --connect 127.0.0.1:7979
+forja --control 7979 &
+forja-cli mcp --connect 127.0.0.1:7979
 ```
 
 An MCP client usually starts its servers when it starts, often before the app is open. With
 `--lazy` the bridge starts anyway and reaches the app at the first tool call; until the app answers,
-each call fails with a message saying how to open it. `--launch` also opens CADCraft (macOS) with
+each call fails with a message saying how to open it. `--launch` also opens Forja (macOS) with
 that control port at a call that finds nothing, and waits for it:
 
 ```json
-{ "mcpServers": { "cadcraft": { "command": "cadcraft-cli", "args": ["mcp", "--connect", "127.0.0.1:7979", "--launch"] } } }
+{ "mcpServers": { "forja": { "command": "forja-cli", "args": ["mcp", "--connect", "127.0.0.1:7979", "--launch"] } } }
 ```
 
-`--connect` needs the app's `HOST:PORT`. Without one (or with an unknown argument) `cadcraft-cli mcp`
+`--connect` needs the app's `HOST:PORT`. Without one (or with an unknown argument) `forja-cli mcp`
 exits with an error instead of falling back to a headless session, so a client meant for the app
 never edits a separate drawing by mistake. If the app can't be reached, startup fails too.
 
 Example client configuration (Claude Code / Claude Desktop):
 
 ```json
-{ "mcpServers": { "cadcraft": { "command": "cadcraft-cli", "args": ["mcp"] } } }
+{ "mcpServers": { "forja": { "command": "forja-cli", "args": ["mcp"] } } }
 ```
 
 ## Tools
@@ -52,7 +52,7 @@ Example client configuration (Claude Code / Claude Desktop):
 | `new_drawing {metric?}`, `open {path}`, `save {path?}`, `cancel` | Files and Escape. `save` to a `.svg`, `.png` or `.pdf` path exports: the drawing keeps its name and unsaved changes. |
 | `screenshot`, `ui_inspect`, `ui_click {x, y}` | Only when connected to the app. |
 
-Resources: `cadcraft://drawing` (inspect JSON) and `cadcraft://commands` (catalog).
+Resources: `forja://drawing` (inspect JSON) and `forja://commands` (catalog).
 
 Arguments are checked against each tool's input schema. An unknown tool, `arguments` that aren't an
 object, a missing required argument or one of the wrong type is a JSON-RPC error `-32602` (invalid

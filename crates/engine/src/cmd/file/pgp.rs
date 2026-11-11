@@ -4,7 +4,7 @@
 //! A loaded file replaces the user aliases, which add to or override the built-in ones for every
 //! drawing; command names themselves always win. Lines that define external commands
 //! (programs the file would have the application start) are never run: they are skipped with a
-//! note. CADCraft ships no alias file; the aliases built into the command catalog stay the
+//! note. Forja ships no alias file; the aliases built into the command catalog stay the
 //! defaults.
 //!
 //! The aliases are user settings, never part of a drawing: [`alias_profile`] gives them (and the
@@ -145,7 +145,7 @@ fn parse(text: &str) -> (Vec<(String, String)>, Vec<String>) {
             continue;
         };
         if !target.trim_start().starts_with('*') {
-            warn(no, format!("{} is an external command; CADCraft doesn't run programs from alias files", alias.trim()));
+            warn(no, format!("{} is an external command; Forja doesn't run programs from alias files", alias.trim()));
             continue;
         }
         let name = match alias_name(alias) {

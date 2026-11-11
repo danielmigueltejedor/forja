@@ -2,8 +2,8 @@
 //! synchronize, move and remove them and fields to edit the selected one. Every change runs the
 //! `battman` command (`app.run`), so it is undoable and scriptable.
 
-use cadcraft_doc::EntityKind;
 use egui::{RichText, vec2};
+use forja_doc::EntityKind;
 use serde_json::{Value, json};
 
 use crate::CadApp;
@@ -211,8 +211,8 @@ pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) -> Option<
 }
 
 /// References of block `name` in model space, the layouts and other blocks.
-fn count_references(d: &cadcraft_doc::Drawing, name: &str) -> usize {
-    let is_ref = |e: &std::sync::Arc<cadcraft_doc::Entity>| matches!(&e.kind, EntityKind::Insert(i) if i.block.eq_ignore_ascii_case(name));
+fn count_references(d: &forja_doc::Drawing, name: &str) -> usize {
+    let is_ref = |e: &std::sync::Arc<forja_doc::Entity>| matches!(&e.kind, EntityKind::Insert(i) if i.block.eq_ignore_ascii_case(name));
     let spaces = std::iter::once(&d.model).chain(d.layouts.iter().map(|l| &l.entities));
     let blocks = d.blocks.iter().filter(|(k, _)| !k.eq_ignore_ascii_case(name)).map(|(_, b)| &b.entities);
     spaces.chain(blocks).map(|st| st.iter().filter(|e| is_ref(e)).count()).sum()

@@ -2,7 +2,7 @@
 //! [Reference]:". The prompt adds "or" before its options, so a message that ended in "or" read
 //! "or or".
 
-use cadcraft_engine::Session;
+use forja_engine::Session;
 use serde_json::json;
 
 fn shows(s: &Session, text: &str) {

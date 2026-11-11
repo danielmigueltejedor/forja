@@ -12,8 +12,8 @@
 
 use std::sync::Arc;
 
-use cadcraft_geom::Vec2;
 use encoding_rs::Encoding;
+use forja_geom::Vec2;
 
 use super::{ShxFont, ShxKind};
 use crate::{Shaped, bidi};

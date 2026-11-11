@@ -36,7 +36,7 @@ pub(super) fn split_embedded(tags: &[Tag]) -> (&[Tag], Option<&[Tag]>) {
 /// A multiline attribute's text, from the MTEXT groups embedded in it.
 pub(super) fn multiline_attrib(embedded: Option<&[Tag]>, c: &Common) -> Option<MultilineAttrib> {
     let mtext = mtext_from(embedded.filter(|e| !e.is_empty())?, c);
-    let read_as = cadcraft_fonts::plain_mtext(&mtext.contents);
+    let read_as = forja_fonts::plain_mtext(&mtext.contents);
     Some(MultilineAttrib { mtext, read_as })
 }
 
@@ -66,7 +66,7 @@ pub(super) fn mtext_from(tags: &[Tag], c: &Common) -> MText {
         // Insertion point and direction are WCS, but the line height runs along extrusion ×
         // direction: under (0,0,-1) the glyphs are mirrored. Drawn readable (MIRRTEXT = 0) with
         // the same footprint, the text turns round and left/right attachment swap.
-        rotation = cadcraft_geom::norm_angle(rotation + std::f64::consts::PI);
+        rotation = forja_geom::norm_angle(rotation + std::f64::consts::PI);
         attach = match attach {
             1 | 4 | 7 => attach + 2,
             3 | 6 | 9 => attach - 2,
@@ -128,11 +128,11 @@ pub(super) fn text_from(t: &T) -> Text {
 }
 
 /// TEXT / ATTRIB / ATTDEF with extrusion (0,0,-1): the points are OCS and the text runs from its
-/// insertion point towards -x in the WCS, with mirrored glyphs. CADCraft draws text readable
+/// insertion point towards -x in the WCS, with mirrored glyphs. Forja draws text readable
 /// (MIRRTEXT = 0), so it keeps the mirrored footprint: the direction turns to -rotation and
 /// left/right justification swap ends (start ↔ end point).
 fn mirror_text(t: &mut Text, align: Option<Vec3>, insert: Vec3) {
-    t.rotation = cadcraft_geom::norm_angle(-t.rotation);
+    t.rotation = forja_geom::norm_angle(-t.rotation);
     let baseline_left = |t: &Text, p: Vec3| if t.valign == VAlign::Baseline { None } else { Some(p) };
     match t.halign {
         HAlign::Left => {

@@ -7,7 +7,7 @@ impl Session {
     pub fn zoom_limits(&self) -> Result<Bounds2> {
         let d = self.doc()?;
         if let Space::Paper(name) = self.space()
-            && let Some(sheet) = cadcraft_render::sheet(d, &name)
+            && let Some(sheet) = forja_render::sheet(d, &name)
         {
             return Ok(sheet.bounds());
         }

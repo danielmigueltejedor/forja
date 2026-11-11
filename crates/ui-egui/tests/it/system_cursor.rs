@@ -1,8 +1,8 @@
 //! The OS cursor over the drawing area (#39): hidden under the drawn crosshair by default, kept
 //! visible with `systemCursor` so screen magnifiers and other assistive tech can follow it.
 
-use cadcraft_engine::Session;
-use cadcraft_ui_egui::{CadApp, Services};
+use forja_engine::Session;
+use forja_ui_egui::{CadApp, Services};
 
 /// The cursor icon the app asks for with the pointer in the middle of the drawing area.
 fn canvas_cursor(app: &mut CadApp) -> egui::CursorIcon {
@@ -36,7 +36,7 @@ fn system_cursor_stays_visible_over_the_canvas_when_requested() {
     assert_eq!(canvas_cursor(&mut app), egui::CursorIcon::Crosshair, "systemCursor keeps an OS cursor for magnifiers");
 }
 
-/// The host's default (the desktop app's `CADCRAFT_SYSTEM_CURSOR`) turns it on; a saved `false`
+/// The host's default (the desktop app's `FORJA_SYSTEM_CURSOR`) turns it on; a saved `false`
 /// and the resets keep it.
 #[test]
 fn the_host_default_survives_saved_profiles_and_resets() {

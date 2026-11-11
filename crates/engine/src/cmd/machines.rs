@@ -1,6 +1,6 @@
 //! Building blocks for interactive commands: object selection and simple point sequences.
 
-use cadcraft_doc::Handle;
+use forja_doc::Handle;
 use serde_json::{Value, json};
 
 use crate::{Accept, EngineError, Input, Interactive, Prompt, Result, Session, Step};
@@ -219,8 +219,8 @@ pub fn number(t: &str) -> Option<f64> {
 
 #[cfg(test)]
 mod tests {
-    use cadcraft_doc::{EntityKind, Handle};
-    use cadcraft_geom::Vec2;
+    use forja_doc::{EntityKind, Handle};
+    use forja_geom::Vec2;
     use serde_json::json;
 
     use crate::{Input, Session};

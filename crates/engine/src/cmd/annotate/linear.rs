@@ -220,7 +220,7 @@ impl Interactive for LinearM {
                 add_dim(s, k)?;
                 if let Some(EntityKind::Dimension(d)) = s.last_dim.and_then(|h| s.doc().ok()?.entity(h).map(|e| e.kind.clone())) {
                     let st = s.doc()?.dim_style(&d.style).cloned().unwrap_or_default();
-                    let g = cadcraft_render::dimension_geometry(&d, &st, 1.0);
+                    let g = forja_render::dimension_geometry(&d, &st, 1.0);
                     s.echo(format!("Dimension text = {}", g.value));
                 }
                 Ok(Step::Done)

@@ -1,8 +1,8 @@
 //! #1667: a layout whose page setup plots a window (DXF plot type 4) lost the window corners
 //! (groups 48, 49, 140, 141) on save: they were written as zero.
 
-use cadcraft_doc::{Drawing, Layout, PageSetup};
-use cadcraft_io::{read, write_dxf};
+use forja_doc::{Drawing, Layout, PageSetup};
+use forja_io::{read, write_dxf};
 
 #[test]
 fn plot_window_corners_round_trip_through_dxf() {

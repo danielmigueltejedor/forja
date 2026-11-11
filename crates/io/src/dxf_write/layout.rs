@@ -4,7 +4,7 @@ use super::{Bounds2, Drawing, Entity, EntityKind, Handle, HashMap, Layout, Vec2,
 /// Layouts with viewports but without the paper-space viewport (id 1, the sheet itself), keyed
 /// by their first viewport. AutoCAD and DWG take a layout's first viewport as its paper-space
 /// viewport (DWG does not store viewport ids; readers number them in order), so a layout made in
-/// CADCraft, whose paper-space viewport is implicit, gets one written ahead of its viewports.
+/// Forja, whose paper-space viewport is implicit, gets one written ahead of its viewports.
 pub(super) fn paper_views(d: &Drawing) -> HashMap<Handle, usize> {
     let mut out = HashMap::new();
     'layouts: for (i, l) in d.layouts.iter().enumerate() {
@@ -42,11 +42,11 @@ fn sheet_scale(l: &Layout) -> f64 {
 }
 
 /// The paper-space viewport (id 1) of the layout whose first viewport is `e`, if it needs one
-/// ([`paper_views`]): the whole sheet, viewed 1:1. Marked with CADCraft xdata so that our reader
+/// ([`paper_views`]): the whole sheet, viewed 1:1. Marked with Forja xdata so that our reader
 /// leaves it implicit again.
 pub(super) fn paper_view(w: &mut W, d: &Drawing, e: &Entity, owner: &str, cx: &Ctx) {
     let Some(l) = cx.paper_views.get(&e.handle).and_then(|i| d.layouts.get(*i)) else { return };
-    let paper = cadcraft_render::paper::sheet(d, &l.name).map(|s| s.size).unwrap_or(Vec2::new(12.0, 9.0));
+    let paper = forja_render::paper::sheet(d, &l.name).map(|s| s.size).unwrap_or(Vec2::new(12.0, 9.0));
     let size = paper / sheet_scale(l);
     let center = size * 0.5;
     let h = w.h();
@@ -78,12 +78,8 @@ pub(super) fn vport_table(w: &mut W, d: &Drawing, ext: Bounds2) {
     // a view 11 tall, which shows a sliver of it, and a horizontal line got 1e-6 (#1602).
     const ASPECT: f64 = 1.6;
     // An untiled view's twist: the lone `*Active` tile the editor keeps for it.
-    let twist = d
-        .vports
-        .iter()
-        .find(|c| c.is_active() && c.tiles.len() == 1)
-        .and_then(|c| c.tiles.first())
-        .map_or(0.0, |t| cadcraft_geom::norm_angle(t.twist));
+    let twist =
+        d.vports.iter().find(|c| c.is_active() && c.tiles.len() == 1).and_then(|c| c.tiles.first()).map_or(0.0, |t| forja_geom::norm_angle(t.twist));
     let (center, height) = match d.header.saved_view() {
         Some(v) => v,
         None if ext.is_empty() => (Vec2::new(6.0, 4.5), 9.0),
@@ -125,7 +121,7 @@ pub(super) fn vport_table(w: &mut W, d: &Drawing, ext: Bounds2) {
         w.i(70, 0);
         w.p2(10, finite(t.min, Vec2::ZERO));
         w.p2(11, finite(t.max, Vec2::new(1.0, 1.0)));
-        let twist = cadcraft_geom::norm_angle(t.twist);
+        let twist = forja_geom::norm_angle(t.twist);
         w.p2(12, dxf_ext::model_center_to_dcs(finite(t.center, Vec2::ZERO), twist));
         // Snap grid origin and rotation (SNAPBASE, SNAPANG in degrees): R13+ files keep them here.
         w.p2(13, d.header.point("SNAPBASE").map(|p| p.xy()).filter(|p| p.is_finite()).unwrap_or(Vec2::ZERO));

@@ -195,7 +195,7 @@ impl LayerSet {
     /// [`Drawing::ensure_layer`] through the set.
     fn ensure(&mut self, d: &mut Drawing, name: &str) {
         if self.0.insert(name.to_ascii_lowercase()) {
-            d.layers.push(cadcraft_doc::Layer::new(name));
+            d.layers.push(forja_doc::Layer::new(name));
         }
     }
 }
@@ -223,7 +223,7 @@ pub(super) fn place_blocks(d: &mut Drawing, blocks: Vec<BlockDef>, rx: &mut Rx, 
             continue;
         }
         // Generated geometry we rebuild on save: table blocks, and standard arrowhead blocks
-        // nothing inserts whose content is the one CADCraft writes. An arrowhead block with other
+        // nothing inserts whose content is the one Forja writes. An arrowhead block with other
         // content (AutoCAD's `_Dot`, a user's redefinition) is kept, so dimensions keep it.
         let generated_arrow = || {
             let own: Vec<&Entity> = ents.iter().map(|(_, _, e)| e).collect();

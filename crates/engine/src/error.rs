@@ -15,8 +15,8 @@ pub enum EngineError {
     Internal(String, String),
 }
 
-impl From<cadcraft_doc::DocError> for EngineError {
-    fn from(e: cadcraft_doc::DocError) -> Self {
+impl From<forja_doc::DocError> for EngineError {
+    fn from(e: forja_doc::DocError) -> Self {
         EngineError::Other(e.to_string())
     }
 }

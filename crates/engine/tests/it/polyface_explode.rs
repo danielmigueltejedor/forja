@@ -1,8 +1,8 @@
 //! EXPLODE turns a polyface mesh into its 3D faces, as AutoCAD does; hidden edges stay hidden.
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::{Common, EntityKind, PolyfaceMesh, Space};
-use cadcraft_geom::Vec3;
+use forja_engine::Session;
+use forja_engine::doc::{Common, EntityKind, PolyfaceMesh, Space};
+use forja_geom::Vec3;
 use serde_json::json;
 
 #[test]

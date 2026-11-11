@@ -6,13 +6,13 @@
 use std::ffi::OsString;
 use std::os::unix::ffi::OsStringExt;
 
-use cadcraft_doc::Drawing;
-use cadcraft_engine::cmd::file::{IoHooks, read_file, set_io};
+use forja_doc::Drawing;
+use forja_engine::cmd::file::{IoHooks, read_file, set_io};
 
 #[test]
 fn read_file_refuses_a_name_that_is_not_unicode() {
     set_io(IoHooks { read: |_, _| Ok(Drawing::new_metric()), write: |_, _| Ok(Vec::new()), plot: None });
-    let dir = std::env::temp_dir().join(format!("cadcraft-nonunicode-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("forja-nonunicode-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let good = dir.join("good.dxf");
     let bad = dir.join(OsString::from_vec(b"bad-\xff.dxf".to_vec()));

@@ -1,8 +1,8 @@
 //! -ATTDEF at the command line, as AutoCAD 2024 runs it (accoreconsole: these scripts with
 //! TEXTSIZE 2.5 and AFLAGS 16, the drawing and AFLAGS read back afterwards).
 
-use cadcraft_engine::doc::{Attrib, EntityKind, HAlign, VAlign};
-use cadcraft_engine::{Session, sysvars};
+use forja_engine::doc::{Attrib, EntityKind, HAlign, VAlign};
+use forja_engine::{Session, sysvars};
 use serde_json::json;
 
 fn session() -> Session {

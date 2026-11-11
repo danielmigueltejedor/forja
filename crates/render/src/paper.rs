@@ -3,8 +3,8 @@
 //! Paper-space units are millimetres in metric drawings (`MEASUREMENT` = 1) and on layouts whose
 //! page setup is in millimetres, and inches otherwise. The sheet's lower-left corner is the paper-space origin.
 
-use cadcraft_doc::{Drawing, PageSetup};
-use cadcraft_geom::{Bounds2, Vec2};
+use forja_doc::{Drawing, PageSetup};
+use forja_geom::{Bounds2, Vec2};
 
 /// Maximum model-space plot offset accepted by the PLOT command, in millimetres.
 pub const MAX_PLOT_OFFSET_MM: f64 = 100_000.0;
@@ -90,7 +90,7 @@ pub fn page_unit_mm(d: &Drawing, page: &PageSetup) -> f64 {
 
 /// Millimetres per paper-space unit on the layout holding the paper-space entity `h` (the
 /// drawing's when no layout holds it).
-pub fn unit_mm_of(d: &Drawing, h: cadcraft_doc::Handle) -> f64 {
+pub fn unit_mm_of(d: &Drawing, h: forja_doc::Handle) -> f64 {
     d.layouts.iter().find(|l| l.entities.contains(h)).map_or_else(|| paper_unit_mm(d), |l| page_unit_mm(d, &l.page))
 }
 

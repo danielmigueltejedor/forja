@@ -2,7 +2,7 @@
 //! entities. This is separate from the preservation matrix's large handles with free capacity.
 //! Neither a particular allocator strategy nor a successful save is required at exhaustion.
 
-use cadcraft_io::{SaveOptions, Version, read, write_with};
+use forja_io::{SaveOptions, Version, read, write_with};
 
 use super::{cases::properties, compare};
 

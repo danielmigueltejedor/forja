@@ -316,7 +316,7 @@ pub(super) struct PeditM {
     /// (with those polylines and their Decurve record) for Undo.
     pub(super) multi: Vec<Handle>,
     pub(super) msel: SelectPhase,
-    pub(super) mundo: Vec<(cadcraft_doc::Drawing, Vec<Handle>, std::collections::HashMap<Handle, Vec<PolyVertex>>)>,
+    pub(super) mundo: Vec<(forja_doc::Drawing, Vec<Handle>, std::collections::HashMap<Handle, Vec<PolyVertex>>)>,
     /// Multiple: each polyline's vertices before its first Fit or Spline, which Decurve restores.
     pub(super) morig: std::collections::HashMap<Handle, Vec<PolyVertex>>,
 }

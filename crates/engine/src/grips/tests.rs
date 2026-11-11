@@ -1,5 +1,5 @@
-use cadcraft_doc::{EntityKind, Handle};
-use cadcraft_geom::{Arc, Vec2};
+use forja_doc::{EntityKind, Handle};
+use forja_geom::{Arc, Vec2};
 use serde_json::{Value, json};
 
 use super::{GripMode, stretch_grip};
@@ -77,12 +77,12 @@ fn arc_and_ellipse_grips() {
 
 #[test]
 fn degenerate_ellipse_cannot_move_from_its_center_grip() {
-    let ellipse = EntityKind::Ellipse(cadcraft_doc::Ellipse {
-        center: cadcraft_geom::Vec3::ZERO,
-        major: cadcraft_geom::Vec3::ZERO,
+    let ellipse = EntityKind::Ellipse(forja_doc::Ellipse {
+        center: forja_geom::Vec3::ZERO,
+        major: forja_geom::Vec3::ZERO,
         ratio: 0.5,
         start: 0.0,
-        end: cadcraft_geom::TAU,
+        end: forja_geom::TAU,
     });
     assert!(super::stretch_grip(&ellipse, 0, v(1.0, 1.0)).is_none());
 }
@@ -105,7 +105,7 @@ fn polyline_grips() {
     s.grip_edit(p, 5, v(6.0, 12.0), GripMode::Stretch).unwrap();
     let EntityKind::LwPolyline(pl) = kind(&s, p) else { panic!() };
     assert!(near(pl.vertices[2].p, 12.0, 10.0) && near(pl.vertices[3].p, 0.0, 10.0));
-    let segs = cadcraft_geom::Polyline { vertices: pl.vertices.clone(), closed: false }.segments();
+    let segs = forja_geom::Polyline { vertices: pl.vertices.clone(), closed: false }.segments();
     assert!(segs[2].mid().near(v(6.0, 12.0), 1e-6), "{:?}", segs[2].mid());
     assert!(s.grip_edit(p, 7, v(0.0, 0.0), GripMode::Stretch).is_err());
     // Closed polylines have a closing-segment midpoint grip.
@@ -171,12 +171,12 @@ fn other_entity_grips() {
 
 #[test]
 fn wipeout_grips_reject_the_closing_marker_and_hostile_input() {
-    let kind = EntityKind::Wipeout(cadcraft_doc::Wipeout { boundary: vec![v(0.0, 0.0), v(7.0, 1.0), v(3.0, 7.0), v(0.0, 0.0)] });
+    let kind = EntityKind::Wipeout(forja_doc::Wipeout { boundary: vec![v(0.0, 0.0), v(7.0, 1.0), v(3.0, 7.0), v(0.0, 0.0)] });
     for (index, to) in [(3, v(2.0, 2.0)), (usize::MAX, v(2.0, 2.0)), (0, v(f64::NAN, 0.0)), (0, v(0.0, f64::INFINITY))] {
         assert!(stretch_grip(&kind, index, to).is_none());
     }
     for boundary in [vec![], vec![v(0.0, 0.0)], vec![v(0.0, 0.0), v(0.0, 0.0)]] {
-        let kind = EntityKind::Wipeout(cadcraft_doc::Wipeout { boundary });
+        let kind = EntityKind::Wipeout(forja_doc::Wipeout { boundary });
         for index in [0, 1, usize::MAX] {
             let result = stretch_grip(&kind, index, v(2.0, 2.0));
             assert_eq!(result.is_some(), index < kind.grips().len());

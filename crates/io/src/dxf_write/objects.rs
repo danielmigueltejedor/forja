@@ -15,7 +15,7 @@ pub(super) fn table_style_obj(w: &mut W, d: &Drawing, s: &TableStyle, h: &str, d
     w.f(41, s.margin);
     w.i(280, i64::from(!s.title));
     w.i(281, i64::from(!s.header));
-    // Data, column header and title cell styles; CADCraft's complete cell styles in xdata.
+    // Data, column header and title cell styles; Forja's complete cell styles in xdata.
     for kind in crate::dxf_table::CELL_TYPES {
         let cs = s.cell_style(kind);
         let style = if d.text_style(&cs.text_style).is_some() { cs.text_style.clone() } else { "Standard".to_string() };
@@ -108,7 +108,7 @@ pub(super) fn mleader_style_obj(w: &mut W, s: &MLeaderStyle, h: &str, dict: &str
 
 /// The ACAD_SCALELIST dictionary and its SCALE objects (DXF Reference, OBJECTS section): name
 /// (300), paper units (140), drawing units (141), unit scale flag (290).
-pub(super) fn scale_list(w: &mut W, scales: &[(&cadcraft_doc::AnnoScale, String)], dict: &str, root: &str) {
+pub(super) fn scale_list(w: &mut W, scales: &[(&forja_doc::AnnoScale, String)], dict: &str, root: &str) {
     w.s(0, "DICTIONARY");
     w.s(5, dict);
     w.group("ACAD_REACTORS", 330, &[root]);
@@ -129,10 +129,10 @@ pub(super) fn scale_list(w: &mut W, scales: &[(&cadcraft_doc::AnnoScale, String)
         w.s(300, dxf_ext::xdata_str(&s.name));
         w.f(140, s.paper_units);
         w.f(141, s.drawing_units);
-        w.i(290, i64::from(cadcraft_doc::same_factor(s.factor(), 1.0)));
+        w.i(290, i64::from(forja_doc::same_factor(s.factor(), 1.0)));
     }
 }
 
-pub(super) fn cadcraft_fonts_name() -> &'static str {
-    "CADCraft Stroke"
+pub(super) fn forja_fonts_name() -> &'static str {
+    "Forja Stroke"
 }

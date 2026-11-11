@@ -2,13 +2,13 @@
 //! Authored contours keep their grips and edit results through DXF/DWG saves, both via the
 //! command API and the interactive grip machine, without changing the file's explicit closure.
 
-use cadcraft_doc::{Drawing, EntityKind, Handle, LwPolyline, Space};
-use cadcraft_engine::{
+use forja_doc::{Drawing, EntityKind, Handle, LwPolyline, Space};
+use forja_engine::{
     Input, Session,
     grips::{GripMode, stretch_grip},
 };
-use cadcraft_geom::{PolyVertex, Vec2};
-use cadcraft_io::{SaveOptions, Version};
+use forja_geom::{PolyVertex, Vec2};
+use forja_io::{SaveOptions, Version};
 use serde_json::json;
 
 fn fixture(explicit: bool, reversed: bool) -> (Drawing, Handle, Vec<Vec2>) {
@@ -83,16 +83,16 @@ fn check(format: &str, interactive: bool) {
                     let options = SaveOptions { version: Some(version), binary };
                     let mut current = drawing.clone();
                     for _pass in 0..2 {
-                        let bytes = cadcraft_io::write_with(&current, format, &options).unwrap();
-                        current = cadcraft_io::read(&bytes, format).unwrap();
+                        let bytes = forja_io::write_with(&current, format, &options).unwrap();
+                        current = forja_io::read(&bytes, format).unwrap();
                         assert!(current.read_notes.is_empty() && current.skipped_records.is_empty());
                         assert_boundary(&current, handle, &points, true);
                         for index in 0..points.len() {
                             let edited = edit(current.clone(), handle, &points, true, index, interactive);
                             let mut expected = points.clone();
                             expected[index] += Vec2::new(2.0, 1.0);
-                            let bytes = cadcraft_io::write_with(&edited, format, &options).unwrap();
-                            let back = cadcraft_io::read(&bytes, format).unwrap();
+                            let bytes = forja_io::write_with(&edited, format, &options).unwrap();
+                            let back = forja_io::read(&bytes, format).unwrap();
                             assert_boundary(&back, handle, &expected, true);
                         }
                     }
@@ -191,8 +191,8 @@ fn coincident_endpoints_remain_separately_editable_after_save() {
                 for version in Version::ALL {
                     for (format, binary) in [("wipeout.dxf", false), ("wipeout.dxf", true), ("wipeout.dwg", false)] {
                         let options = SaveOptions { version: Some(version), binary };
-                        let bytes = cadcraft_io::write_with(&collapsed, format, &options).unwrap();
-                        let back = cadcraft_io::read(&bytes, format).unwrap();
+                        let bytes = forja_io::write_with(&collapsed, format, &options).unwrap();
+                        let back = forja_io::read(&bytes, format).unwrap();
                         session.open_drawing(back, "coincident corners", None);
                         points_equal(&session.grips_of(handle).unwrap(), &coincident);
                         assert_boundary(session.doc().unwrap(), handle, &coincident, true);
@@ -201,8 +201,8 @@ fn coincident_endpoints_remain_separately_editable_after_save() {
                         move_grip(&mut session, handle, other, separated[other], interactive);
                         points_equal(&session.grips_of(handle).unwrap(), &separated);
                         assert_boundary(session.doc().unwrap(), handle, &separated, true);
-                        let bytes = cadcraft_io::write_with(session.doc().unwrap(), format, &options).unwrap();
-                        let back = cadcraft_io::read(&bytes, format).unwrap();
+                        let bytes = forja_io::write_with(session.doc().unwrap(), format, &options).unwrap();
+                        let back = forja_io::read(&bytes, format).unwrap();
                         assert_boundary(&back, handle, &separated, true);
                     }
                 }

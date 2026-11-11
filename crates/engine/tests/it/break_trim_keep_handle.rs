@@ -10,9 +10,9 @@
 //! after each chain, a new handle marked `+`, and the dimensions' DIMASSOC references. The other
 //! cases follow from those rules, or say what they check.
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::{AssocSnap, Common, DimAssoc, Dimension, EntityKind, Handle, Hatch, Line, Space};
-use cadcraft_engine::geom::{Vec2, Vec3};
+use forja_engine::Session;
+use forja_engine::doc::{AssocSnap, Common, DimAssoc, Dimension, EntityKind, Handle, Hatch, Line, Space};
+use forja_engine::geom::{Vec2, Vec3};
 use serde_json::{Value, json};
 
 fn first_handle(v: &Value) -> Handle {

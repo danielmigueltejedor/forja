@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use std::sync::mpsc::{Receiver, TryRecvError, channel};
 use std::time::{Duration, Instant};
 
-use cadcraft_engine::cmd::file::{ReadFile, read_file};
+use forja_engine::cmd::file::{ReadFile, read_file};
 
 use crate::theme::Tokens;
 
@@ -30,7 +30,7 @@ impl Opening {
     pub fn start(&mut self, path: &Path) {
         let (tx, rx) = channel();
         let p = path.to_path_buf();
-        let spawned = std::thread::Builder::new().name("cadcraft-open".into()).spawn(move || {
+        let spawned = std::thread::Builder::new().name("forja-open".into()).spawn(move || {
             let _ = tx.send(read_file(&p));
         });
         if spawned.is_err() {
@@ -104,7 +104,7 @@ mod tests {
     use std::path::Path;
     use std::time::{Duration, Instant};
 
-    use cadcraft_engine::Session;
+    use forja_engine::Session;
 
     use crate::{CadApp, Services};
 
@@ -114,7 +114,7 @@ mod tests {
     fn open_path_reads_in_the_background_and_reports_failure() {
         let mut app = CadApp::new(Session::new(), Services::default());
         let before = app.session.docs.len();
-        let missing = std::env::temp_dir().join(format!("cadcraft-missing-{}.dxf", std::process::id()));
+        let missing = std::env::temp_dir().join(format!("forja-missing-{}.dxf", std::process::id()));
         let p = missing.to_string_lossy().to_string();
         app.open_path(&missing);
         assert!(app.opening.busy() || app.status.is_some(), "the read starts in the background");

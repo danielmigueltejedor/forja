@@ -55,7 +55,7 @@ pub(super) fn add_dim(s: &mut Session, k: EntityKind) -> Result<Handle> {
         && let Ok(d) = s.doc()
     {
         let style = d.dim_style(&dm.style).cloned().unwrap_or_default();
-        let g = cadcraft_render::dimension_geometry(dm, &style, d.header.f64("DIMSCALE", 1.0));
+        let g = forja_render::dimension_geometry(dm, &style, d.header.f64("DIMSCALE", 1.0));
         dm.measurement = g.measurement;
         // The text position the writer puts in group 11 when the user has not placed the text.
         if !dm.user_text_pos {
@@ -114,9 +114,9 @@ pub(super) fn pick_at(s: &Session, p: Vec2) -> Option<Handle> {
 /// The straight or curved piece of `h` picked at `p`: a line, an arc, or the polyline segment nearest `p`.
 pub(in crate::cmd) fn segment_at(s: &Session, h: Handle, p: Vec2) -> Option<Segment> {
     match &s.doc().ok()?.entity(h)?.kind {
-        EntityKind::Line(l) => Some(Segment::Line(cadcraft_geom::Line::new(l.a.xy(), l.b.xy()))),
-        EntityKind::Arc(a) => Some(Segment::Arc { arc: cadcraft_geom::Arc::new(a.center.xy(), a.radius, a.start, a.end), ccw: true }),
-        EntityKind::LwPolyline(pl) => cadcraft_geom::Polyline { vertices: pl.vertices.clone(), closed: pl.closed }
+        EntityKind::Line(l) => Some(Segment::Line(forja_geom::Line::new(l.a.xy(), l.b.xy()))),
+        EntityKind::Arc(a) => Some(Segment::Arc { arc: forja_geom::Arc::new(a.center.xy(), a.radius, a.start, a.end), ccw: true }),
+        EntityKind::LwPolyline(pl) => forja_geom::Polyline { vertices: pl.vertices.clone(), closed: pl.closed }
             .segments()
             .into_iter()
             .min_by(|x, y| x.closest(p).dist(p).total_cmp(&y.closest(p).dist(p))),

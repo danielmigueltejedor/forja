@@ -1,13 +1,13 @@
 //! The drawing area: grid, entities, selection highlighting, grips, rubber bands, object-snap
 //! markers, crosshair cursor, ViewCube, UCS icon and mouse handling.
 
-use cadcraft_color::Rgb;
-use cadcraft_doc::Handle;
-use cadcraft_engine::Input;
-use cadcraft_engine::snap::{self, SnapHit};
-use cadcraft_geom::{Bounds2, Mat3, Vec2};
-use cadcraft_render::{DisplayList, Kind};
 use egui::{Color32, Pos2, Rect, Sense, Shape, Stroke, pos2, vec2};
+use forja_color::Rgb;
+use forja_doc::Handle;
+use forja_engine::Input;
+use forja_engine::snap::{self, SnapHit};
+use forja_geom::{Bounds2, Mat3, Vec2};
+use forja_render::{DisplayList, Kind};
 
 use crate::CadApp;
 use crate::theme::Tokens;
@@ -47,7 +47,7 @@ pub struct Xf {
     pub center: Vec2,
     /// Pixels (points) per drawing unit.
     pub scale: f64,
-    /// The view twist (radians counterclockwise, `cadcraft_engine::View::twist`): the drawing
+    /// The view twist (radians counterclockwise, `forja_engine::View::twist`): the drawing
     /// appears turned by it about `center`. 0 for paper space.
     pub twist: f64,
 }
@@ -101,8 +101,8 @@ fn same_content(a: &ListKey, b: &ListKey) -> bool {
 #[derive(Default)]
 pub struct CanvasState {
     pub list: Option<DisplayList>,
-    /// The font set the list was drawn with ([`cadcraft_fonts::ttf::generation`] and
-    /// [`cadcraft_fonts::shx::generation`]): a new font folder redraws the text.
+    /// The font set the list was drawn with ([`forja_fonts::ttf::generation`] and
+    /// [`forja_fonts::shx::generation`]): a new font folder redraws the text.
     font_generation: u64,
     key: ListKey,
     /// The area `list` was built for (hatch patterns exist only inside it); a view leaving it
@@ -168,8 +168,8 @@ pub struct CanvasState {
     /// Dynamic block grips of the selection (cached), the one being dragged, and the list grip
     /// whose choices are open (and whether it opened this frame).
     pub(crate) dyn_grips: crate::dyngrips::Cache,
-    pub(crate) dyn_hot: Option<(Handle, i32, cadcraft_engine::doc::dynblock::GripPart)>,
-    pub(crate) dyn_menu: Option<(Handle, cadcraft_engine::doc::dynblock::DynGrip)>,
+    pub(crate) dyn_hot: Option<(Handle, i32, forja_engine::doc::dynblock::GripPart)>,
+    pub(crate) dyn_menu: Option<(Handle, forja_engine::doc::dynblock::DynGrip)>,
     pub(crate) dyn_menu_fresh: bool,
     /// Zoom to extents once the canvas size is known (after opening a drawing).
     pub zoom_pending: bool,
@@ -262,7 +262,7 @@ struct PointerInput {
 
 struct Navigation<'a> {
     rect: Rect,
-    tiles: &'a [(Rect, cadcraft_engine::ModelTile)],
+    tiles: &'a [(Rect, forja_engine::ModelTile)],
     response: &'a egui::Response,
     xf: Xf,
     pointer: PointerInput,
@@ -307,7 +307,7 @@ fn handle_scroll_zoom(app: &mut CadApp, ui: &mut egui::Ui, nav: &Navigation<'_>,
         && let Ok(st) = app.session.state_mut()
     {
         let view = st.view();
-        st.set_view_quiet(cadcraft_engine::View {
+        st.set_view_quiet(forja_engine::View {
             center: view.center - nav.xf.screen_delta_to_world(p.scroll),
             height: view.height,
             twist: view.twist,
@@ -346,7 +346,7 @@ fn handle_button_navigation(app: &mut CadApp, nav: &Navigation<'_>, inside: bool
             let delta = at - last;
             if let Ok(st) = app.session.state_mut() {
                 let view = st.view();
-                st.set_view_quiet(cadcraft_engine::View {
+                st.set_view_quiet(forja_engine::View {
                     center: view.center - nav.xf.screen_delta_to_world(delta),
                     height: view.height,
                     twist: view.twist,
@@ -368,13 +368,13 @@ struct CanvasPaint<'a> {
     painter: &'a egui::Painter,
     tokens: Tokens,
     full: Rect,
-    tiles: &'a [(Rect, cadcraft_engine::ModelTile)],
+    tiles: &'a [(Rect, forja_engine::ModelTile)],
     rect: Rect,
     xf: Xf,
     xf_paper: Xf,
-    view: cadcraft_engine::View,
-    active_vp: Option<cadcraft_doc::Viewport>,
-    active_clip: Option<cadcraft_render::clip::PolyClip>,
+    view: forja_engine::View,
+    active_vp: Option<forja_doc::Viewport>,
+    active_clip: Option<forja_render::clip::PolyClip>,
     inside: bool,
     on_menu: bool,
     hover_pos: Option<Pos2>,
@@ -511,7 +511,7 @@ fn paint_pointer_overlay(
     paper_rect: Option<Rect>,
     surround: Color32,
     selecting: bool,
-    sheet: Option<cadcraft_render::Sheet>,
+    sheet: Option<forja_render::Sheet>,
 ) {
     let app = &mut *frame.app;
     let ui = &mut *frame.ui;
@@ -586,8 +586,8 @@ struct DoubleClickContext<'a> {
     xf: Xf,
     xf_paper: Xf,
     scale: f64,
-    active_viewport: &'a Option<cadcraft_doc::Viewport>,
-    active_clip: &'a Option<cadcraft_render::clip::PolyClip>,
+    active_viewport: &'a Option<forja_doc::Viewport>,
+    active_clip: &'a Option<forja_render::clip::PolyClip>,
 }
 
 fn handle_double_click(app: &mut CadApp, ctx: DoubleClickContext<'_>) -> Option<bool> {
@@ -595,11 +595,11 @@ fn handle_double_click(app: &mut CadApp, ctx: DoubleClickContext<'_>) -> Option<
     if inside
         && double
         && !app.session.prompting()
-        && matches!(app.session.layout_space(), cadcraft_doc::Space::Paper(_))
+        && matches!(app.session.layout_space(), forja_doc::Space::Paper(_))
         && let Some(hp) = hover
     {
         let pp = xf_paper.to_world(hp);
-        let in_rect = |v: &cadcraft_doc::Viewport| (pp.x - v.center.x).abs() <= v.width / 2.0 && (pp.y - v.center.y).abs() <= v.height / 2.0;
+        let in_rect = |v: &forja_doc::Viewport| (pp.x - v.center.x).abs() <= v.width / 2.0 && (pp.y - v.center.y).abs() <= v.height / 2.0;
         let in_active = active_viewport.as_ref().is_some_and(|v| active_clip.as_ref().map_or(in_rect(v), |c| c.contains(pp)));
         if !in_active {
             app.canvas.hot_grips.clear();
@@ -700,8 +700,8 @@ fn update_hover(app: &mut CadApp, ui: &egui::Ui, inside: bool, hover_pos: Option
             && let (Some(w), Ok(st)) = (raw_world, app.session.state())
         {
             let filter = app.session.settings.previewfilter;
-            app.canvas.hover = cadcraft_engine::select::pick(&st.doc, &st.edit_space(), w, app.session.settings.pickbox.max(1.0) * 1.5 / scale)
-                .filter(|h| st.doc.entity(*h).is_none_or(|e| !cadcraft_engine::select::preview_filtered(&st.doc, e, filter)));
+            app.canvas.hover = forja_engine::select::pick(&st.doc, &st.edit_space(), w, app.session.settings.pickbox.max(1.0) * 1.5 / scale)
+                .filter(|h| st.doc.entity(*h).is_none_or(|e| !forja_engine::select::preview_filtered(&st.doc, e, filter)));
             app.canvas.hover_at = hover_pos;
         }
     } else {
@@ -738,7 +738,7 @@ struct PromptClickContext<'a> {
 fn collect_prompt_clicks(app: &mut CadApp, ui: &egui::Ui, context: PromptClickContext<'_>) -> bool {
     // egui drops a click whose button comes up a few pixels from where it went down (a drag to it),
     // and eframe hands a slow frame's clicks over together, which egui reports as one.
-    let point_prompt = app.session.current_prompt().is_some_and(|p| cadcraft_engine::pointmod::accepts(&p))
+    let point_prompt = app.session.current_prompt().is_some_and(|p| forja_engine::pointmod::accepts(&p))
         && app.session.pending_window.is_none()
         && !app.session.realtime_zoom_active();
     let pressed_primary = context.primary_clicked || (point_prompt && context.response.drag_stopped_by(egui::PointerButton::Primary));
@@ -829,7 +829,7 @@ pub fn show(app: &mut CadApp, ui: &mut egui::Ui) {
         Err(_) => (xf, None),
     };
     // A clipped active viewport's outline (picks and its heavy border follow it).
-    let active_clip = app.session.state().ok().and_then(|st| st.active_viewport().and_then(|(h, v)| cadcraft_render::viewport_clip(&st.doc, h, &v)));
+    let active_clip = app.session.state().ok().and_then(|st| st.active_viewport().and_then(|(h, v)| forja_render::viewport_clip(&st.doc, h, &v)));
     let Some(hatch_dialog) = handle_double_click(
         app,
         DoubleClickContext {

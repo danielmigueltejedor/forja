@@ -5,11 +5,11 @@ use super::{Bounds2, CadApp, DisplayList, Handle, Kind, Mat3, Rect, Rgb, Vec2, X
 /// [`VpContent`]), with its clip outline when it is clipped. A clipped viewport is clipped with
 /// the GPU's stencil buffer (`stencil`); without one its contents stay in the list.
 pub(super) fn split_viewport(
-    st: &cadcraft_engine::DocState,
+    st: &forja_engine::DocState,
     stencil: bool,
-) -> Option<(Handle, cadcraft_doc::Viewport, Option<cadcraft_render::clip::PolyClip>)> {
+) -> Option<(Handle, forja_doc::Viewport, Option<forja_render::clip::PolyClip>)> {
     let (h, vp) = st.active_viewport()?;
-    let clip = cadcraft_render::viewport_clip(&st.doc, h, &vp);
+    let clip = forja_render::viewport_clip(&st.doc, h, &vp);
     (clip.is_none() || stencil).then_some((h, vp, clip))
 }
 
@@ -66,7 +66,7 @@ impl VpContent {
 /// view, as `p = k·p0 + b` on paper. A model point m is at p0 = c + s0 R(m − c0) in the list and
 /// belongs at p = c + s R(m − vc), with c the viewport's centre, R its view twist and s, s0 paper
 /// units per model unit, so k = s / s0 and b = c (1 − k) + s R(c0 − vc).
-fn vp_motion(vp: &cadcraft_doc::Viewport, built: (Vec2, f64)) -> Option<(f64, Vec2)> {
+fn vp_motion(vp: &forja_doc::Viewport, built: (Vec2, f64)) -> Option<(f64, Vec2)> {
     let (s, k) = (vp.height / vp.view_height, built.1 / vp.view_height);
     let b = vp.center.xy() * (1.0 - k) + (built.0 - vp.view_center).rotate(vp.view_twist()) * s;
     (k.is_finite() && k > 0.0 && b.is_finite()).then_some((k, b))
@@ -126,7 +126,7 @@ pub(super) fn ensure_vp_content(app: &mut CadApp, xf_paper: &Xf, ctx: &egui::Con
         // The viewport with half its larger side of margin all round: panning by up to that much
         // only moves the geometry.
         let area = rect.expand(rect.width().max(rect.height()) * 0.5);
-        let opts = cadcraft_render::Options {
+        let opts = forja_render::Options {
             tolerance: 2f64.powi(band) * 0.5,
             min_dash: 2f64.powi(band) * 2.0,
             text: true,
@@ -140,7 +140,7 @@ pub(super) fn ensure_vp_content(app: &mut CadApp, xf_paper: &Xf, ctx: &egui::Con
             transparency,
             cancel: None,
         };
-        c.list = cadcraft_render::viewport_content(&st.doc, &st.space, h, area, &opts);
+        c.list = forja_render::viewport_content(&st.doc, &st.space, h, area, &opts);
         c.key = Some(key);
         c.view = view;
         c.twist = vp.view_twist();
@@ -227,7 +227,7 @@ fn draw_vp_mask(c: &mut VpContent, p: &egui::Painter, outline: &[Vec2], xf_paper
         }
         fan.bounds = Bounds2::from_points(outline.iter().copied());
         let len = u32::try_from(fan.tris.len()).unwrap_or(0);
-        fan.prims.push(cadcraft_render::DPrim {
+        fan.prims.push(forja_render::DPrim {
             handle: Handle(0),
             color: Rgb(0, 0, 0),
             aci7: false,
@@ -281,7 +281,7 @@ pub(super) struct VpHighlight {
 }
 
 impl VpHighlight {
-    pub(super) fn update(&mut self, st: &cadcraft_engine::DocState, handles: &[Handle], scale: f64) {
+    pub(super) fn update(&mut self, st: &forja_engine::DocState, handles: &[Handle], scale: f64) {
         let tolerance = viewport_highlight_tolerance(scale);
         let key = {
             use std::hash::{Hash, Hasher};
@@ -292,7 +292,7 @@ impl VpHighlight {
         };
         if self.key != Some(key) {
             let ents = handles.iter().filter_map(|h| st.doc.model.get(*h)).map(|e| e.as_ref());
-            self.list = cadcraft_render::build_entities(&st.doc, ents, &cadcraft_render::Options { tolerance, ..Default::default() });
+            self.list = forja_render::build_entities(&st.doc, ents, &forja_render::Options { tolerance, ..Default::default() });
             self.key = Some(key);
             self.list_gen = self.list_gen.wrapping_add(1);
         }

@@ -1,12 +1,12 @@
 //! Ctrl+C in one open drawing, Ctrl+V in another: the objects are pasted there.
 
-use cadcraft_engine::doc::EntityKind;
-use cadcraft_engine::geom::Vec2;
-use cadcraft_engine::{Input, Session};
-use cadcraft_ui_egui::{CadApp, Services};
 use egui::{Event, vec2};
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
+use forja_engine::doc::EntityKind;
+use forja_engine::geom::Vec2;
+use forja_engine::{Input, Session};
+use forja_ui_egui::{CadApp, Services};
 use serde_json::json;
 
 fn harness(app: CadApp) -> Harness<'static, CadApp> {
@@ -24,8 +24,8 @@ fn harness(app: CadApp) -> Harness<'static, CadApp> {
 #[test]
 fn copy_in_one_drawing_and_paste_in_another() {
     // A DXF writer for the clipboard text (the app installs the real one).
-    cadcraft_engine::cmd::file::set_io(cadcraft_engine::cmd::file::IoHooks {
-        read: |_, _| Ok(cadcraft_engine::doc::Drawing::new_metric()),
+    forja_engine::cmd::file::set_io(forja_engine::cmd::file::IoHooks {
+        read: |_, _| Ok(forja_engine::doc::Drawing::new_metric()),
         write: |_, _| Ok(b"0\nSECTION\n0\nENDSEC\n0\nEOF\n".to_vec()),
         plot: None,
     });
@@ -41,10 +41,10 @@ fn copy_in_one_drawing_and_paste_in_another() {
     h.event(Event::Copy);
     h.run_steps(2);
     // The copy is mirrored to the system clipboard as text (what another drawing or another
-    // CADCraft window pastes): checked on a frame of its own, where egui's output is kept.
+    // Forja window pastes): checked on a frame of its own, where egui's output is kept.
     let text = {
         let ctx = egui::Context::default();
-        let mut out = ctx.run_ui(egui::RawInput::default(), |ui| cadcraft_ui_egui::clipboard::mirror(h.state(), ui.ctx()));
+        let mut out = ctx.run_ui(egui::RawInput::default(), |ui| forja_ui_egui::clipboard::mirror(h.state(), ui.ctx()));
         out.textures_delta.clear();
         out.platform_output.commands.iter().find_map(|c| match c {
             egui::OutputCommand::CopyText(t) => Some(t.clone()),

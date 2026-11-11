@@ -1,10 +1,10 @@
 //! LEADER vertex elevations survive the shared DXF read path and DWG bridge (#2245).
 
-use cadcraft_color::Color;
-use cadcraft_doc::{Common, DimStyle, Drawing, EntityKind, Handle, Leader, Lineweight, Space};
-use cadcraft_dxf::Tag;
-use cadcraft_geom::Vec3;
-use cadcraft_io::{SaveOptions, Version, read, write_with};
+use forja_color::Color;
+use forja_doc::{Common, DimStyle, Drawing, EntityKind, Handle, Leader, Lineweight, Space};
+use forja_dxf::Tag;
+use forja_geom::Vec3;
+use forja_io::{SaveOptions, Version, read, write_with};
 
 type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 
@@ -66,7 +66,7 @@ fn dwg_preserves_leader_vertex_elevations() -> TestResult {
 fn missing_z_defaults_only_the_corresponding_vertex() -> TestResult {
     let vertices = [Vec3::new(1.0, 2.0, 4.0), Vec3::new(5.0, 6.0, 7.0), Vec3::new(9.0, 10.0, -3.0)];
     // All eight presence patterns include wholly 2D input and omitted first/middle/last Zs.
-    // Author the groups directly, independently of CADCraft's entity writer.
+    // Author the groups directly, independently of Forja's entity writer.
     for z_mask in 0..8 {
         let mut tags = vec![
             Tag::s(0, "SECTION"),
@@ -93,7 +93,7 @@ fn missing_z_defaults_only_the_corresponding_vertex() -> TestResult {
             expected.push(Vec3::new(p.x, p.y, if has_z { p.z } else { 0.0 }));
         }
         tags.extend([Tag::s(0, "ENDSEC"), Tag::s(0, "EOF")]);
-        let dxf = cadcraft_dxf::write_ascii(&tags);
+        let dxf = forja_dxf::write_ascii(&tags);
         let d = read(dxf.as_bytes(), "missing-z.dxf")?;
         let e = d.entity(Handle(0x10)).ok_or("LEADER missing")?;
         let EntityKind::Leader(l) = &e.kind else { return Err("expected LEADER".into()) };

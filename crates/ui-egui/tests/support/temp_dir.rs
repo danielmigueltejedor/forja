@@ -5,7 +5,7 @@
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 
-/// `cadcraft-<tag>-<pid>-<n>`: the process id keeps parallel test binaries apart and the counter
+/// `forja-<tag>-<pid>-<n>`: the process id keeps parallel test binaries apart and the counter
 /// keeps the tests of one binary apart, so no two tests ever share (or delete) one folder.
 pub struct TempDir(PathBuf);
 
@@ -13,7 +13,7 @@ impl TempDir {
     pub fn new(tag: &str) -> Self {
         static NEXT: AtomicU64 = AtomicU64::new(0);
         let n = NEXT.fetch_add(1, Ordering::Relaxed);
-        let dir = std::env::temp_dir().join(format!("cadcraft-{tag}-{}-{n}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("forja-{tag}-{}-{n}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).expect("create the test's temp folder");
         Self(dir)

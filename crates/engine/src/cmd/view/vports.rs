@@ -11,8 +11,8 @@
 
 use std::sync::Arc;
 
-use cadcraft_doc::{Drawing, EntityKind, Space, VportConfig, VportTile};
-use cadcraft_geom::Vec2;
+use forja_doc::{Drawing, EntityKind, Space, VportConfig, VportTile};
+use forja_geom::Vec2;
 use serde_json::{Value, json};
 
 use super::super::qselect::wildcard;

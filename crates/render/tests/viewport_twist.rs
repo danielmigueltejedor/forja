@@ -1,11 +1,11 @@
 //! A layout viewport with a view twist (DVIEW TWist inside it; DXF VIEWPORT group 51) shows model
 //! space turned on the sheet, on screen, when plotting and in the canvas's active-viewport list.
 
-use cadcraft_doc::{Common, Drawing, EntityKind, Line, Space, Viewport};
-use cadcraft_geom::{Bounds2, Vec2, Vec3};
-use cadcraft_render::{DisplayList, Options, VIEWPORT_CONTENT, build, build_plot, viewport_content};
+use forja_doc::{Common, Drawing, EntityKind, Line, Space, Viewport};
+use forja_geom::{Bounds2, Vec2, Vec3};
+use forja_render::{DisplayList, Options, VIEWPORT_CONTENT, build, build_plot, viewport_content};
 
-fn drawing(twist_deg: f64) -> (Drawing, cadcraft_doc::Handle) {
+fn drawing(twist_deg: f64) -> (Drawing, forja_doc::Handle) {
     let mut d = Drawing::new_imperial();
     // A model line along +X, 2 long, from the view centre.
     d.add(&Space::Model, Common::default(), EntityKind::Line(Line { a: Vec3::ZERO, b: Vec3::new(2.0, 0.0, 0.0) })).unwrap();

@@ -4,7 +4,7 @@
 
 use std::io::Cursor;
 
-use cadcraft_doc::Raster;
+use forja_doc::Raster;
 
 use crate::{IoError, Result};
 

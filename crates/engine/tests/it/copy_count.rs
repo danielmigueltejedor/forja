@@ -1,6 +1,6 @@
 //! JSON COPY refuses a `count` that is not an integer from 1 to 10000 instead of clamping it.
 
-use cadcraft_engine::Session;
+use forja_engine::Session;
 use serde_json::{Value, json};
 
 fn entities(s: &Session) -> usize {

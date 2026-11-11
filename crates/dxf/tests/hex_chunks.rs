@@ -7,7 +7,7 @@
 //! https://help.autodesk.com/cloudhelp/2025/ENU/AutoCAD-DXF/files/GUID-3F0380A5-1C15-464D-BC66-2C5F094BCFB9.htm
 //! https://help.autodesk.com/cloudhelp/2025/ENU/AutoCAD-DXF/files/GUID-FC1C3C69-DBC2-49E4-893A-000D6538C0FE.htm
 
-use cadcraft_dxf::{Tag, Value, parse, write_ascii_as, write_binary};
+use forja_dxf::{Tag, Value, parse, write_ascii_as, write_binary};
 
 const SENTINEL: &[u8] = b"AutoCAD Binary DXF\r\n\x1a\0";
 const FOLLOWING_BINARY: &[u8] = b"\x46\0\xf9\xff"; // group 70, signed i16 -7

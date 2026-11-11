@@ -1,20 +1,20 @@
 //! Grip dimensional input at the cursor: while one grip is stretched, the dimensions it changes
-//! ([`cadcraft_engine::grip_dims`]) show as value fields beside the object in place of the pointer
+//! ([`forja_engine::grip_dims`]) show as value fields beside the object in place of the pointer
 //! boxes. Typing goes into the active field; Tab locks a typed value and moves to the next field;
 //! locked values hold the grip; Enter places it there (the GRIP command gets a plain point).
 //!
 //! The command-line text is the active field's text, so Backspace and Escape behave as usual;
 //! text that isn't a value (a keyword such as `C` for Copy) goes to the command as typed.
 //!
-//! A prompt that asks for a distance from its base ([`cadcraft_engine::Prompt::distance`]: a
+//! A prompt that asks for a distance from its base ([`forja_engine::Prompt::distance`]: a
 //! circle's radius, a polyline arc's) shows the same way, as one length field from the base, and
 //! Enter sends the typed value to the command as a number.
 
-use cadcraft_doc::Handle;
-use cadcraft_engine::Input;
-use cadcraft_engine::grip_dims::{GripDim, GripDimKind, grip_dims, resolve};
-use cadcraft_geom::Vec2;
 use egui::{Color32, Pos2, Rect, Shape, Stroke, pos2, vec2};
+use forja_doc::Handle;
+use forja_engine::Input;
+use forja_engine::grip_dims::{GripDim, GripDimKind, grip_dims, resolve};
+use forja_geom::Vec2;
 
 use crate::CadApp;
 use crate::theme::Tokens;
@@ -136,7 +136,7 @@ pub fn submit(app: &mut CadApp) -> bool {
 }
 
 fn format(kind: GripDimKind, v: f64, (lu, lp): (i64, i64)) -> String {
-    if kind.is_angle() { format!("{}°", (v.to_degrees() * 10.0).round() / 10.0) } else { cadcraft_engine::units::format_distance(v, lu, lp) }
+    if kind.is_angle() { format!("{}°", (v.to_degrees() * 10.0).round() / 10.0) } else { forja_engine::units::format_distance(v, lu, lp) }
 }
 
 /// Draw the fields for the stretched grip at the cursor; `false` when there are none (the
@@ -230,8 +230,8 @@ fn padlock(p: &egui::Painter, c: Pos2, color: Color32) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cadcraft_doc::EntityKind;
     use egui::Event;
+    use forja_doc::EntityKind;
 
     fn run_frame(app: &mut CadApp, ctx: &egui::Context, events: Vec<Event>) {
         let raw = egui::RawInput { screen_rect: Some(Rect::from_min_size(Pos2::ZERO, vec2(1400.0, 900.0))), events, ..Default::default() };
@@ -265,7 +265,7 @@ mod tests {
 
     #[test]
     fn typed_length_tab_and_enter_place_the_grip_and_keywords_pass_through() {
-        let mut app = CadApp::new(cadcraft_engine::Session::new(), crate::Services::default());
+        let mut app = CadApp::new(forja_engine::Session::new(), crate::Services::default());
         let r = app.session.execute("line", &serde_json::json!({"points": [[0, 0], [10, 0]]})).unwrap();
         let h = Handle::parse_hex(r["handles"][0].as_str().unwrap()).unwrap();
         let ctx = egui::Context::default();
@@ -307,7 +307,7 @@ mod tests {
     #[test]
     fn circle_radius_shows_one_distance_field_and_typed_value_is_the_radius() {
         for cartesian in [true, false] {
-            let mut app = CadApp::new(cadcraft_engine::Session::new(), crate::Services::default());
+            let mut app = CadApp::new(forja_engine::Session::new(), crate::Services::default());
             app.session.settings.dynpi_cartesian = cartesian;
             // The UCS icon paints "X" and "Y" too.
             app.ui.show_ucs_icon = false;
@@ -326,7 +326,7 @@ mod tests {
             let text = crate::canvas::tests::painted_text(&mut app, &ctx, at);
             assert!(labels(&text).is_empty(), "pointer boxes at the radius prompt (DYNPIFORMAT {cartesian}):\n{text}");
             assert_eq!(dims(&mut app).len(), 1, "one distance field");
-            let r = cadcraft_engine::units::format_distance(app.canvas.cursor.unwrap().len(), 2, 4);
+            let r = forja_engine::units::format_distance(app.canvas.cursor.unwrap().len(), 2, 4);
             assert!(text.contains(&r), "no radius {r} in:\n{text}");
             assert!(text.contains("Specify radius of circle"), "{text}");
 
@@ -344,7 +344,7 @@ mod tests {
     /// The grip's length fields read the drawing's length units (LUNITS/LUPREC) (#841).
     #[test]
     fn length_fields_follow_the_drawing_units() {
-        let mut app = CadApp::new(cadcraft_engine::Session::new(), crate::Services::default());
+        let mut app = CadApp::new(forja_engine::Session::new(), crate::Services::default());
         app.session.execute("units", &serde_json::json!({"lunits": 4, "luprec": 4})).unwrap();
         let r = app.session.execute("line", &serde_json::json!({"points": [[0, 0], [10, 0]]})).unwrap();
         let h = Handle::parse_hex(r["handles"][0].as_str().unwrap()).unwrap();
@@ -355,7 +355,7 @@ mod tests {
         crate::canvas::tests::painted_text(&mut app, &ctx, at);
         let text = crate::canvas::tests::painted_text(&mut app, &ctx, at);
         let c = app.canvas.cursor.unwrap();
-        let arch = |v: f64| cadcraft_engine::units::format_distance(v, 4, 4);
+        let arch = |v: f64| forja_engine::units::format_distance(v, 4, 4);
         assert!(arch(c.len()) != arch(c.x) && arch(c.len()) != arch(c.y), "{c:?}");
         assert!(text.contains(&arch(c.len())), "no {} in:\n{text}", arch(c.len()));
     }

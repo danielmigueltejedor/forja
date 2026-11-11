@@ -12,7 +12,7 @@ fn angular_from_lines(s: &Session, h1: Handle, h2: Handle, at: Vec2) -> Option<E
         _ => None,
     };
     let ((a1, a2), (b1, b2)) = (line(h1)?, line(h2)?);
-    let (v, _, _) = cadcraft_geom::line_line_infinite(a1, a2, b1, b2)?;
+    let (v, _, _) = forja_geom::line_line_infinite(a1, a2, b1, b2)?;
     // Use the leg ends on the side of the picked arc location (the quadrant the user meant).
     let pick = |p: Vec2, q: Vec2, snap_p: AssocSnap, snap_q: AssocSnap| {
         let dir = if (p - v).len() > (q - v).len() { (p, snap_p) } else { (q, snap_q) };
@@ -56,7 +56,7 @@ pub(super) fn run_angular(s: &mut Session, p: &Value) -> Result<Value> {
             Some(EntityKind::Arc(a)) => a,
             _ => return Err(bad("dimangular", "object is not an arc")),
         };
-        let g = cadcraft_geom::Arc::new(a.center.xy(), a.radius, a.start, a.end);
+        let g = forja_geom::Arc::new(a.center.xy(), a.radius, a.start, a.end);
         let k = dim(s, DimKind::Angular3P, at, g.start_point(), g.end_point(), g.center, "");
         return Ok(json!({ "handle": add_dim(s, k)?.hex() }));
     }
@@ -78,7 +78,7 @@ pub(super) fn run_arclen(s: &mut Session, p: &Value) -> Result<Value> {
         Some(EntityKind::Arc(a)) => a,
         _ => return Err(bad("dimarc", "object is not an arc")),
     };
-    let ga = cadcraft_geom::Arc::new(a.center.xy(), a.radius, a.start, a.end);
+    let ga = forja_geom::Arc::new(a.center.xy(), a.radius, a.start, a.end);
     let k = dim(s, DimKind::ArcLength, at, ga.start_point(), ga.end_point(), ga.center, "");
     Ok(json!({ "handle": add_dim(s, k)?.hex() }))
 }
@@ -107,7 +107,7 @@ impl AngularM {
             return Some((*v, *a, *b));
         }
         let ((a1, a2), (b1, b2)) = (self.first?, self.second?);
-        let (v, _, _) = cadcraft_geom::line_line_infinite(a1, a2, b1, b2)?;
+        let (v, _, _) = forja_geom::line_line_infinite(a1, a2, b1, b2)?;
         let far = |p: Vec2, q: Vec2| if p.dist(v) > q.dist(v) { p } else { q };
         Some((v, far(a1, a2), far(b1, b2)))
     }
@@ -204,7 +204,7 @@ impl Interactive for AngularM {
                 let circle = s
                     .doc()?
                     .entity(h)
-                    .and_then(|e| if let EntityKind::Circle(c) = &e.kind { Some(cadcraft_geom::Circle::new(c.center.xy(), c.radius)) } else { None });
+                    .and_then(|e| if let EntityKind::Circle(c) = &e.kind { Some(forja_geom::Circle::new(c.center.xy(), c.radius)) } else { None });
                 if let Some(g) = circle.filter(|_| self.first.is_none()) {
                     // The center is the vertex and the pick the first endpoint; ask for the second.
                     self.vertex = true;
@@ -239,18 +239,18 @@ impl Interactive for AngularM {
 
 #[derive(Default)]
 pub(super) struct ArcLenM {
-    arc: Option<cadcraft_geom::Arc>,
+    arc: Option<forja_geom::Arc>,
     text: DimText,
     /// Partial: the points picked so far on the arc (`None` when not choosing a part).
     partial: Option<Vec<Vec2>>,
 }
 
 /// The part of `arc` between the points nearest `p` and `q` (in the arc's direction).
-fn arc_part(arc: &cadcraft_geom::Arc, p: Vec2, q: Vec2) -> Option<cadcraft_geom::Arc> {
+fn arc_part(arc: &forja_geom::Arc, p: Vec2, q: Vec2) -> Option<forja_geom::Arc> {
     let sweep = arc.sweep();
     // Offset along the arc from its start, clamped to the nearer end when the point is off the arc.
     let along = |x: Vec2| {
-        let t = cadcraft_geom::ccw_sweep(arc.start, arc.center.angle_to(x));
+        let t = forja_geom::ccw_sweep(arc.start, arc.center.angle_to(x));
         if t <= sweep {
             t
         } else if t - sweep < std::f64::consts::TAU - t {
@@ -261,7 +261,7 @@ fn arc_part(arc: &cadcraft_geom::Arc, p: Vec2, q: Vec2) -> Option<cadcraft_geom:
     };
     let (t1, t2) = (along(p), along(q));
     let (lo, hi) = (t1.min(t2), t1.max(t2));
-    (hi - lo > 1e-9).then(|| cadcraft_geom::Arc::new(arc.center, arc.radius, arc.start + lo, arc.start + hi))
+    (hi - lo > 1e-9).then(|| forja_geom::Arc::new(arc.center, arc.radius, arc.start + lo, arc.start + hi))
 }
 
 impl Interactive for ArcLenM {
@@ -302,7 +302,7 @@ impl Interactive for ArcLenM {
         match (self.arc, i) {
             (None, Input::Point(p)) => {
                 if let Some(EntityKind::Arc(a)) = pick_at(s, p).and_then(|h| s.doc().ok()?.entity(h).map(|e| e.kind.clone())) {
-                    self.arc = Some(cadcraft_geom::Arc::new(a.center.xy(), a.radius, a.start, a.end));
+                    self.arc = Some(forja_geom::Arc::new(a.center.xy(), a.radius, a.start, a.end));
                 } else {
                     s.echo("Select an arc.");
                 }

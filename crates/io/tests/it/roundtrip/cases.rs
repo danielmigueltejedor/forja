@@ -7,11 +7,11 @@ pub(super) mod complex;
 pub(super) mod geometry;
 pub(super) mod properties;
 
-use cadcraft_color::{Color, Rgb};
-use cadcraft_doc::{
+use forja_color::{Color, Rgb};
+use forja_doc::{
     AnnoScale, Circle, Common, Drawing, EntityKind, HAlign, Layer, Line, Linetype, Lineweight, RawTag, Space, Text, TextStyle, Transparency, VAlign,
 };
-use cadcraft_geom::Vec3;
+use forja_geom::Vec3;
 
 pub(super) struct Case {
     pub name: String,
@@ -285,8 +285,8 @@ pub(super) fn text_alignment(with_point: bool) -> Vec<Case> {
                 if let Some(anchor) = align_pt
                     && !matches!(halign, HAlign::Aligned | HAlign::Fit)
                 {
-                    let (h, v) = cadcraft_render::text_align(halign, valign);
-                    let params = cadcraft_fonts::TextParams {
+                    let (h, v) = forja_render::text_align(halign, valign);
+                    let params = forja_fonts::TextParams {
                         insert: t.insert.xy(),
                         align_pt: Some(anchor.xy()),
                         height: t.height,
@@ -298,7 +298,7 @@ pub(super) fn text_alignment(with_point: bool) -> Vec<Case> {
                         backwards: false,
                         upside_down: false,
                     };
-                    t.insert = cadcraft_fonts::baseline_start(&cadcraft_fonts::TextFont::Stroke, &t.value, &params).to3(anchor.z);
+                    t.insert = forja_fonts::baseline_start(&forja_fonts::TextFont::Stroke, &t.value, &params).to3(anchor.z);
                 }
                 cases.push(entity_case(&format!("text/alignment/{halign:?}/{valign:?}/point={align_pt:?}"), Common::default(), EntityKind::Text(t)));
             }

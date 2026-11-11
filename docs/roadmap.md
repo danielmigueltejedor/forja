@@ -1,4 +1,4 @@
-# CADCraft roadmap detail
+# Forja roadmap detail
 
 > **Last reviewed:** 2026-10-24 · **Last updated:** 2026-10-24 · **Change:** minor (re-audit against main 41d9b5e95: alpha-gate evidence, CI gate, beta checklist states, open-PR and catalog counts; percentages and hours not re-scored; previously: re-audit against main e707ab4d: alpha-gate evidence, beta checklist states and milestone notes; percentages and hours not re-scored) · **Target:** Autodesk AutoCAD 2027
 
@@ -26,7 +26,7 @@ Items 2 and 7 are the open [alpha gate](#alpha-gate) rows.
 
 ## Alpha gate
 
-The core workflows a typical AutoCAD professional does every day. CADCraft is **pre-alpha** because four of the five fail the gate; the failing rows are
+The core workflows a typical AutoCAD professional does every day. Forja is **pre-alpha** because four of the five fail the gate; the failing rows are
 the alpha checklist. Main platform: macOS.
 
 | Core workflow | Works end to end? | Evidence | Hours to pass |

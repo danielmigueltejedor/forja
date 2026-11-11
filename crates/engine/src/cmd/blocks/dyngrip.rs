@@ -3,10 +3,10 @@
 //! grip begins, with the reference re-evaluated under the cursor as its preview. Typing a number
 //! at a distance's grip sets the distance.
 
-use cadcraft_doc::color::Color;
-use cadcraft_doc::dynblock::{self, GripPart, GripShape};
-use cadcraft_doc::{Common, Drawing, Entity, EntityKind, Handle, Lineweight, Transparency};
-use cadcraft_geom::Vec2;
+use forja_doc::color::Color;
+use forja_doc::dynblock::{self, GripPart, GripShape};
+use forja_doc::{Common, Drawing, Entity, EntityKind, Handle, Lineweight, Transparency};
+use forja_geom::Vec2;
 use serde_json::{Value, json};
 
 use crate::cmd::{bad, point_param, str_param};

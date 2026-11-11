@@ -1,15 +1,15 @@
 //! OOPS, as AutoCAD 2024 runs it (accoreconsole: a line A, a line B, a circle C and a line D, these
 //! scripts, then the drawing's `entnext` order read back).
 
-use cadcraft_engine::Session;
-use cadcraft_engine::cmd::file::{EntityCodec, set_entity_codec};
-use cadcraft_engine::doc::{Common, EntityKind, Handle, Line, Space};
-use cadcraft_engine::geom::Vec3;
+use forja_engine::Session;
+use forja_engine::cmd::file::{EntityCodec, set_entity_codec};
+use forja_engine::doc::{Common, EntityKind, Handle, Line, Space};
+use forja_engine::geom::Vec3;
 use serde_json::{Value, json};
 
 /// A session that `entmake` works in.
 fn session() -> Session {
-    set_entity_codec(EntityCodec { groups: cadcraft_io::entity_groups, entity: cadcraft_io::entity_from_groups });
+    set_entity_codec(EntityCodec { groups: forja_io::entity_groups, entity: forja_io::entity_from_groups });
     Session::new()
 }
 

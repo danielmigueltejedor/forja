@@ -1,17 +1,17 @@
 //! Autosave and Drawing Recovery in the app. The engine decides what to write and writes it
-//! ([`cadcraft_engine::autosave`]); this runs it every frame, keeps SAVETIME, SAVEFILEPATH and ISAVEBAK with
+//! ([`forja_engine::autosave`]); this runs it every frame, keeps SAVETIME, SAVEFILEPATH and ISAVEBAK with
 //! the preferences, and shows the Drawing Recovery list after a crash: each autosaved drawing can
 //! be opened (as an unsaved copy) or discarded. On the web there is no autosave yet.
 
-use cadcraft_engine::autosave::{self, Recoverable};
 use egui::{RichText, vec2};
+use forja_engine::autosave::{self, Recoverable};
 use serde_json::{Value, json};
 
 use crate::CadApp;
 use crate::theme::Tokens;
 
 /// The host storage key for [`prefs_json`].
-pub const PREFS_KEY: &str = "cadcraft.autosave";
+pub const PREFS_KEY: &str = "forja.autosave";
 
 /// SAVETIME, SAVEFILEPATH and ISAVEBAK as JSON for the host's storage.
 pub fn prefs_json() -> String {
@@ -105,7 +105,7 @@ impl CadApp {
         #[cfg(not(target_arch = "wasm32"))]
         {
             // A write that fails while the app is idle must still reach the notice.
-            if self.autosave.as_ref().is_some_and(cadcraft_engine::autosave::Autosaver::results_pending) {
+            if self.autosave.as_ref().is_some_and(forja_engine::autosave::Autosaver::results_pending) {
                 _ctx.request_repaint_after(std::time::Duration::from_secs(1));
             }
             self.note_autosave_failure(_ctx);
@@ -204,7 +204,7 @@ pub fn show(app: &mut CadApp, ctx: &egui::Context) {
         ui.set_width(460.0);
         ui.label(RichText::new("Drawing Recovery").strong());
         ui.add_space(4.0);
-        ui.label("CADCraft did not close normally. These drawings were autosaved:");
+        ui.label("Forja did not close normally. These drawings were autosaved:");
         ui.add_space(6.0);
         egui::Grid::new("cc_recovery_list").num_columns(4).spacing(vec2(12.0, 6.0)).show(ui, |ui| {
             for (i, item) in app.recovery.items.iter().enumerate() {
@@ -261,10 +261,10 @@ pub fn gpu_notice(app: &mut CadApp, ctx: &egui::Context) {
         .show(ctx, |ui| {
             ui.set_width(440.0);
             if n.fault.lost {
-                ui.label("The graphics device stopped working (a driver reset or a GPU that stopped responding). CADCraft can't draw again until it restarts.");
+                ui.label("The graphics device stopped working (a driver reset or a GPU that stopped responding). Forja can't draw again until it restarts.");
             } else {
                 let times = if n.fault.errors == 1 { String::new() } else { format!(" ({} times)", n.fault.errors) };
-                ui.label(format!("The graphics driver reported an error{times}. CADCraft kept running, but the drawing may not display correctly."));
+                ui.label(format!("The graphics driver reported an error{times}. Forja kept running, but the drawing may not display correctly."));
             }
             ui.add_space(4.0);
             match n.autosaved {
@@ -272,7 +272,7 @@ pub fn gpu_notice(app: &mut CadApp, ctx: &egui::Context) {
                 1 => ui.label("A recovery copy of the open drawing with unsaved changes was autosaved."),
                 k => ui.label(format!("Recovery copies of {k} drawings with unsaved changes were autosaved.")),
             };
-            ui.label(RichText::new("Save your work and restart CADCraft. Recovery copies are offered at the next start if needed.").strong());
+            ui.label(RichText::new("Save your work and restart Forja. Recovery copies are offered at the next start if needed.").strong());
             ui.add_space(4.0);
             ui.collapsing("Details", |ui| {
                 ui.label(RichText::new(&n.fault.message).color(t.text_dim).monospace());
@@ -302,7 +302,7 @@ pub fn failure_notice(app: &mut CadApp, ctx: &egui::Context) {
         .anchor(egui::Align2::CENTER_TOP, vec2(0.0, 48.0))
         .show(ctx, |ui| {
             ui.set_width(440.0);
-            ui.label("CADCraft could not write a recovery copy, so recent changes would be lost if the app stopped now.");
+            ui.label("Forja could not write a recovery copy, so recent changes would be lost if the app stopped now.");
             ui.label(RichText::new("Save your work. Autosave tries again after the SAVETIME interval; its folder is in Options.").strong());
             ui.add_space(4.0);
             ui.collapsing("Details", |ui| {

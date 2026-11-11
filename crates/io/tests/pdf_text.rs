@@ -5,9 +5,9 @@
 //!
 //! The fonts are tiny synthetic TrueType files built here (no font files in the repository).
 
-use cadcraft_doc::{Common, Drawing, EntityKind, Space, Text, TextStyle, Viewport};
-use cadcraft_geom::{Vec2, Vec3};
-use cadcraft_io::plot;
+use forja_doc::{Common, Drawing, EntityKind, Space, Text, TextStyle, Viewport};
+use forja_geom::{Vec2, Vec3};
+use forja_io::plot;
 use serde_json::json;
 
 #[path = "support/pdf_read.rs"]
@@ -153,9 +153,9 @@ fn test_font(fs_type: u16, metrics: usize) -> Vec<u8> {
 fn fonts() {
     static ONCE: std::sync::Once = std::sync::Once::new();
     ONCE.call_once(|| {
-        cadcraft_fonts::ttf::register("cadcraft-pdf-test.ttf", test_font(0, 3));
-        cadcraft_fonts::ttf::register("cadcraft-pdf-restricted.ttf", test_font(0x0002, 3));
-        cadcraft_fonts::ttf::register("cadcraft-pdf-short-hmtx.ttf", test_font(0, 1));
+        forja_fonts::ttf::register("forja-pdf-test.ttf", test_font(0, 3));
+        forja_fonts::ttf::register("forja-pdf-restricted.ttf", test_font(0x0002, 3));
+        forja_fonts::ttf::register("forja-pdf-short-hmtx.ttf", test_font(0, 1));
     });
 }
 
@@ -184,9 +184,9 @@ fn text(d: &mut Drawing, space: &Space, style: &str, at: (f64, f64), value: &str
 fn drawing() -> Drawing {
     fonts();
     let mut d = Drawing::new_metric();
-    style(&mut d, "Real", "cadcraft-pdf-test.ttf");
-    style(&mut d, "Locked", "cadcraft-pdf-restricted.ttf");
-    style(&mut d, "Short", "cadcraft-pdf-short-hmtx.ttf");
+    style(&mut d, "Real", "forja-pdf-test.ttf");
+    style(&mut d, "Locked", "forja-pdf-restricted.ttf");
+    style(&mut d, "Short", "forja-pdf-short-hmtx.ttf");
     d
 }
 
@@ -263,8 +263,8 @@ fn the_subset_is_a_valid_truetype_font() {
     text(&mut d, &Space::Model, "Real", (0.0, 0.0), "A", (0.0, 1.0, 0.0));
     let doc = pdf(&d, &Space::Model, json!({}));
     let file = doc.pages[0].fonts[0].font_file.clone().expect("an embedded font file");
-    let face = cadcraft_fonts::ttf::Face::new(std::sync::Arc::new(file.clone()), 0).expect("the subset parses");
-    assert_eq!(cadcraft_fonts::subset::embedding(&face), cadcraft_fonts::subset::Embedding::Allowed);
+    let face = forja_fonts::ttf::Face::new(std::sync::Arc::new(file.clone()), 0).expect("the subset parses");
+    assert_eq!(forja_fonts::subset::embedding(&face), forja_fonts::subset::Embedding::Allowed);
     // Glyph A kept, B (unused) left out: the subset is smaller than the font.
     assert!(file.len() < test_font(0, 3).len());
 }

@@ -1,6 +1,6 @@
 //! PAGESETUP: the plot style table and "Display plot styles" of a layout (issue #410).
 
-use cadcraft_engine::Session;
+use forja_engine::Session;
 use serde_json::json;
 
 #[test]
@@ -94,7 +94,7 @@ fn stylesmanager_creates_edits_saves_and_loads_tables() {
     assert!(s.execute("stylesmanager", &json!({"action": "explode"})).is_err());
     #[cfg(not(target_arch = "wasm32"))]
     {
-        let path = std::env::temp_dir().join(format!("cadcraft-pstyle-{}.stb.json", std::process::id()));
+        let path = std::env::temp_dir().join(format!("forja-pstyle-{}.stb.json", std::process::id()));
         let p = path.to_string_lossy().to_string();
         s.execute("stylesmanager", &json!({"action": "save", "name": "office.stb", "path": p})).unwrap();
         s.execute("stylesmanager", &json!({"action": "load", "path": p, "name": "copy.stb"})).unwrap();
@@ -111,7 +111,7 @@ fn stylesmanager_creates_edits_saves_and_loads_tables() {
 #[test]
 fn plot_style_save_is_atomic_and_keeps_permissions() {
     use std::os::unix::fs::PermissionsExt;
-    let dir = std::env::temp_dir().join(format!("cadcraft-pstyle-atomic-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("forja-pstyle-atomic-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).unwrap();
     let path = dir.join("office.stb.json");
@@ -119,7 +119,7 @@ fn plot_style_save_is_atomic_and_keeps_permissions() {
     std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600)).unwrap();
     let victim = dir.join("victim");
     std::fs::write(&victim, "keep").unwrap();
-    std::os::unix::fs::symlink(&victim, dir.join("office.stb.json.cadcraft-tmp")).unwrap();
+    std::os::unix::fs::symlink(&victim, dir.join("office.stb.json.forja-tmp")).unwrap();
 
     let mut s = Session::new();
     s.execute("stylesmanager", &json!({"action": "new", "name": "office.stb"})).unwrap();

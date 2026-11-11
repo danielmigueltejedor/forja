@@ -5,9 +5,9 @@ name: ast-grep
 on:
   push:
     branches: [main]
-    paths: ["lint/ast-grep/**", "apps/cadcraft-cli/src/**", "apps/cadcraft/src/launch_args.rs", "apps/cadcraft/src/main.rs", ".github/workflows/ast-grep.yml"]
+    paths: ["lint/ast-grep/**", "apps/forja-cli/src/**", "apps/forja/src/launch_args.rs", "apps/forja/src/main.rs", ".github/workflows/ast-grep.yml"]
   pull_request:
-    paths: ["lint/ast-grep/**", "apps/cadcraft-cli/src/**", "apps/cadcraft/src/launch_args.rs", "apps/cadcraft/src/main.rs", ".github/workflows/ast-grep.yml"]
+    paths: ["lint/ast-grep/**", "apps/forja-cli/src/**", "apps/forja/src/launch_args.rs", "apps/forja/src/main.rs", ".github/workflows/ast-grep.yml"]
   workflow_dispatch:
 
 permissions:
@@ -23,4 +23,4 @@ jobs:
     uses: storytold/craft-common-actions/.github/workflows/ast-grep.yml@main
     with:
       config: lint/ast-grep/sgconfig.yml
-      paths: apps/cadcraft-cli/src apps/cadcraft/src/launch_args.rs apps/cadcraft/src/main.rs
+      paths: apps/forja-cli/src apps/forja/src/launch_args.rs apps/forja/src/main.rs

@@ -27,7 +27,7 @@ fn new_layout_gets_viewport_zoomed_to_extents() {
     let vps = viewports(&s, "Layout3");
     assert_eq!(vps.len(), 1);
     let (_, v) = &vps[0];
-    let sheet = cadcraft_render::sheet(s.doc().unwrap(), "Layout3").unwrap();
+    let sheet = forja_render::sheet(s.doc().unwrap(), "Layout3").unwrap();
     assert!((v.width - sheet.printable.width()).abs() < 1e-9 && (v.height - sheet.printable.height()).abs() < 1e-9);
     assert!(v.id >= 2);
     // Model extents (0,0)..(100,45) are centred and fully visible.
@@ -35,9 +35,9 @@ fn new_layout_gets_viewport_zoomed_to_extents() {
     let model_w = v.view_height * v.width / v.height;
     assert!(model_w >= 100.0 && v.view_height >= 45.0);
     // The render shows model geometry inside the viewport only.
-    let list = cadcraft_render::build(s.doc().unwrap(), &Space::Paper("Layout3".into()), &cadcraft_render::Options::default());
+    let list = forja_render::build(s.doc().unwrap(), &Space::Paper("Layout3".into()), &forja_render::Options::default());
     let rect = Bounds2::new(v.center.xy() - Vec2::new(v.width, v.height) / 2.0, v.center.xy() + Vec2::new(v.width, v.height) / 2.0).expand(1e-9);
-    let content: Vec<_> = list.prims.iter().filter(|p| p.handle == cadcraft_render::VIEWPORT_CONTENT).collect();
+    let content: Vec<_> = list.prims.iter().filter(|p| p.handle == forja_render::VIEWPORT_CONTENT).collect();
     assert!(content.len() >= 2);
     assert!(content.iter().all(|p| list.points(p).iter().all(|q| rect.contains(*q))));
     assert!(list.sheet.is_some());
@@ -151,13 +151,13 @@ fn viewport_scale_lock_and_layers() {
     assert!(s.execute("vplayer", &json!({"handle": h, "colors": {"Walls": "bylayer"}})).is_err());
     assert!(s.execute("vplayer", &json!({"handle": h, "colors": {"Walls": [1]}})).is_err());
     let vv = viewports(&s, "Layout1");
-    assert_eq!(vv[0].1.layer_colors, vec![("Walls".to_string(), cadcraft_color::Color::Index(1))]);
+    assert_eq!(vv[0].1.layer_colors, vec![("Walls".to_string(), forja_color::Color::Index(1))]);
     s.execute("vplayer", &json!({"handle": h, "colors": {"walls": null}})).unwrap();
     assert!(viewports(&s, "Layout1")[0].1.layer_colors.is_empty());
     assert!((v[0].1.view_height - 30.0).abs() < 1e-9);
     // Layer 0 frozen in the viewport: nothing of the model shows.
-    let list = cadcraft_render::build(s.doc().unwrap(), &Space::Paper("Layout1".into()), &cadcraft_render::Options::default());
-    assert!(list.prims.iter().all(|p| p.handle != cadcraft_render::VIEWPORT_CONTENT));
+    let list = forja_render::build(s.doc().unwrap(), &Space::Paper("Layout1".into()), &forja_render::Options::default());
+    assert!(list.prims.iter().all(|p| p.handle != forja_render::VIEWPORT_CONTENT));
     for bad_p in
         [json!({"handle": h, "scale": "0:0"}), json!({"handle": h, "scale": -1}), json!({"handle": h, "viewHeight": 0}), json!({"handle": "FFFFFF"})]
     {
@@ -170,7 +170,7 @@ fn pagesetup_paper_table() {
     let mut s = Session::new();
     let r = s.execute("pagesetup", &json!({"layout": "Layout1", "paper": "A3", "landscape": true, "margins": [5, 5, 5, 5]})).unwrap();
     assert_eq!(r["page"]["widthMm"], 297.0);
-    let sheet = cadcraft_render::sheet(s.doc().unwrap(), "Layout1").unwrap();
+    let sheet = forja_render::sheet(s.doc().unwrap(), "Layout1").unwrap();
     // Imperial drawing: paper units are inches.
     assert!((sheet.size.x - 420.0 / 25.4).abs() < 1e-9 && (sheet.size.y - 297.0 / 25.4).abs() < 1e-9);
     assert!(s.execute("pagesetup", &json!({"layout": "Layout1", "paper": "Z12"})).is_err());
@@ -250,7 +250,7 @@ fn plot_goes_through_the_hook() {
     assert!(text.contains("Paper(\"Layout1\")"), "one sheet renders that layout, not the session space: {text}");
     #[cfg(not(target_arch = "wasm32"))]
     {
-        let path = std::env::temp_dir().join(format!("cadcraft-plot-test-{}.pdf", std::process::id()));
+        let path = std::env::temp_dir().join(format!("forja-plot-test-{}.pdf", std::process::id()));
         let ps = path.to_string_lossy().to_string();
         let r = s.execute("plot", &json!({"path": ps})).unwrap();
         assert!(r["bytes"].as_u64().unwrap() > 0);
@@ -320,7 +320,7 @@ fn plot_help_names_the_device_and_the_built_in_devices() {
         assert!(help.contains("device?"), "{id}: {help}");
     }
     let help = crate::find_command("plot").map(|c| c.params).unwrap_or_default();
-    for name in ["CADCraft PDF", "CADCraft PNG", "CADCraft SVG"] {
+    for name in ["Forja PDF", "Forja PNG", "Forja SVG"] {
         assert!(super::super::plotters::find_device(name).is_some(), "{name} is not a device");
         assert!(help.contains(name), "plot help lacks {name}");
     }
@@ -341,7 +341,7 @@ fn plot_path_extension_picks_the_format_like_export() {
         return; // another test installed hooks without a plotter first
     }
     let mut s = session_with_model();
-    let dir = std::env::temp_dir().join(format!("cadcraft-plot-ext-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("forja-plot-ext-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let path = |n: &str| dir.join(n).to_string_lossy().to_string();
     let upper = s.execute("plot", &json!({"path": path("X.PNG")})).unwrap();
@@ -352,7 +352,7 @@ fn plot_path_extension_picks_the_format_like_export() {
     let e = s.execute("plot", &json!({"path": path("noext")})).unwrap_err().to_string();
     assert!(e.contains("png") && e.contains("svg") && e.contains("pdf"), "{e}");
     assert!(!dir.join("noext").exists());
-    let e = s.execute("plot", &json!({"path": path("y.png"), "device": "CADCraft PDF"})).unwrap_err().to_string();
+    let e = s.execute("plot", &json!({"path": path("y.png"), "device": "Forja PDF"})).unwrap_err().to_string();
     assert!(e.contains("writes pdf") && e.contains("png"), "{e}");
     // A device that resolves to none, or a null/unknown `output`, names no format: the refusal stands.
     for p in [

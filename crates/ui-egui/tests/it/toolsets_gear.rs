@@ -1,11 +1,11 @@
 //! The gear on a Tool Sets category header opens that category's options menu and no longer
 //! collapses the category it sits on.
 
-use cadcraft_engine::Session;
-use cadcraft_ui_egui::{CadApp, Services};
 use egui::vec2;
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
+use forja_engine::Session;
+use forja_ui_egui::{CadApp, Services};
 
 /// A tool name that appears exactly once in the Drafting palette, so the accessibility tree can
 /// be queried for it without running into a toolbar button of the same name.

@@ -11,8 +11,8 @@
 //! - Fonts are found by name through the font table (`table`): registered bytes
 //!   ([`register`], the web build's files opened alongside a drawing), an app-set
 //!   [`FontProvider`], the folders of opened drawings ([`add_drawing_dir`]) and the support
-//!   search path ([`set_search_path`], `CADCRAFT_SHXPATH`), after the font map
-//!   ([`set_font_map`]). CADCraft never looks inside another CAD program's installation.
+//!   search path ([`set_search_path`], `FORJA_SHXPATH`), after the font map
+//!   ([`set_font_map`]). Forja never looks inside another CAD program's installation.
 //! - [`ShxText`] is a text style's pair of fonts (main + big font) and orientation, which the
 //!   text layout draws ([`crate::TextFont::Shx`]): advances are the pen's end positions, so
 //!   widths and extents follow the font's own metrics.
@@ -37,7 +37,7 @@ mod text;
 use std::collections::HashMap;
 use std::sync::{Arc, PoisonError, RwLock};
 
-use cadcraft_geom::Vec2;
+use forja_geom::Vec2;
 
 pub use compile::compile;
 pub use table::{
@@ -54,7 +54,7 @@ pub enum ShxError {
     NotShx,
     /// The file ends inside its header or index.
     Truncated,
-    /// The file is larger, or has more of something, than CADCraft reads.
+    /// The file is larger, or has more of something, than Forja reads.
     TooLarge,
     /// The file is well-formed but holds no shape.
     Empty,

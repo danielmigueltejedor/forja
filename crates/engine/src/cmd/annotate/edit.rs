@@ -347,7 +347,7 @@ impl Interactive for OverrideM {
                 if t.eq_ignore_ascii_case("c") {
                     self.clear = true;
                     self.selecting = Some(crate::cmd::machines::SelectPhase::default());
-                } else if cadcraft_doc::DimStyle::field_name(&t).is_some() {
+                } else if forja_doc::DimStyle::field_name(&t).is_some() {
                     self.var = Some(t);
                 } else {
                     s.echo(format!("Unknown dimension variable \"{t}\"."));

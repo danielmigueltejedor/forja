@@ -14,7 +14,7 @@ pub(super) fn annotative_xdata(w: &mut W) {
     w.s(1002, "}");
 }
 
-/// Override (`ACAD` DSTYLE) and associativity (`CADCRAFT` ASSOC) xdata of a dimension.
+/// Override (`ACAD` DSTYLE) and associativity (`FORJA` ASSOC) xdata of a dimension.
 pub(super) fn dim_xdata(w: &mut W, dm: &Dimension, cx: &Ctx) {
     let mut ov = W { t: Vec::new(), next: 0, pstyles: HashMap::new(), layers: HashMap::new(), reactors: HashMap::new() };
     let mut sah = false;
@@ -56,7 +56,7 @@ pub(super) fn dim_xdata(w: &mut W, dm: &Dimension, cx: &Ctx) {
 /// dimension line's (`base`), in degrees.
 pub(super) fn oblique_52(w: &mut W, dm: &Dimension, base: f64) {
     if let Some(a) = dm.marks.oblique.filter(|a| a.is_finite()) {
-        w.f(52, cadcraft_geom::norm_angle(a - base).to_degrees());
+        w.f(52, forja_geom::norm_angle(a - base).to_degrees());
     }
 }
 
@@ -126,7 +126,7 @@ pub(super) fn layer_and_props(w: &mut W, c: &Common, base: Option<&Common>) {
         Color::ByLayer if write(true, |b| b.color == Color::ByLayer) => w.i(62, 256),
         Color::ByLayer => {}
         Color::True(rgb) => {
-            w.i(62, i64::from(cadcraft_color::nearest_aci(rgb)));
+            w.i(62, i64::from(forja_color::nearest_aci(rgb)));
             w.i(420, i64::from(rgb.to_u32()));
         }
         c => w.i(62, i64::from(c.to_aci())),
@@ -196,11 +196,11 @@ fn attrib_flags(a: &Attrib) -> i64 {
 /// from DWG as is (it recomputes it only for DXF): writing the alignment point there drew centred
 /// and right-aligned text from the wrong end in AutoCAD (#1050).
 ///
-/// The stored point is kept when it is close to where CADCraft's font puts the baseline start:
+/// The stored point is kept when it is close to where Forja's font puts the baseline start:
 /// then it is AutoCAD's own (exact for its fonts). It is replaced when it is clearly stale: the
 /// alignment point itself (text made here) or a text whose length changed since. Close means
 /// along the baseline within a tenth of the text's width plus half its height (AutoCAD's fonts,
-/// or the ones CADCraft substitutes for them, differ most in width, and most on short texts) and
+/// or the ones Forja substitutes for them, differ most in width, and most on short texts) and
 /// across it within a fifth of its height: Left Middle and Left Bottom text made here, whose
 /// alignment point is only half or a third of a height from the baseline start, must not pass
 /// for AutoCAD's.
@@ -217,7 +217,7 @@ fn text_insert(d: &Drawing, t: &Text) -> Vec3 {
         let width = t.align_pt.map_or(0.0, |a| 2.0 * a.xy().dist(computed.xy()));
         off.len() <= 0.1 * width + 0.5 * h
     } else {
-        let width = cadcraft_fonts::line_width(&t.value, h, t.width_factor.abs());
+        let width = forja_fonts::line_width(&t.value, h, t.width_factor.abs());
         off.x.abs() <= 0.1 * width + 0.5 * h && off.y.abs() <= 0.2 * h
     };
     if close { t.insert } else { computed }
@@ -227,8 +227,8 @@ fn computed_text_insert(d: &Drawing, t: &Text) -> Vec3 {
     let justified = !matches!((t.halign, t.valign), (HAlign::Left, VAlign::Baseline) | (HAlign::Aligned | HAlign::Fit, _));
     let Some(a) = t.align_pt.filter(|_| justified) else { return t.insert };
     let ts = d.text_style(&t.style).cloned().unwrap_or_default();
-    let (h, v) = cadcraft_render::text_align(t.halign, t.valign);
-    let p = cadcraft_fonts::TextParams {
+    let (h, v) = forja_render::text_align(t.halign, t.valign);
+    let p = forja_fonts::TextParams {
         insert: t.insert.xy(),
         align_pt: Some(a.xy()),
         height: t.height,
@@ -240,7 +240,7 @@ fn computed_text_insert(d: &Drawing, t: &Text) -> Vec3 {
         backwards: ts.backwards,
         upside_down: ts.upside_down,
     };
-    let q = cadcraft_fonts::baseline_start(&cadcraft_fonts::TextFont::resolve(&ts.font), &t.value, &p);
+    let q = forja_fonts::baseline_start(&forja_fonts::TextFont::resolve(&ts.font), &t.value, &p);
     // Justification recalculates the baseline in XY; group 10 keeps its own elevation.
     if q.is_finite() { Vec3::new(q.x, q.y, t.insert.z) } else { t.insert }
 }

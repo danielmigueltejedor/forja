@@ -14,7 +14,7 @@
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 
-use cadcraft_geom::{Mat3, Vec2, Vec3};
+use forja_geom::{Mat3, Vec2, Vec3};
 
 use super::{ActionKind, DynamicBlock, ParameterKind, Value, dynamic_block, reference};
 use crate::foreign::{ForeignExtra, ForeignObject};
@@ -184,7 +184,7 @@ impl Plan {
                 let (b2, e2) = linear_points(b, e, dist, *from_midpoint);
                 self.set.insert(node, Val::Points(b2, e2));
             }
-            (_, other) => return Err(format!("A lookup table sets {other}, which CADCraft can't change yet.")),
+            (_, other) => return Err(format!("A lookup table sets {other}, which Forja can't change yet.")),
         }
         Ok(())
     }
@@ -311,7 +311,7 @@ pub fn set_property(d: &mut Drawing, insert: Handle, name: &str, value: &str) ->
             let at = if is_x { Vec3::new(block_base.x + v / sx, at.y, at.z) } else { Vec3::new(at.x, block_base.y + v / sy, at.z) };
             plan.set.insert(p.node, Val::Point(at));
         }
-        _ => return Err(format!("CADCraft can't change {name} yet.")),
+        _ => return Err(format!("Forja can't change {name} yet.")),
     }
     apply(d, insert, &r.definition, &r.values, &plan.set, p.node)
 }
@@ -674,7 +674,7 @@ fn apply(
 /// Associative hatches of block `b` whose loop is one closed polyline of the block take its
 /// outline again (it may have been stretched).
 fn refill_hatches(b: &mut Block) {
-    let outlines: HashMap<Handle, Vec<cadcraft_geom::PolyVertex>> = b
+    let outlines: HashMap<Handle, Vec<forja_geom::PolyVertex>> = b
         .entities
         .iter()
         .filter_map(|e| match &e.kind {

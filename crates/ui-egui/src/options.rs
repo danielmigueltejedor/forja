@@ -1,10 +1,10 @@
 //! OPTIONS: the user's preferences, in one dialog and one JSON form.
 //!
-//! Typed (OPTIONS, OP), chosen from Tools ▸ Options… or, on macOS, CADCraft ▸ Settings… (⌘,),
+//! Typed (OPTIONS, OP), chosen from Tools ▸ Options… or, on macOS, Forja ▸ Settings… (⌘,),
 //! OPTIONS opens the Options dialog ([`dialog`]). A JSON call never opens it: `options {}` reports
 //! every preference and `options {"PICKBOX": 5, "modelBackground": "#ffffff"}` changes some (all
 //! or nothing; `"reset": true` restores the defaults first). Upper-case names are the engine's
-//! profile variables (`cadcraft_engine::cmd::options`); camel-case names are the interface's own:
+//! profile variables (`forja_engine::cmd::options`); camel-case names are the interface's own:
 //!
 //! | name | value |
 //! |---|---|
@@ -41,14 +41,14 @@ pub use dialog::dialog;
 use egui::Color32;
 use serde_json::{Map, Value, json};
 
-use cadcraft_engine::cmd::file::MAX_ALIAS_PROFILE_BYTES;
+use forja_engine::cmd::file::MAX_ALIAS_PROFILE_BYTES;
 
 use crate::CadApp;
 use crate::animation::AnimationPref;
 use crate::theme::{self, ThemePref};
 
 /// The host storage key for [`CadApp::profile_json`].
-pub const PROFILE_KEY: &str = "cadcraft.profile";
+pub const PROFILE_KEY: &str = "forja.profile";
 
 /// The largest saved profile [`CadApp::load_profile`] reads: everything [`CadApp::profile_json`]
 /// writes — a full ALIASEDIT alias set (up to [`MAX_ALIAS_PROFILE_BYTES`]) and the profile
@@ -292,7 +292,7 @@ fn parse_ui(key: &str, v: &Value, c: &mut UiChanges) -> Result<bool, String> {
             c.right_click_command = Some(CommandClick::parse(text()?).ok_or("rightClickCommand must be menu, enter or menuWithOptions")?)
         }
         k if k.eq_ignore_ascii_case("SAVETIME") => {
-            let max = cadcraft_engine::autosave::MAX_SAVETIME;
+            let max = forja_engine::autosave::MAX_SAVETIME;
             let n = v
                 .as_f64()
                 .filter(|n| n.is_finite() && (0.0..=f64::from(max)).contains(n))
@@ -328,9 +328,9 @@ fn ui_json(app: &CadApp) -> Map<String, Value> {
     m.insert("snapMarkerSize".into(), json!(o.snap_marker_size));
     m.insert("interfaceScale".into(), json!(o.interface_scale));
     m.insert("saveVersion".into(), json!(app.ui.save_version));
-    m.insert("SAVETIME".into(), json!(cadcraft_engine::autosave::savetime()));
-    m.insert("SAVEFILEPATH".into(), json!(cadcraft_engine::autosave::savefilepath()));
-    m.insert("ISAVEBAK".into(), json!(i32::from(cadcraft_engine::autosave::isavebak())));
+    m.insert("SAVETIME".into(), json!(forja_engine::autosave::savetime()));
+    m.insert("SAVEFILEPATH".into(), json!(forja_engine::autosave::savefilepath()));
+    m.insert("ISAVEBAK".into(), json!(i32::from(forja_engine::autosave::isavebak())));
     m.insert("timeSensitiveRightClick".into(), json!(o.time_sensitive_right_click));
     m.insert("rightClickDuration".into(), json!(o.right_click_hold_ms));
     m.insert("rightClickDefault".into(), json!(o.right_click_default.as_str()));
@@ -342,7 +342,7 @@ fn ui_json(app: &CadApp) -> Map<String, Value> {
 /// Every preference: the interface's and the engine's profile variables.
 pub fn report(app: &CadApp) -> Value {
     let mut m = ui_json(app);
-    if let Value::Object(engine) = cadcraft_engine::cmd::options::profile(&app.session) {
+    if let Value::Object(engine) = forja_engine::cmd::options::profile(&app.session) {
         m.extend(engine);
     }
     Value::Object(m)
@@ -401,13 +401,13 @@ fn run_json(app: &mut CadApp, params: &Value) -> Result<Value, String> {
         app.ui.save_version = v.year().to_string();
     }
     if let Some(m) = ui.savetime {
-        cadcraft_engine::autosave::set_savetime(m);
+        forja_engine::autosave::set_savetime(m);
     }
     if let Some(p) = &ui.savefilepath {
-        cadcraft_engine::autosave::set_savefilepath(p);
+        forja_engine::autosave::set_savefilepath(p);
     }
     if let Some(b) = ui.isavebak {
-        cadcraft_engine::autosave::set_isavebak(b);
+        forja_engine::autosave::set_isavebak(b);
     }
     if let Some(b) = ui.time_sensitive_right_click {
         app.options.time_sensitive_right_click = b;
@@ -452,8 +452,8 @@ impl CadApp {
     pub fn profile_json(&self) -> String {
         json!({
             "version": 1,
-            "sysvars": cadcraft_engine::cmd::options::profile(&self.session),
-            "aliases": cadcraft_engine::cmd::file::alias_profile(),
+            "sysvars": forja_engine::cmd::options::profile(&self.session),
+            "aliases": forja_engine::cmd::file::alias_profile(),
             "systemCursor": self.ui.system_cursor,
             "modelBackground": color_json(self.options.model_background),
             "paperBackground": color_json(self.options.paper_background),
@@ -477,12 +477,12 @@ impl CadApp {
         }
         let Ok(v) = serde_json::from_str::<Value>(json) else { return };
         if let Some(vars) = v.get("sysvars") {
-            cadcraft_engine::cmd::options::restore(&mut self.session, vars);
+            forja_engine::cmd::options::restore(&mut self.session, vars);
         }
         // The user's aliases (ALIASEDIT) are settings, not drawing data; a malformed section is
         // skipped by the engine without touching the aliases already in use.
         if let Some(aliases) = v.get("aliases") {
-            cadcraft_engine::cmd::file::restore_aliases(aliases);
+            forja_engine::cmd::file::restore_aliases(aliases);
         }
         let mut c = UiChanges::default();
         for key in [
