@@ -126,10 +126,37 @@ pub struct Tokens {
     pub paper: Color32,
 }
 
-/// The Nodalia Design Language palettes with Forja's accent: every interface colour below comes
-/// from them.
-const NDL_DARK: nodalia_theme::Palette = nodalia_theme::Mode::Dark.palette_with(nodalia_theme::Accent::Forja);
-const NDL_LIGHT: nodalia_theme::Palette = nodalia_theme::Mode::Light.palette_with(nodalia_theme::Accent::Forja);
+/// The Nodalia Design Language palettes with the Nodalia accent: every interface colour below
+/// comes from them. Forja's dark palette is NDL's dark one lifted a few steps ([`lifted_dark`]).
+const NDL_DARK: nodalia_theme::Palette = lifted_dark(nodalia_theme::Mode::Dark.palette_with(nodalia_theme::Accent::Nodalia));
+const NDL_LIGHT: nodalia_theme::Palette = nodalia_theme::Mode::Light.palette_with(nodalia_theme::Accent::Nodalia);
+
+const fn rgb(r: u8, g: u8, b: u8) -> nodalia_theme::Rgba {
+    nodalia_theme::Rgba::new(r, g, b, 255)
+}
+
+/// NDL's dark palette with its surfaces, controls and borders lifted: the near-black frame and
+/// islands read as too dark over a drawing session. The steps between the frame, the islands and
+/// the raised surfaces stay those of NDL, and text keeps 4.5:1 on every surface (tested).
+const fn lifted_dark(mut p: nodalia_theme::Palette) -> nodalia_theme::Palette {
+    p.surface_window = rgb(25, 27, 33);
+    p.surface_panel = rgb(36, 39, 48);
+    p.surface_raised = rgb(45, 49, 60);
+    p.surface_sunken = rgb(30, 32, 40);
+    p.surface_overlay = rgb(45, 49, 60);
+    p.text_tertiary = rgb(152, 158, 177);
+    p.border_subtle = rgb(52, 57, 70);
+    p.border_default = rgb(82, 89, 108);
+    p.control_bg = rgb(45, 49, 60);
+    p.control_bg_hover = rgb(54, 59, 72);
+    p.control_bg_pressed = rgb(65, 71, 87);
+    p.control_bg_disabled = rgb(36, 39, 48);
+    p.control_field_bg = rgb(30, 32, 40);
+    p.selection_bg = rgb(16, 72, 80);
+    p.selection_bg_inactive = rgb(45, 49, 60);
+    p.accent_subtle = rgb(16, 72, 80);
+    p
+}
 
 /// An opaque NDL colour (every colour taken from the palettes here is opaque).
 const fn ndl(c: nodalia_theme::Rgba) -> Color32 {
@@ -153,16 +180,16 @@ impl Tokens {
         control_hover: ndl(NDL_DARK.control_bg_hover),
         border: ndl(NDL_DARK.border_subtle),
         canvas: ndl(NDL_DARK.surface_panel),
-        grid_minor: Color32::from_rgb(0x1d, 0x20, 0x28),
-        grid_major: Color32::from_rgb(0x27, 0x2a, 0x34),
-        axis_x: Color32::from_rgb(0x56, 0x28, 0x29),
-        axis_y: Color32::from_rgb(0x28, 0x4a, 0x2e),
+        grid_minor: Color32::from_rgb(0x2b, 0x2e, 0x38),
+        grid_major: Color32::from_rgb(0x35, 0x39, 0x45),
+        axis_x: Color32::from_rgb(0x5e, 0x32, 0x36),
+        axis_y: Color32::from_rgb(0x32, 0x56, 0x3c),
         text: ndl(NDL_DARK.text_primary),
         text_dim: ndl(NDL_DARK.text_secondary),
         text_faint: ndl(NDL_DARK.text_tertiary),
         icon: ndl(NDL_DARK.text_primary),
         icon_accent: ndl(NDL_DARK.accent_default),
-        icon_point: Color32::from_rgb(0xf0, 0x7a, 0x3a),
+        icon_point: ndl(NDL_DARK.accent_default),
         accent: ndl(NDL_DARK.accent_default),
         selection: Color32::from_rgb(0x4a, 0x8f, 0xff),
         hover: Color32::from_rgb(0x9c, 0xc6, 0xff),
@@ -207,7 +234,7 @@ impl Tokens {
         text_faint: ndl(NDL_LIGHT.text_tertiary),
         icon: ndl(NDL_LIGHT.text_primary),
         icon_accent: ndl(NDL_LIGHT.accent_default),
-        icon_point: Color32::from_rgb(0xd3, 0x5a, 0x1c),
+        icon_point: ndl(NDL_LIGHT.accent_default),
         accent: ndl(NDL_LIGHT.accent_default),
         cmd_bg: ndl_alpha(NDL_LIGHT.surface_raised, 0xf0),
         toggle_on: ndl(NDL_LIGHT.accent_default),
@@ -776,17 +803,61 @@ fn any_script(faces: &[cadcraft_fonts::CraftFont], script: &str) -> bool {
     faces.iter().any(|f| f.style == "Regular" && f.scripts.contains(&script))
 }
 
-/// egui's visuals for `theme`: the Nodalia Design Language's, with Forja's accent and the window
-/// frame behind the panels.
+/// egui's visuals for `theme`: the Nodalia Design Language's, with the Nodalia accent, Forja's
+/// lifted dark surfaces and the window frame behind the panels.
 fn visuals(theme: Theme) -> Visuals {
+    use nodalia_theme::for_egui::color;
     let t = Tokens::of(theme);
-    let mode = match theme {
-        Theme::Dark => nodalia_theme::Mode::Dark,
-        Theme::Light => nodalia_theme::Mode::Light,
+    let (mode, p) = match theme {
+        Theme::Dark => (nodalia_theme::Mode::Dark, NDL_DARK),
+        Theme::Light => (nodalia_theme::Mode::Light, NDL_LIGHT),
     };
-    let mut v = nodalia_theme::for_egui::visuals_with(mode, nodalia_theme::Accent::Forja);
+    let mut v = nodalia_theme::for_egui::visuals_with(mode, nodalia_theme::Accent::Nodalia);
+    // `visuals_with` reads NDL's own palette; repaint its slots from Forja's (the same in light).
+    let w = &mut v.widgets;
+    for (wv, fill, border) in [
+        (&mut w.noninteractive, p.surface_panel, p.border_subtle),
+        (&mut w.inactive, p.control_bg, p.border_default),
+        (&mut w.hovered, p.control_bg_hover, p.border_strong),
+        (&mut w.active, p.control_bg_pressed, p.border_focus),
+        (&mut w.open, p.control_bg_hover, p.border_default),
+    ] {
+        wv.bg_fill = color(fill);
+        wv.weak_bg_fill = color(fill);
+        wv.bg_stroke.color = color(border);
+    }
+    v.selection.bg_fill = color(p.selection_bg);
+    v.faint_bg_color = color(p.surface_sunken);
+    v.extreme_bg_color = color(p.control_field_bg);
+    v.text_edit_bg_color = Some(color(p.control_field_bg));
+    v.code_bg_color = color(p.surface_sunken);
+    v.panel_fill = color(p.surface_panel);
+    v.window_fill = color(p.surface_overlay);
+    v.window_stroke.color = color(p.border_subtle);
+    v.weak_text_color = Some(color(p.text_secondary));
     v.override_text_color = Some(t.text);
     v
+}
+
+/// NDL scroll bars: thin rounded handles with no track. The bar keeps a thin gutter of its own
+/// instead of floating over the content: a floating bar would cover the controls at a panel's
+/// right edge (the Tool Sets gear).
+fn scroll_style() -> egui::style::ScrollStyle {
+    egui::style::ScrollStyle {
+        floating: false,
+        bar_width: 6.0,
+        handle_min_length: 24.0,
+        bar_inner_margin: 2.0,
+        bar_outer_margin: 2.0,
+        foreground_color: true,
+        dormant_background_opacity: 0.0,
+        active_background_opacity: 0.0,
+        interact_background_opacity: 0.0,
+        dormant_handle_opacity: 0.35,
+        active_handle_opacity: 0.55,
+        interact_handle_opacity: 0.8,
+        ..egui::style::ScrollStyle::solid()
+    }
 }
 
 /// Install the styles of both themes and show `theme` (egui's own widgets, popups and menus
@@ -806,6 +877,7 @@ pub fn apply(ctx: &egui::Context, theme: Theme, follow_system: bool) {
         s.spacing.button_padding = egui::vec2(8.0, 3.0);
         s.spacing.interact_size.y = 20.0;
         s.spacing.menu_margin = egui::Margin::same(6);
+        s.spacing.scroll = scroll_style();
         s.text_styles.insert(egui::TextStyle::Body, body());
         s.text_styles.insert(egui::TextStyle::Button, body());
         s.text_styles.insert(egui::TextStyle::Small, small());
@@ -903,6 +975,52 @@ mod tests {
                     }
                 }
             });
+        }
+    }
+}
+
+#[cfg(test)]
+mod palette_tests {
+    use super::{NDL_DARK, Tokens};
+    use nodalia_theme::{Palette, contrast};
+
+    fn surfaces(p: &Palette) -> [nodalia_theme::Rgba; 6] {
+        [p.surface_window, p.surface_panel, p.surface_raised, p.surface_sunken, p.surface_overlay, p.control_bg]
+    }
+
+    /// Every text colour reads at 4.5:1 or better on every surface of the lifted dark palette
+    /// (the light one is NDL's own).
+    #[test]
+    fn text_keeps_its_contrast_on_every_surface() {
+        for p in [&NDL_DARK] {
+            for bg in surfaces(p) {
+                for fg in [p.text_primary, p.text_secondary, p.text_tertiary] {
+                    let c = contrast(fg, bg);
+                    assert!(c >= 4.5, "{fg:?} on {bg:?}: {c:.2}");
+                }
+            }
+        }
+    }
+
+    /// The dark frame and islands are lighter than NDL's own, and the islands stay distinct from
+    /// the frame around them.
+    #[test]
+    fn the_dark_surfaces_are_lifted_and_keep_their_steps() {
+        let ndl = nodalia_theme::Mode::Dark.palette();
+        let lum = nodalia_theme::luminance;
+        assert!(lum(NDL_DARK.surface_window) > lum(ndl.surface_window));
+        assert!(lum(NDL_DARK.surface_panel) > lum(ndl.surface_panel));
+        assert!(lum(NDL_DARK.surface_panel) > lum(NDL_DARK.surface_window));
+        assert!(lum(NDL_DARK.surface_raised) > lum(NDL_DARK.surface_panel));
+    }
+
+    /// The interface accent is Nodalia's cyan, not an orange.
+    #[test]
+    fn the_accent_is_nodalia_cyan() {
+        for (t, mode) in [(Tokens::DARK, nodalia_theme::Mode::Dark), (Tokens::LIGHT, nodalia_theme::Mode::Light)] {
+            let a = mode.palette_with(nodalia_theme::Accent::Nodalia).accent_default;
+            assert_eq!(t.accent, egui::Color32::from_rgb(a.r, a.g, a.b));
+            assert!(t.accent.b() > t.accent.r(), "{:?}", t.accent);
         }
     }
 }
