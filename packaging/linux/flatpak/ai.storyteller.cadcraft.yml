@@ -50,6 +50,8 @@ modules:
       - install -Dm644 NOTICE /app/share/doc/cadcraft/NOTICE
       - install -Dm755 target/release/cadcraft-cli /app/bin/cadcraft-cli
       - install -Dm644 packaging/linux/ai.storyteller.cadcraft.desktop /app/share/applications/ai.storyteller.cadcraft.desktop
+      # Flatpak only exports icons named after the app ID, so the sandbox keeps the Craft icon name.
+      - sed -i "s/^Icon=.*/Icon=ai.storyteller.cadcraft/" /app/share/applications/ai.storyteller.cadcraft.desktop
       - install -Dm644 packaging/linux/ai.storyteller.cadcraft.mime.xml /app/share/mime/packages/ai.storyteller.cadcraft.xml
       - mkdir -p /app/share/icons && cp -R assets/app-icon/hicolor /app/share/icons/
       - install -Dm644 NOTICE /app/share/doc/cadcraft/NOTICE
