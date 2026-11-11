@@ -3026,7 +3026,7 @@ fn svg_left_out_content_is_noted() {
     assert_eq!(kinds(&d), ["Polyline", "Polyline"]);
     assert_eq!(
         d.read_notes,
-        ["SVG: CADCraft doesn't read these yet, so they were left out: 2 texts, 1 raster image, 2 `<use>` copies, \
+        ["SVG: Forja doesn't read these yet, so they were left out: 2 texts, 1 raster image, 2 `<use>` copies, \
           1 `<style>` sheet (its class rules aren't applied), 1 rectangle with rounded corners (drawn square)"]
     );
     let plain = read(format!("{SVG_PAGE}<rect x=\"1\" y=\"1\" width=\"4\" height=\"3\"/></svg>").as_bytes(), "a.svg").unwrap();
