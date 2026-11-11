@@ -14,7 +14,9 @@ exception is the ArtCraft brand in `docs/brand/`: ArtCraft trademarks, not open 
 `docs/brand/LICENSE-brand.txt`.
 
 Generated-in-code assets are original and have no file to list:
-- the UI icon set (`crates/ui-egui/src/icons.rs`);
+- the UI icon set: Nodalia Design's icons (`nodalia-theme` from
+  [danielmigueltejedor/nodalia-design](https://github.com/danielmigueltejedor/nodalia-design), MIT,
+  original work), drawn by `crates/ui-egui/src/ndl_icons.rs`;
 - the "CADCraft Stroke" single-stroke drafting font (`crates/fonts/src/stroke.rs`);
 - the standard linetype and hatch-pattern libraries (`crates/doc/src/library.rs`; industry-common
   names, our own dash/spacing values);

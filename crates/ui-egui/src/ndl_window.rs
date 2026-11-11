@@ -180,9 +180,7 @@ pub fn close_control(ui: &mut Ui) -> egui::Response {
     let fill = raised(ui, if response.is_pointer_button_down_on() { 2 } else { u8::from(response.hovered()) });
     ui.painter().circle_filled(rect.center(), CONTROL / 2.0, fill);
     let glyph = egui::Rect::from_center_size(rect.center(), vec2(14.0, 14.0));
-    if let Some(body) = crate::ndl_icons::body(Icon::Close) {
-        crate::ndl_icons::paint(ui.painter(), glyph, body, t.text);
-    }
+    crate::ndl_icons::paint_ink(ui.painter(), glyph, Icon::Close, t.text);
     response
 }
 

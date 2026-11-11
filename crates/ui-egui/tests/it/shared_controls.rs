@@ -48,7 +48,12 @@ fn drafting_button_preserves_multicolor_selection_and_accessibility() {
     let out = button_frame(&ctx, &mut state, vec![Event::PointerMoved(center), pointer(center, true)]);
     let t = theme::Tokens::get();
     assert!(out.shapes.iter().any(|s| matches!(&s.shape, egui::Shape::Rect(r) if r.fill == t.tab_active)));
-    assert!(out.shapes.iter().any(|s| matches!(&s.shape, egui::Shape::LineSegment { stroke, .. } if stroke.color == t.icon_accent)));
+    let accent_stroke = |s: &egui::Shape| match s {
+        egui::Shape::LineSegment { stroke, .. } => stroke.color == t.icon_accent,
+        egui::Shape::Path(p) => p.stroke.color == egui::epaint::ColorMode::Solid(t.icon_accent),
+        _ => false,
+    };
+    assert!(out.shapes.iter().any(|s| accent_stroke(&s.shape)));
     assert!(out.shapes.iter().any(|s| matches!(&s.shape, egui::Shape::Circle(c) if c.fill == t.icon_point)));
     let update = out.platform_output.accesskit_update.unwrap();
     let node = &update.nodes.iter().find(|(_, n)| n.label() == Some("Draw line")).unwrap().1;

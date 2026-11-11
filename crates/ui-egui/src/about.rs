@@ -149,11 +149,9 @@ fn row(ui: &mut Ui, icon: Option<Icon>, title: &str, value: Option<&str>, activa
     }
     let inner = rect.shrink2(vec2(12.0, 0.0));
     let mut x = inner.left();
-    if let Some(icon) = icon
-        && let Some(body) = crate::ndl_icons::body(icon)
-    {
+    if let Some(icon) = icon {
         let r = egui::Rect::from_center_size(egui::pos2(x + 9.0, inner.center().y), vec2(18.0, 18.0));
-        crate::ndl_icons::paint(ui.painter(), r, body, t.text_dim);
+        crate::ndl_icons::paint_ink(ui.painter(), r, icon, t.text_dim);
         x += 28.0;
     }
     let font = egui::TextStyle::Body.resolve(ui.style());
