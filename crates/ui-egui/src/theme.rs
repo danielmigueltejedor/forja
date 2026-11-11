@@ -853,13 +853,16 @@ fn visuals(theme: Theme) -> Visuals {
     v
 }
 
-/// NDL scroll bars: thin rounded handles with no track. The bar keeps a thin gutter of its own
-/// instead of floating over the content: a floating bar would cover the controls at a panel's
-/// right edge (the Tool Sets gear).
+/// NDL scroll bars: thin, rounded, faint handles with no track that widen under the pointer.
+/// They float, but over a gutter of their own (`floating_allocated_width`): a bar over the
+/// content would cover the controls at a panel's right edge (the Tool Sets gear). The solid
+/// style ignores the handle opacities, so its bars showed as bright full-opacity strips.
 fn scroll_style() -> egui::style::ScrollStyle {
     egui::style::ScrollStyle {
-        floating: false,
-        bar_width: 6.0,
+        floating: true,
+        bar_width: 8.0,
+        floating_width: 4.0,
+        floating_allocated_width: 10.0,
         handle_min_length: 24.0,
         bar_inner_margin: 2.0,
         bar_outer_margin: 2.0,
@@ -867,10 +870,10 @@ fn scroll_style() -> egui::style::ScrollStyle {
         dormant_background_opacity: 0.0,
         active_background_opacity: 0.0,
         interact_background_opacity: 0.0,
-        dormant_handle_opacity: 0.35,
-        active_handle_opacity: 0.55,
-        interact_handle_opacity: 0.8,
-        ..egui::style::ScrollStyle::solid()
+        dormant_handle_opacity: 0.22,
+        active_handle_opacity: 0.4,
+        interact_handle_opacity: 0.65,
+        ..egui::style::ScrollStyle::floating()
     }
 }
 
