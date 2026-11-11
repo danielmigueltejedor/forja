@@ -7,6 +7,7 @@ use serde_json::{Value, json};
 
 use crate::CadApp;
 use crate::icons::{self, Icon};
+use crate::ndl_widgets::NdlUi as _;
 use crate::theme::Tokens;
 
 #[cfg(test)]
@@ -216,7 +217,7 @@ pub fn toolsets(app: &mut CadApp, ui: &mut egui::Ui) {
                         ui.label(crate::tl!("Show in Tool Sets"));
                         for (_, cmd, tip) in large.iter().chain(small.iter()) {
                             let mut shown = !hidden(cmd);
-                            if ui.checkbox(&mut shown, *tip).changed() {
+                            if ui.check(&mut shown, *tip).changed() {
                                 tool_visible = Some((cmd.to_string(), shown));
                             }
                         }
@@ -1185,7 +1186,7 @@ pub(crate) fn properties_section(app: &mut CadApp, ui: &mut egui::Ui) {
                 prop_row(ui, "Closed", |ui| {
                     let mut c = pl.closed;
                     let label = if c { "Yes" } else { "No" };
-                    if ui.checkbox(&mut c, crate::i18n::t(label)).changed() {
+                    if ui.check(&mut c, crate::i18n::t(label)).changed() {
                         set = Some(json!({ "handles": ids, "closed": c }));
                     }
                 });

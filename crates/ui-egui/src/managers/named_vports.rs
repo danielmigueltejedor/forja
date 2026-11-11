@@ -29,7 +29,7 @@ fn preview(ui: &mut egui::Ui, tiles: &[VportTile], t: &Tokens) {
 pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) -> Option<(&'static str, Value)> {
     let t = Tokens::get();
     let Ok(d) = app.session.doc() else {
-        egui::Window::new("Named Viewports").open(open).collapsible(false).resizable(false).show(ctx, |ui| {
+        crate::ndl_window::Window::new("Named Viewports").open(open).collapsible(false).resizable(false).show(ctx, |ui| {
             ui.label("Open a drawing first.");
         });
         return None;
@@ -44,7 +44,7 @@ pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) -> Option<
     let mut action: Option<(&'static str, Value)> = None;
     let mut restore = false;
     let mut close = false;
-    egui::Window::new("Named Viewports").open(open).default_width(400.0).resizable(false).show(ctx, |ui| {
+    crate::ndl_window::Window::new("Named Viewports").open(open).default_width(400.0).resizable(false).show(ctx, |ui| {
         if model {
             ui.label(format!("Current name: {}", current.as_deref().unwrap_or(VportConfig::ACTIVE)));
         } else {

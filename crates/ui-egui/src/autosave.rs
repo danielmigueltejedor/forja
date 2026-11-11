@@ -253,7 +253,7 @@ pub fn gpu_notice(app: &mut CadApp, ctx: &egui::Context) {
     let Some(n) = &app.gpu_notice else { return };
     let t = Tokens::get();
     let mut dismiss = false;
-    egui::Window::new("Graphics error")
+    crate::ndl_window::Window::new("Graphics error")
         .id(egui::Id::unique("cc_gpu_notice"))
         .collapsible(false)
         .resizable(false)
@@ -295,7 +295,7 @@ pub fn failure_notice(app: &mut CadApp, ctx: &egui::Context) {
     let Some(n) = app.autosave_notice.as_ref().filter(|n| !n.dismissed) else { return };
     let t = Tokens::get();
     let mut dismiss = false;
-    egui::Window::new("Autosave failed")
+    crate::ndl_window::Window::new("Autosave failed")
         .id(egui::Id::unique("cc_autosave_notice"))
         .collapsible(false)
         .resizable(false)

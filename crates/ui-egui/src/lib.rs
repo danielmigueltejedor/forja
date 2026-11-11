@@ -19,6 +19,7 @@ pub const UPDATE_APP: craft_update::app::App = craft_update::app::App {
     ..craft_update::app::App::new("forja", "Forja", "2D drafting and DWG/DXF", "danielmigueltejedor/forja")
 };
 
+pub mod about;
 pub mod aliasdlg;
 pub mod animation;
 pub mod autosave;
@@ -59,6 +60,8 @@ pub mod managers;
 pub mod menus;
 pub mod modal;
 mod ndl_icons;
+pub mod ndl_widgets;
+pub mod ndl_window;
 pub mod opening;
 pub mod options;
 pub mod palettes;

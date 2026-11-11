@@ -89,7 +89,7 @@ pub fn dialog(app: &mut CadApp, ctx: &egui::Context, spec: &str, open: &mut bool
     // The field's undo history is keyed by drawing and handle: two edits on the same drawing
     // must not share a Ctrl+Z trail, and neither must an edit on two different drawings.
     let field = egui::Id::unique("textedit_field").with(st.uid).with(&st.handle);
-    egui::Window::new(crate::tl!("Edit Text"))
+    crate::ndl_window::Window::new(crate::tl!("Edit Text"))
         .id(egui::Id::unique("Edit Text"))
         .open(&mut keep)
         .collapsible(false)

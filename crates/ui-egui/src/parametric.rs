@@ -602,7 +602,7 @@ pub fn parameters_dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool)
     // The name being renamed in place: (old name, text typed so far).
     let rename_id = egui::Id::unique("par_rename");
     let mut renaming = ctx.data_mut(|d| d.get_temp::<(String, String)>(rename_id));
-    egui::Window::new(crate::tl!("Parameters Manager"))
+    crate::ndl_window::Window::new(crate::tl!("Parameters Manager"))
         .id(egui::Id::unique("Parameters Manager"))
         .open(open)
         .default_size(vec2(560.0, 300.0))

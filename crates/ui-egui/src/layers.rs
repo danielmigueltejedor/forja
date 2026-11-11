@@ -248,7 +248,7 @@ pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
         Some(_) => "Layer Properties Manager — current viewport",
         None => "Layer Properties Manager",
     };
-    egui::Window::new(crate::i18n::t(title))
+    crate::ndl_window::Window::new(crate::i18n::t(title))
         .id(egui::Id::unique("lpm_window"))
         .open(open)
         .default_size(vec2(1180.0, 440.0))
@@ -281,7 +281,7 @@ pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
                 // Layer states.
                 ui.label(crate::tl!("Layer State"));
                 let label = st.state_sel.clone().unwrap_or_else(|| crate::tl!("Unsaved Layer State").into());
-                craft_ui::ComboBox::from_id_salt("lpm_states").selected_text(label).width(170.0).show_ui(ui, |ui| {
+                crate::ndl_widgets::combo("lpm_states").selected_text(label).width(170.0).show_ui(ui, |ui| {
                     for s in &states {
                         if ui.selectable_label(st.state_sel.as_deref() == Some(s), s).clicked() {
                             st.state_sel = Some(s.clone());

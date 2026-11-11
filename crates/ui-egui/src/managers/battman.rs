@@ -7,6 +7,7 @@ use egui::{RichText, vec2};
 use serde_json::{Value, json};
 
 use crate::CadApp;
+use crate::ndl_widgets::NdlUi as _;
 use crate::theme::Tokens;
 
 /// One attribute definition as listed.
@@ -51,7 +52,7 @@ fn fmt_num(v: f64) -> String {
 pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) -> Option<(&'static str, Value)> {
     let t = Tokens::get();
     let Ok(d) = app.session.doc() else {
-        egui::Window::new("Block Attribute Manager").open(open).collapsible(false).resizable(false).show(ctx, |ui| {
+        crate::ndl_window::Window::new("Block Attribute Manager").open(open).collapsible(false).resizable(false).show(ctx, |ui| {
             ui.label("Open a drawing first.");
         });
         return None;
@@ -96,14 +97,14 @@ pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) -> Option<
         }
         Some(("battman", p))
     };
-    egui::Window::new("Block Attribute Manager").open(open).default_width(460.0).resizable(false).show(ctx, |ui| {
+    crate::ndl_window::Window::new("Block Attribute Manager").open(open).default_width(460.0).resizable(false).show(ctx, |ui| {
         if blocks.is_empty() {
             ui.label("This drawing has no blocks with attributes.");
             return;
         }
         ui.horizontal(|ui| {
             ui.label("Block:");
-            craft_ui::ComboBox::from_id_salt("battman_blocks").selected_text(block.as_str()).width(180.0).show_ui(ui, |ui| {
+            crate::ndl_widgets::combo("battman_blocks").selected_text(block.as_str()).width(180.0).show_ui(ui, |ui| {
                 for b in &blocks {
                     if ui.selectable_label(*b == block, b).clicked() {
                         block = b.clone();
@@ -174,10 +175,10 @@ pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) -> Option<
                 ui.label("Mode");
                 ui.horizontal(|ui| {
                     let (mut inv, mut con) = (r.invisible, r.constant);
-                    if ui.checkbox(&mut inv, "Invisible").changed() {
+                    if ui.check(&mut inv, "Invisible").changed() {
                         action = act(edit("invisible", json!(inv)), apply);
                     }
-                    if ui.checkbox(&mut con, "Constant").changed() {
+                    if ui.check(&mut con, "Constant").changed() {
                         action = act(edit("constant", json!(con)), apply);
                     }
                 });
@@ -189,7 +190,7 @@ pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) -> Option<
                 }
                 ui.end_row();
                 ui.label("Layer");
-                craft_ui::ComboBox::from_id_salt("battman_layer").selected_text(r.layer.as_str()).show_ui(ui, |ui| {
+                crate::ndl_widgets::combo("battman_layer").selected_text(r.layer.as_str()).show_ui(ui, |ui| {
                     for l in &layers {
                         if ui.selectable_label(*l == r.layer, l).clicked() && *l != r.layer {
                             action = act(edit("layer", json!(l)), apply);
@@ -200,7 +201,7 @@ pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) -> Option<
             });
         }
         ui.separator();
-        ui.checkbox(&mut apply, "Apply changes to existing references");
+        ui.check(&mut apply, "Apply changes to existing references");
     });
     set_temp(ctx, "battman_block", block);
     if let Some(s) = sel {

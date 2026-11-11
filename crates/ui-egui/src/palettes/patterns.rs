@@ -128,7 +128,7 @@ pub fn prompt_picker(app: &mut CadApp, ctx: &egui::Context) {
     let mut filter: String = ctx.data_mut(|d| d.get_temp(filter_id)).unwrap_or_default();
     let mut chosen = None;
     let area = ctx.content_rect();
-    egui::Window::new(crate::tl!("Hatch Pattern"))
+    crate::ndl_window::Window::new(crate::tl!("Hatch Pattern"))
         .id(egui::Id::unique("Hatch Pattern"))
         .collapsible(true)
         .resizable(true)

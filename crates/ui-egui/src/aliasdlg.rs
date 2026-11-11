@@ -244,152 +244,156 @@ pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
     if std::mem::take(&mut st.raise) {
         ctx.move_to_top(egui::LayerId::new(egui::Order::Middle, id));
     }
-    egui::Window::new(crate::tl!("Command Aliases")).id(id).open(open).collapsible(false).default_size(vec2(480.0, 460.0)).show(ctx, |ui| {
-        match &st.file {
-            Some(f) => ui.label(crate::tf!("Alias file: {file}", file = f)),
-            None => ui.label(crate::tl!("No alias file loaded. REINIT replaces these aliases with a file's.")),
-        };
-        ui.label(RichText::new(crate::tl!("Aliases are saved in your Forja profile and survive restarts.")).small());
-        ui.horizontal(|ui| {
-            let label = ui.label(crate::tl!("Filter"));
-            ui.text_edit_singleline(&mut st.filter).labelled_by(label.id);
-        });
-        let f = st.filter.trim().to_ascii_lowercase();
-        let mut names: Vec<&String> = st.user.keys().chain(built.keys().filter(|a| !st.user.contains_key(*a))).collect();
-        names.sort();
-        // Edit and Remove act only on a selected row the filter shows.
-        let mut selected_shown = false;
-        egui::ScrollArea::vertical().max_height(240.0).auto_shrink([false, true]).show(ui, |ui| {
-            egui::Grid::new("alias_rows").striped(true).num_columns(3).show(ui, |ui| {
-                ui.strong(crate::tl!("Alias"));
-                ui.strong(crate::tl!("Command"));
-                ui.label("");
-                ui.end_row();
-                for name in names {
-                    let (command, mine) = match st.user.get(name) {
-                        Some(c) => (c, true),
-                        None => (built.get(name).unwrap_or(name), false),
-                    };
-                    if !f.is_empty() && !name.contains(&f) && !command.contains(&f) {
-                        continue;
-                    }
-                    let selected = st.selected.as_deref() == Some(name.as_str());
-                    selected_shown |= selected;
-                    let text = RichText::new(name.to_ascii_uppercase());
-                    if ui.selectable_label(selected, if mine { text } else { text.weak() }).clicked() {
-                        st.selected = Some(name.clone());
-                    }
-                    ui.label(if mine { RichText::new(command.to_ascii_uppercase()) } else { RichText::new(command.to_ascii_uppercase()).weak() });
-                    let note = match (mine, built.contains_key(name)) {
-                        (true, true) => crate::tl!("overrides built-in"),
-                        (true, false) => "",
-                        (false, _) => crate::tl!("built-in"),
-                    };
-                    ui.label(RichText::new(note).small());
-                    ui.end_row();
-                }
+    crate::ndl_window::Window::new(crate::tl!("Command Aliases")).id(id).open(open).collapsible(false).default_size(vec2(480.0, 460.0)).show(
+        ctx,
+        |ui| {
+            match &st.file {
+                Some(f) => ui.label(crate::tf!("Alias file: {file}", file = f)),
+                None => ui.label(crate::tl!("No alias file loaded. REINIT replaces these aliases with a file's.")),
+            };
+            ui.label(RichText::new(crate::tl!("Aliases are saved in your Forja profile and survive restarts.")).small());
+            ui.horizontal(|ui| {
+                let label = ui.label(crate::tl!("Filter"));
+                ui.text_edit_singleline(&mut st.filter).labelled_by(label.id);
             });
-        });
-        let sel = st.selected.clone().filter(|_| selected_shown);
-        let sel_mine = sel.as_ref().is_some_and(|s| st.user.contains_key(s));
-        let sel_known = sel.as_ref().is_some_and(|s| sel_mine || built.contains_key(s));
-        ui.horizontal(|ui| {
-            if ui.button(crate::tl!("Add…")).clicked() {
-                st.form = Some(Form::default());
-                st.error = None;
-            }
-            if ui.add_enabled(sel_known, egui::Button::new(crate::tl!("Edit…"))).clicked()
-                && let Some(s) = &sel
-            {
-                let command = st.user.get(s).or_else(|| built.get(s)).cloned().unwrap_or_default();
-                st.form = Some(Form { alias: s.to_ascii_uppercase(), command: command.to_ascii_uppercase(), editing: sel_mine.then(|| s.clone()) });
-                st.error = None;
-            }
-            if ui.add_enabled(sel_mine, egui::Button::new(crate::tl!("Remove"))).clicked()
-                && let Some(s) = &sel
-            {
-                st.user.remove(s);
-            }
-            let import = ui
-                .add_enabled(can_pick, egui::Button::new(crate::tl!("Import…")))
-                .on_disabled_hover_text(crate::tl!("Run ALIASEDIT with the file's contents using its text parameter."));
-            if import.clicked() {
-                if import_replaces_something(st) {
-                    st.confirm_import = true;
-                } else {
-                    import_clicked = true;
+            let f = st.filter.trim().to_ascii_lowercase();
+            let mut names: Vec<&String> = st.user.keys().chain(built.keys().filter(|a| !st.user.contains_key(*a))).collect();
+            names.sort();
+            // Edit and Remove act only on a selected row the filter shows.
+            let mut selected_shown = false;
+            egui::ScrollArea::vertical().max_height(240.0).auto_shrink([false, true]).show(ui, |ui| {
+                egui::Grid::new("alias_rows").striped(true).num_columns(3).show(ui, |ui| {
+                    ui.strong(crate::tl!("Alias"));
+                    ui.strong(crate::tl!("Command"));
+                    ui.label("");
+                    ui.end_row();
+                    for name in names {
+                        let (command, mine) = match st.user.get(name) {
+                            Some(c) => (c, true),
+                            None => (built.get(name).unwrap_or(name), false),
+                        };
+                        if !f.is_empty() && !name.contains(&f) && !command.contains(&f) {
+                            continue;
+                        }
+                        let selected = st.selected.as_deref() == Some(name.as_str());
+                        selected_shown |= selected;
+                        let text = RichText::new(name.to_ascii_uppercase());
+                        if ui.selectable_label(selected, if mine { text } else { text.weak() }).clicked() {
+                            st.selected = Some(name.clone());
+                        }
+                        ui.label(if mine { RichText::new(command.to_ascii_uppercase()) } else { RichText::new(command.to_ascii_uppercase()).weak() });
+                        let note = match (mine, built.contains_key(name)) {
+                            (true, true) => crate::tl!("overrides built-in"),
+                            (true, false) => "",
+                            (false, _) => crate::tl!("built-in"),
+                        };
+                        ui.label(RichText::new(note).small());
+                        ui.end_row();
+                    }
+                });
+            });
+            let sel = st.selected.clone().filter(|_| selected_shown);
+            let sel_mine = sel.as_ref().is_some_and(|s| st.user.contains_key(s));
+            let sel_known = sel.as_ref().is_some_and(|s| sel_mine || built.contains_key(s));
+            ui.horizontal(|ui| {
+                if ui.button(crate::tl!("Add…")).clicked() {
+                    st.form = Some(Form::default());
+                    st.error = None;
                 }
-            }
-        });
-        if st.confirm_import {
-            ui.group(|ui| {
-                ui.label(crate::tf!("Importing a file replaces your {n} aliases, and any changes not applied yet.", n = st.user.len()));
-                ui.horizontal(|ui| {
-                    if ui.button(crate::tl!("Import and replace")).clicked() {
-                        st.confirm_import = false;
+                if ui.add_enabled(sel_known, egui::Button::new(crate::tl!("Edit…"))).clicked()
+                    && let Some(s) = &sel
+                {
+                    let command = st.user.get(s).or_else(|| built.get(s)).cloned().unwrap_or_default();
+                    st.form =
+                        Some(Form { alias: s.to_ascii_uppercase(), command: command.to_ascii_uppercase(), editing: sel_mine.then(|| s.clone()) });
+                    st.error = None;
+                }
+                if ui.add_enabled(sel_mine, egui::Button::new(crate::tl!("Remove"))).clicked()
+                    && let Some(s) = &sel
+                {
+                    st.user.remove(s);
+                }
+                let import = ui
+                    .add_enabled(can_pick, egui::Button::new(crate::tl!("Import…")))
+                    .on_disabled_hover_text(crate::tl!("Run ALIASEDIT with the file's contents using its text parameter."));
+                if import.clicked() {
+                    if import_replaces_something(st) {
+                        st.confirm_import = true;
+                    } else {
                         import_clicked = true;
                     }
-                    if ui.button(crate::tl!("Keep my aliases")).clicked() {
-                        st.confirm_import = false;
-                    }
-                });
+                }
             });
-        }
-        let mut save = false;
-        let mut discard = false;
-        if let Some(form) = st.form.as_mut() {
-            ui.group(|ui| {
-                egui::Grid::new("alias_form").num_columns(2).show(ui, |ui| {
-                    let alias_label = ui.label(crate::tl!("Alias"));
-                    ui.text_edit_singleline(&mut form.alias).labelled_by(alias_label.id);
-                    ui.end_row();
-                    let command_label = ui.label(crate::tl!("Command"));
-                    ui.text_edit_singleline(&mut form.command).labelled_by(command_label.id);
-                    ui.end_row();
-                });
-                // A few commands starting with what was typed, to pick from.
-                let typed = form.command.trim().trim_start_matches('*').to_ascii_lowercase();
-                if !typed.is_empty() && cadcraft_engine::find_command(&typed).is_none() {
-                    ui.horizontal_wrapped(|ui| {
-                        for c in cadcraft_engine::command_specs().iter().filter(|c| c.id.starts_with(&typed)).take(8) {
-                            if ui.small_button(c.id.to_ascii_uppercase()).clicked() {
-                                form.command = c.id.to_ascii_uppercase();
-                            }
+            if st.confirm_import {
+                ui.group(|ui| {
+                    ui.label(crate::tf!("Importing a file replaces your {n} aliases, and any changes not applied yet.", n = st.user.len()));
+                    ui.horizontal(|ui| {
+                        if ui.button(crate::tl!("Import and replace")).clicked() {
+                            st.confirm_import = false;
+                            import_clicked = true;
+                        }
+                        if ui.button(crate::tl!("Keep my aliases")).clicked() {
+                            st.confirm_import = false;
                         }
                     });
-                }
-                ui.horizontal(|ui| {
-                    save = ui.button(crate::tl!("Save alias")).clicked();
-                    discard = ui.button(crate::tl!("Discard")).clicked();
                 });
+            }
+            let mut save = false;
+            let mut discard = false;
+            if let Some(form) = st.form.as_mut() {
+                ui.group(|ui| {
+                    egui::Grid::new("alias_form").num_columns(2).show(ui, |ui| {
+                        let alias_label = ui.label(crate::tl!("Alias"));
+                        ui.text_edit_singleline(&mut form.alias).labelled_by(alias_label.id);
+                        ui.end_row();
+                        let command_label = ui.label(crate::tl!("Command"));
+                        ui.text_edit_singleline(&mut form.command).labelled_by(command_label.id);
+                        ui.end_row();
+                    });
+                    // A few commands starting with what was typed, to pick from.
+                    let typed = form.command.trim().trim_start_matches('*').to_ascii_lowercase();
+                    if !typed.is_empty() && cadcraft_engine::find_command(&typed).is_none() {
+                        ui.horizontal_wrapped(|ui| {
+                            for c in cadcraft_engine::command_specs().iter().filter(|c| c.id.starts_with(&typed)).take(8) {
+                                if ui.small_button(c.id.to_ascii_uppercase()).clicked() {
+                                    form.command = c.id.to_ascii_uppercase();
+                                }
+                            }
+                        });
+                    }
+                    ui.horizontal(|ui| {
+                        save = ui.button(crate::tl!("Save alias")).clicked();
+                        discard = ui.button(crate::tl!("Discard")).clicked();
+                    });
+                });
+            }
+            if save {
+                save_form(st);
+            }
+            if discard {
+                st.form = None;
+                st.error = None;
+            }
+            if let Some(e) = &st.error {
+                ui.colored_label(warn, e.as_str());
+            }
+            if !st.warnings.is_empty() {
+                for w in st.warnings.iter().take(3) {
+                    ui.colored_label(warn, w.as_str());
+                }
+                let more = st.warnings.len().saturating_sub(3);
+                if more > 0 {
+                    ui.label(crate::tf!("{n} more warnings; see the command line.", n = more));
+                }
+            }
+            ui.separator();
+            ui.horizontal(|ui| {
+                ok = ui.button(crate::tl!("OK")).clicked();
+                cancel = ui.button(crate::tl!("Cancel")).clicked();
+                apply_clicked = ui.button(crate::tl!("Apply")).clicked();
             });
-        }
-        if save {
-            save_form(st);
-        }
-        if discard {
-            st.form = None;
-            st.error = None;
-        }
-        if let Some(e) = &st.error {
-            ui.colored_label(warn, e.as_str());
-        }
-        if !st.warnings.is_empty() {
-            for w in st.warnings.iter().take(3) {
-                ui.colored_label(warn, w.as_str());
-            }
-            let more = st.warnings.len().saturating_sub(3);
-            if more > 0 {
-                ui.label(crate::tf!("{n} more warnings; see the command line.", n = more));
-            }
-        }
-        ui.separator();
-        ui.horizontal(|ui| {
-            ok = ui.button(crate::tl!("OK")).clicked();
-            cancel = ui.button(crate::tl!("Cancel")).clicked();
-            apply_clicked = ui.button(crate::tl!("Apply")).clicked();
-        });
-    });
+        },
+    );
     if import_clicked {
         let _ = pick_and_import(app);
     }

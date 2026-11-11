@@ -6,6 +6,7 @@ use egui::{Pos2, RichText, vec2};
 use serde_json::{Value, json};
 
 use crate::CadApp;
+use crate::ndl_widgets::NdlUi as _;
 use crate::theme::Tokens;
 
 // ---------------- QSELECT ----------------
@@ -77,7 +78,7 @@ pub fn qselect_dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
     let has_sel = !app.session.selection().is_empty();
     let mut run: Option<Value> = None;
     let mut close = false;
-    egui::Window::new(crate::tl!("Quick Select"))
+    crate::ndl_window::Window::new(crate::tl!("Quick Select"))
         .id(egui::Id::unique("Quick Select"))
         .open(open)
         .collapsible(false)
@@ -86,7 +87,7 @@ pub fn qselect_dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
         .show(ctx, |ui| {
             egui::Grid::new("qs_grid").num_columns(2).spacing(vec2(10.0, 6.0)).show(ui, |ui| {
                 ui.label(crate::tl!("Apply to:"));
-                craft_ui::ComboBox::from_id_salt("qs_apply")
+                crate::ndl_widgets::combo("qs_apply")
                     .width(220.0)
                     .selected_text(crate::i18n::t(if st.apply_selection { "Current selection" } else { "Entire drawing" }))
                     .show_ui(ui, |ui| {
@@ -107,7 +108,7 @@ pub fn qselect_dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
                             .collect()
                     })
                     .unwrap_or_default();
-                craft_ui::ComboBox::from_id_salt("qs_type").width(220.0).selected_text(crate::i18n::t(&st.ty)).show_ui(ui, |ui| {
+                crate::ndl_widgets::combo("qs_type").width(220.0).selected_text(crate::i18n::t(&st.ty)).show_ui(ui, |ui| {
                     ui.selectable_value(&mut st.ty, "Multiple".to_string(), crate::tl!("Multiple"));
                     for (n, c) in &types {
                         ui.selectable_value(&mut st.ty, n.clone(), format!("{} ({c})", crate::i18n::t(n)));
@@ -136,7 +137,7 @@ pub fn qselect_dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
                 ui.end_row();
                 ui.label(crate::tl!("Operator:"));
                 let op_label = OPERATORS.iter().find(|o| o.0 == st.operator).map(|o| o.1).unwrap_or("= Equals");
-                craft_ui::ComboBox::from_id_salt("qs_op").width(220.0).selected_text(crate::i18n::t(op_label)).show_ui(ui, |ui| {
+                crate::ndl_widgets::combo("qs_op").width(220.0).selected_text(crate::i18n::t(op_label)).show_ui(ui, |ui| {
                     for (o, l) in OPERATORS {
                         ui.selectable_value(&mut st.operator, o.to_string(), crate::i18n::t(l));
                     }
@@ -175,9 +176,9 @@ pub fn qselect_dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
             });
             ui.separator();
             ui.label(crate::tl!("How to apply:"));
-            ui.radio_value(&mut st.exclude, false, crate::tl!("Include in new selection set"));
-            ui.radio_value(&mut st.exclude, true, crate::tl!("Exclude from new selection set"));
-            ui.checkbox(&mut st.append, crate::tl!("Append to current selection set"));
+            ui.radio_choice(&mut st.exclude, false, crate::tl!("Include in new selection set"));
+            ui.radio_choice(&mut st.exclude, true, crate::tl!("Exclude from new selection set"));
+            ui.check(&mut st.append, crate::tl!("Append to current selection set"));
             ui.separator();
             ui.horizontal(|ui| {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -301,7 +302,7 @@ pub fn quick_properties(app: &mut CadApp, ctx: &egui::Context) {
     // Rotations show as the drawing measures directions (ANGBASE, ANGDIR).
     let angles = app.session.angle_settings();
     let mut close = false;
-    egui::Window::new(title)
+    crate::ndl_window::Window::new(title)
         .id(egui::Id::unique(("quick_properties", &st.sel)))
         .default_pos(at)
         .collapsible(false)
@@ -317,7 +318,7 @@ pub fn quick_properties(app: &mut CadApp, ctx: &egui::Context) {
                 }
                 ui.end_row();
                 ui.label(RichText::new(crate::tl!("Layer")).color(Tokens::get().text_dim));
-                craft_ui::ComboBox::from_id_salt("qp_layer").width(150.0).selected_text(layer.clone()).show_ui(ui, |ui| {
+                crate::ndl_widgets::combo("qp_layer").width(150.0).selected_text(layer.clone()).show_ui(ui, |ui| {
                     for l in &layers {
                         if ui.selectable_label(*l == layer, l).clicked() {
                             set = Some(("layer".into(), json!(l)));
@@ -326,7 +327,7 @@ pub fn quick_properties(app: &mut CadApp, ctx: &egui::Context) {
                 });
                 ui.end_row();
                 ui.label(RichText::new(crate::tl!("Linetype")).color(Tokens::get().text_dim));
-                craft_ui::ComboBox::from_id_salt("qp_lt").width(150.0).selected_text(linetype.clone()).show_ui(ui, |ui| {
+                crate::ndl_widgets::combo("qp_lt").width(150.0).selected_text(linetype.clone()).show_ui(ui, |ui| {
                     for l in std::iter::once("ByLayer".to_string())
                         .chain(std::iter::once("ByBlock".to_string()))
                         .chain(linetypes.iter().filter(|l| !["ByLayer", "ByBlock"].contains(&l.as_str())).cloned())

@@ -91,7 +91,7 @@ fn notice(app: &mut CadApp, ctx: &egui::Context) {
     let Some(message) = app.fault.message.clone() else { return };
     let t = Tokens::get();
     let mut dismiss = false;
-    egui::Window::new("Internal error")
+    crate::ndl_window::Window::new("Internal error")
         .id(egui::Id::unique("cc_fault_notice"))
         .collapsible(false)
         .resizable(false)
@@ -118,7 +118,7 @@ fn notice(app: &mut CadApp, ctx: &egui::Context) {
 /// All that's left once the interface keeps panicking.
 fn broken_window(app: &CadApp, ctx: &egui::Context) {
     let t = Tokens::get();
-    egui::Window::new("Forja has to close")
+    crate::ndl_window::Window::new("Forja has to close")
         .id(egui::Id::unique("cc_fault_broken"))
         .collapsible(false)
         .resizable(false)

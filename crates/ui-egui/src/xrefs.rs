@@ -8,6 +8,7 @@ use serde_json::{Value, json};
 
 use crate::CadApp;
 use crate::docking::Panel;
+use crate::ndl_widgets::NdlUi as _;
 
 /// XREF typed or chosen from a menu opens this palette; XATTACH there asks for the file first
 /// (with the host's file picker, where there is one). JSON calls (with parameters) run the
@@ -227,8 +228,8 @@ fn details(ui: &mut egui::Ui, r: &Row, path_id: egui::Id, act: &mut Option<Act>)
         ui.add_space(8.0);
         ui.label(crate::tl!("Type"));
         let mut overlay = r.overlay;
-        let a = ui.radio_value(&mut overlay, false, crate::tl!("Attach")).clicked();
-        let o = ui.radio_value(&mut overlay, true, crate::tl!("Overlay")).clicked();
+        let a = ui.radio_choice(&mut overlay, false, crate::tl!("Attach")).clicked();
+        let o = ui.radio_choice(&mut overlay, true, crate::tl!("Overlay")).clicked();
         if (a || o) && overlay != r.overlay {
             *act = Some(Act::Run("-xref", json!({ "option": "type", "names": name, "overlay": overlay })));
         }

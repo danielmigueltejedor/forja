@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
 use crate::CadApp;
+use crate::ndl_widgets::NdlUi as _;
 
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
@@ -134,7 +135,7 @@ fn navigate(app: &mut CadApp, params: &Value) -> Result<Value, String> {
 
 /// 3D Mouse window showing connection status, detected device/detail and the navigation settings, with a Calibrate action.
 pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
-    egui::Window::new(crate::tl!("3D Mouse")).id(egui::Id::unique("spacemouse")).open(open).resizable(false).show(ctx, |ui| {
+    crate::ndl_window::Window::new(crate::tl!("3D Mouse")).id(egui::Id::unique("spacemouse")).open(open).resizable(false).show(ctx, |ui| {
         ui.label(crate::i18n::t(app.spacemouse.status.message()));
         if let Some(device) = &app.spacemouse.device {
             ui.label(device);
@@ -144,10 +145,10 @@ pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
         }
         ui.separator();
         let mut settings = app.spacemouse.settings;
-        let mut changed = ui.checkbox(&mut settings.enabled, crate::tl!("Enable 3D mouse navigation")).changed();
+        let mut changed = ui.check(&mut settings.enabled, crate::tl!("Enable 3D mouse navigation")).changed();
         changed |= ui.add(egui::Slider::new(&mut settings.pan_speed, 0.1..=3.0).text(crate::tl!("Pan sensitivity"))).changed();
         changed |= ui.add(egui::Slider::new(&mut settings.zoom_speed, 0.1..=3.0).text(crate::tl!("Zoom sensitivity"))).changed();
-        changed |= ui.checkbox(&mut settings.reverse_zoom, crate::tl!("Reverse zoom direction")).changed();
+        changed |= ui.check(&mut settings.reverse_zoom, crate::tl!("Reverse zoom direction")).changed();
         if changed {
             let _ = app.run("ui.spacemouse", json!({"settings": settings}));
         }

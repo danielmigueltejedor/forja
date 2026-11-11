@@ -14,6 +14,7 @@ use egui::{Color32, CursorIcon, Pos2, Rect, Sense, Stroke, pos2, vec2};
 use serde_json::json;
 
 use crate::CadApp;
+use crate::ndl_widgets::NdlUi as _;
 use crate::theme::Tokens;
 
 /// Shown when the compass ring is clicked or dragged.
@@ -183,7 +184,7 @@ pub fn ucs_icon(app: &mut CadApp, ui: &mut egui::Ui, canvas: Rect) {
 fn ucs_menu(app: &mut CadApp, popup: egui::Popup<'_>) {
     let mut hide = false;
     popup.show(|ui| {
-        ui.radio(true, "World (WCS)").on_hover_text("Forja draws in the World Coordinate System; user coordinate systems aren't available yet.");
+        ui.choice(true, "World (WCS)").on_hover_text("Forja draws in the World Coordinate System; user coordinate systems aren't available yet.");
         ui.separator();
         if ui.button("Hide UCS Icon").clicked() {
             hide = true;

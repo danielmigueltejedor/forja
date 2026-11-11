@@ -357,7 +357,7 @@ pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
         }
     }
     let mut reset_all = false;
-    egui::Window::new(crate::tl!("Keyboard Shortcuts"))
+    crate::ndl_window::Window::new(crate::tl!("Keyboard Shortcuts"))
         .id(egui::Id::unique("shortcuts_dialog"))
         .open(open)
         .collapsible(false)

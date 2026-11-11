@@ -9,6 +9,7 @@ use serde_json::{Map, Value, json};
 
 use crate::CadApp;
 use crate::animation::AnimationPref;
+use crate::ndl_widgets::NdlUi as _;
 use crate::theme::{ThemePref, Tokens};
 
 /// The tabs: (id in the dialog name, label).
@@ -32,7 +33,7 @@ pub fn dialog(app: &mut CadApp, ctx: &egui::Context, name: &str, open: &mut bool
     let mut start = None;
     let mut close = false;
     let center = ctx.content_rect().center();
-    egui::Window::new(crate::tl!("Options"))
+    crate::ndl_window::Window::new(crate::tl!("Options"))
         .id(egui::Id::unique("cc_options"))
         .open(open)
         .resizable(false)
@@ -141,7 +142,7 @@ fn display(app: &CadApp, ui: &mut egui::Ui, changes: &mut Map<String, Value>) {
     grid(ui, "options_display", |ui| {
         let theme_caption = ui.label(crate::tl!("Interface theme"));
         let mut theme = app.ui.theme;
-        let theme_combo = craft_ui::ComboBox::from_id_salt("options_theme").selected_text(theme_label(theme)).show_ui(ui, |ui| {
+        let theme_combo = crate::ndl_widgets::combo("options_theme").selected_text(theme_label(theme)).show_ui(ui, |ui| {
             for t in ThemePref::ALL {
                 ui.selectable_value(&mut theme, t, theme_label(t));
             }
@@ -154,7 +155,7 @@ fn display(app: &CadApp, ui: &mut egui::Ui, changes: &mut Map<String, Value>) {
 
         let animations_caption = ui.label(crate::tl!("Animation effects"));
         let mut animations = app.ui.animations;
-        let animations_combo = craft_ui::ComboBox::from_id_salt("options_animations").selected_text(animations_label(animations)).show_ui(ui, |ui| {
+        let animations_combo = crate::ndl_widgets::combo("options_animations").selected_text(animations_label(animations)).show_ui(ui, |ui| {
             for a in AnimationPref::ALL {
                 ui.selectable_value(&mut animations, a, animations_label(a));
             }
@@ -168,7 +169,7 @@ fn display(app: &CadApp, ui: &mut egui::Ui, changes: &mut Map<String, Value>) {
         let scale_caption = ui.label(crate::tl!("Interface scale"));
         let scale = app.options.interface_scale;
         let percent = |s: f32| format!("{} %", (s * 100.0).round());
-        let scale_combo = craft_ui::ComboBox::from_id_salt("options_interface_scale").selected_text(percent(scale)).show_ui(ui, |ui| {
+        let scale_combo = crate::ndl_widgets::combo("options_interface_scale").selected_text(percent(scale)).show_ui(ui, |ui| {
             for n in [75u16, 100, 125, 150, 175, 200, 250, 300] {
                 let s = f32::from(n) / 100.0;
                 if ui.selectable_label((scale - s).abs() < 1e-4, format!("{n} %")).clicked() && (scale - s).abs() >= 1e-4 {
@@ -208,7 +209,7 @@ fn display(app: &CadApp, ui: &mut egui::Ui, changes: &mut Map<String, Value>) {
     });
     ui.add_space(6.0);
     let mut system_cursor = app.ui.system_cursor;
-    if ui.checkbox(&mut system_cursor, crate::tl!("Keep the system cursor visible over the drawing area")).changed() {
+    if ui.check(&mut system_cursor, crate::tl!("Keep the system cursor visible over the drawing area")).changed() {
         changes.insert("systemCursor".into(), json!(system_cursor));
     }
     hint(ui, crate::tl!("Screen magnifiers, screen readers and recorders follow the system cursor."));
@@ -243,7 +244,7 @@ fn save_format_row(ui: &mut egui::Ui, app: &CadApp, changes: &mut Map<String, Va
                 crate::SaveFormat::Dxf => crate::tl!("DXF"),
                 crate::SaveFormat::Dwg => crate::tl!("DWG"),
             };
-            if ui.radio(app.ui.save_format == f, label).clicked() && app.ui.save_format != f {
+            if ui.choice(app.ui.save_format == f, label).clicked() && app.ui.save_format != f {
                 changes.insert("saveFormat".into(), json!(f.as_str()));
             }
         }
@@ -254,7 +255,7 @@ fn save_version_row(ui: &mut egui::Ui, app: &CadApp, changes: &mut Map<String, V
     let version_caption = ui.label(crate::tl!("Default save version"));
     let current = crate::SaveVersion::parse(&app.ui.save_version).unwrap_or_default();
     let mut version = current;
-    let version_combo = craft_ui::ComboBox::from_id_salt("options_save_version").selected_text(version.year()).show_ui(ui, |ui| {
+    let version_combo = crate::ndl_widgets::combo("options_save_version").selected_text(version.year()).show_ui(ui, |ui| {
         for v in crate::SaveVersion::ALL {
             ui.selectable_value(&mut version, v, v.year());
         }
@@ -269,10 +270,10 @@ fn units_row(ui: &mut egui::Ui, app: &CadApp, changes: &mut Map<String, Value>) 
     ui.label(crate::tl!("Units of new drawings"));
     ui.horizontal(|ui| {
         let metric = app.session.settings.measureinit;
-        if ui.radio(!metric, crate::tl!("Imperial (inches)")).clicked() && metric {
+        if ui.choice(!metric, crate::tl!("Imperial (inches)")).clicked() && metric {
             changes.insert("MEASUREINIT".into(), json!(0));
         }
-        if ui.radio(metric, crate::tl!("Metric (millimetres)")).clicked() && !metric {
+        if ui.choice(metric, crate::tl!("Metric (millimetres)")).clicked() && !metric {
             changes.insert("MEASUREINIT".into(), json!(1));
         }
     });
@@ -291,7 +292,7 @@ fn autosave_row(ui: &mut egui::Ui, changes: &mut Map<String, Value>) {
 fn backup_row(ui: &mut egui::Ui, changes: &mut Map<String, Value>) {
     ui.label(crate::tl!("Backup copy"));
     let mut bak = cadcraft_engine::autosave::isavebak();
-    if ui.checkbox(&mut bak, crate::tl!("Create backup copy with each save")).changed() {
+    if ui.check(&mut bak, crate::tl!("Create backup copy with each save")).changed() {
         changes.insert("ISAVEBAK".into(), json!(i32::from(bak)));
     }
 }
@@ -373,27 +374,27 @@ fn selection(app: &CadApp, ui: &mut egui::Ui, changes: &mut Map<String, Value>) 
         left.add_space(8.0);
         heading(left, crate::tl!("Selection modes"));
         let mut pickfirst = st.pickfirst;
-        if left.checkbox(&mut pickfirst, crate::tl!("Select objects first, then choose a command")).changed() {
+        if left.check(&mut pickfirst, crate::tl!("Select objects first, then choose a command")).changed() {
             changes.insert("PICKFIRST".into(), json!(i32::from(pickfirst)));
         }
         let mut shift_adds = !st.pickadd;
-        if left.checkbox(&mut shift_adds, crate::tl!("Hold Shift to add to the selection")).changed() {
+        if left.check(&mut shift_adds, crate::tl!("Hold Shift to add to the selection")).changed() {
             changes.insert("PICKADD".into(), json!(i32::from(!shift_adds)));
         }
         let mut grouping = st.pickstyle & 1 != 0;
         let mut two_clicks = !st.pickdrag;
         if left
-            .checkbox(&mut two_clicks, crate::tl!("Select using two clicks only"))
+            .check(&mut two_clicks, crate::tl!("Select using two clicks only"))
             .on_hover_text(crate::tl!("Define each corner of the selection window with a separate click."))
             .changed()
         {
             changes.insert("PICKDRAG".into(), json!(if two_clicks { 0 } else { 2 }));
         }
-        if left.checkbox(&mut grouping, crate::tl!("Object grouping")).changed() {
+        if left.check(&mut grouping, crate::tl!("Object grouping")).changed() {
             changes.insert("PICKSTYLE".into(), json!((st.pickstyle & !1) | u8::from(grouping)));
         }
         let mut qp = st.qpmode;
-        if left.checkbox(&mut qp, crate::tl!("Show Quick Properties for selected objects")).changed() {
+        if left.check(&mut qp, crate::tl!("Show Quick Properties for selected objects")).changed() {
             changes.insert("QPMODE".into(), json!(i32::from(qp)));
         }
         left.add_space(4.0);
@@ -421,7 +422,7 @@ fn selection(app: &CadApp, ui: &mut egui::Ui, changes: &mut Map<String, Value>) 
         right.add_space(8.0);
         heading(right, crate::tl!("Grips"));
         let mut grips = st.grips > 0;
-        if right.checkbox(&mut grips, crate::tl!("Show grips")).changed() {
+        if right.check(&mut grips, crate::tl!("Show grips")).changed() {
             changes.insert("GRIPS".into(), json!(u8::from(grips)));
         }
         right.horizontal(|ui| {
@@ -436,8 +437,8 @@ fn selection(app: &CadApp, ui: &mut egui::Ui, changes: &mut Map<String, Value>) 
         heading(right, crate::tl!("Preview"));
         right.label(crate::tl!("Selection preview"));
         let (mut asking, mut idle) = (st.selectionpreview & 2 != 0, st.selectionpreview & 1 != 0);
-        let a = right.checkbox(&mut asking, crate::tl!("When a command is active")).changed();
-        let b = right.checkbox(&mut idle, crate::tl!("When no command is active")).changed();
+        let a = right.check(&mut asking, crate::tl!("When a command is active")).changed();
+        let b = right.check(&mut idle, crate::tl!("When no command is active")).changed();
         if a || b {
             changes.insert("SELECTIONPREVIEW".into(), json!(u8::from(idle) | (u8::from(asking) << 1)));
         }
@@ -463,7 +464,7 @@ fn heading(ui: &mut egui::Ui, text: &str) -> egui::Response {
 /// cursor never highlights (PREVIEWFILTER). Changes apply at once, as on the Options tabs.
 fn visual_effects(ctx: &egui::Context, st: &cadcraft_engine::Settings, open: &mut bool, changes: &mut Map<String, Value>) {
     let mut close = false;
-    egui::Window::new(crate::tl!("Visual Effect Settings"))
+    crate::ndl_window::Window::new(crate::tl!("Visual Effect Settings"))
         .id(egui::Id::unique("cc_visual_effects"))
         .open(open)
         .resizable(false)
@@ -475,7 +476,7 @@ fn visual_effects(ctx: &egui::Context, st: &cadcraft_engine::Settings, open: &mu
                 let [left, right] = cols else { return };
                 heading(left, crate::tl!("Selection Area Effect"));
                 let mut area = st.selectionarea;
-                if left.checkbox(&mut area, crate::tl!("Indicate selection area")).changed() {
+                if left.check(&mut area, crate::tl!("Indicate selection area")).changed() {
                     changes.insert("SELECTIONAREA".into(), json!(i32::from(area)));
                 }
                 left.add_enabled_ui(st.selectionarea, |ui| {
@@ -505,7 +506,7 @@ fn visual_effects(ctx: &egui::Context, st: &cadcraft_engine::Settings, open: &mu
                     (16, crate::tl!("Hatches")),
                 ] {
                     let mut on = st.previewfilter & bit != 0;
-                    if right.checkbox(&mut on, label).changed() {
+                    if right.check(&mut on, label).changed() {
                         changes.insert("PREVIEWFILTER".into(), json!(if on { st.previewfilter | bit } else { st.previewfilter & !bit }));
                     }
                 }
@@ -543,7 +544,7 @@ fn preferences(app: &CadApp, ui: &mut egui::Ui, changes: &mut Map<String, Value>
     grid(ui, "options_preferences", |ui| {
         let language_caption = ui.label(crate::tl!("Interface language"));
         let mut lang = app.ui.interface_language;
-        let language_combo = craft_ui::ComboBox::from_id_salt("options_language").selected_text(lang.name()).show_ui(ui, |ui| {
+        let language_combo = crate::ndl_widgets::combo("options_language").selected_text(lang.name()).show_ui(ui, |ui| {
             for p in crate::i18n::Preference::for_picker() {
                 ui.selectable_value(&mut lang, p, p.name());
             }
@@ -568,7 +569,7 @@ fn preferences(app: &CadApp, ui: &mut egui::Ui, changes: &mut Map<String, Value>
     hint(ui, crate::tl!("An array that would create more objects than this is refused."));
     ui.add_space(6.0);
     let mut timed = app.options.time_sensitive_right_click;
-    if ui.checkbox(&mut timed, crate::tl!("Time-sensitive right-click: a quick click is Enter, holding opens the menu")).changed() {
+    if ui.check(&mut timed, crate::tl!("Time-sensitive right-click: a quick click is Enter, holding opens the menu")).changed() {
         changes.insert("timeSensitiveRightClick".into(), json!(timed));
     }
     hint(ui, crate::tl!("Turned off, a right-click while a command runs does what Right-Click Customization sets for Command mode."));
@@ -590,7 +591,7 @@ const RIGHT_CLICK: &str = "cc_options_right_click";
 fn right_click_window(o: &super::UiOptions, ctx: &egui::Context, open: &mut bool, changes: &mut Map<String, Value>) {
     use super::{CommandClick, IdleClick};
     let mut close = false;
-    egui::Window::new(crate::tl!("Right-Click Customization"))
+    crate::ndl_window::Window::new(crate::tl!("Right-Click Customization"))
         .id(egui::Id::unique("cc_right_click"))
         .open(open)
         .resizable(false)
@@ -600,7 +601,7 @@ fn right_click_window(o: &super::UiOptions, ctx: &egui::Context, open: &mut bool
         .show(ctx, |ui| {
             ui.set_width(460.0);
             let mut timed = o.time_sensitive_right_click;
-            if ui.checkbox(&mut timed, crate::tl!("Turn on time-sensitive right-click")).changed() {
+            if ui.check(&mut timed, crate::tl!("Turn on time-sensitive right-click")).changed() {
                 changes.insert("timeSensitiveRightClick".into(), json!(timed));
             }
             ui.add_enabled_ui(o.time_sensitive_right_click, |ui| {
@@ -626,7 +627,7 @@ fn right_click_window(o: &super::UiOptions, ctx: &egui::Context, open: &mut bool
                     ui.set_width(ui.available_width());
                     hint(ui, note);
                     for (choice, label) in [(IdleClick::Repeat, crate::tl!("Repeat last command")), (IdleClick::Menu, crate::tl!("Shortcut Menu"))] {
-                        if ui.radio(current == choice, label).clicked() && current != choice {
+                        if ui.choice(current == choice, label).clicked() && current != choice {
                             changes.insert(key.into(), json!(choice.as_str()));
                         }
                     }
@@ -642,7 +643,7 @@ fn right_click_window(o: &super::UiOptions, ctx: &egui::Context, open: &mut bool
                         (CommandClick::Menu, crate::tl!("Shortcut Menu: always enabled")),
                         (CommandClick::MenuWithOptions, crate::tl!("Shortcut Menu: enabled when command options are present")),
                     ] {
-                        if ui.radio(o.right_click_command == choice, label).clicked() && o.right_click_command != choice {
+                        if ui.choice(o.right_click_command == choice, label).clicked() && o.right_click_command != choice {
                             changes.insert("rightClickCommand".into(), json!(choice.as_str()));
                         }
                     }

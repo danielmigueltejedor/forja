@@ -13,6 +13,7 @@ use egui::{Color32, RichText, Sense, TextFormat};
 use serde_json::{Value, json};
 
 use crate::CadApp;
+use crate::ndl_widgets::NdlUi as _;
 use crate::theme::{self, Tokens};
 
 /// One object the search hit, as the engine reports it.
@@ -171,7 +172,7 @@ pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
     let mut do_replace: Option<Option<usize>> = None;
     let mut do_select_all = false;
     let mut pick: Option<usize> = None;
-    egui::Window::new(crate::tl!("Find and Replace"))
+    crate::ndl_window::Window::new(crate::tl!("Find and Replace"))
         .id(egui::Id::unique("Find and Replace"))
         .open(open)
         .collapsible(false)
@@ -191,8 +192,8 @@ pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
                 ui.end_row();
             });
             ui.horizontal(|ui| {
-                ui.checkbox(&mut st.match_case, crate::tl!("Match case"));
-                ui.checkbox(&mut st.whole_word, crate::tl!("Whole words"));
+                ui.check(&mut st.match_case, crate::tl!("Match case"));
+                ui.check(&mut st.whole_word, crate::tl!("Whole words"));
             });
             ui.label(RichText::new(crate::tl!("Searches the current space.")).color(t.text_faint).small());
             ui.add_space(2.0);

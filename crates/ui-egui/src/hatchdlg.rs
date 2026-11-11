@@ -10,6 +10,7 @@ use serde_json::{Value, json};
 use egui::vec2;
 
 use crate::CadApp;
+use crate::ndl_widgets::NdlUi as _;
 use crate::theme::Tokens;
 
 /// The gradient shapes the dialog offers; each can also be inverted (`INV` + name).
@@ -430,7 +431,7 @@ pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
     };
     let title = if st.edit.is_empty() { crate::tl!("Hatch and Gradient") } else { crate::tl!("Hatch Edit") };
     let mut action = Action::None;
-    egui::Window::new(title).id(egui::Id::unique("hatch_dialog")).open(open).collapsible(false).resizable(false).show(ctx, |ui| {
+    crate::ndl_window::Window::new(title).id(egui::Id::unique("hatch_dialog")).open(open).collapsible(false).resizable(false).show(ctx, |ui| {
         ui.horizontal_top(|ui| {
             ui.vertical(|ui| {
                 ui.set_width(340.0);
@@ -498,17 +499,17 @@ fn fill_ui(ui: &mut egui::Ui, f: &mut Fill, action: &mut Action) {
             }
             ui.end_row();
             ui.label(crate::tl!("Shape"));
-            craft_ui::ComboBox::from_id_salt("hatch_shape").selected_text(shape_label(&f.shape)).show_ui(ui, |ui| {
+            crate::ndl_widgets::combo("hatch_shape").selected_text(shape_label(&f.shape)).show_ui(ui, |ui| {
                 for name in SHAPES {
                     ui.selectable_value(&mut f.shape, name.to_string(), shape_label(name));
                 }
             });
             ui.end_row();
             ui.label("");
-            ui.checkbox(&mut f.inverted, crate::tl!("Inverted"));
+            ui.check(&mut f.inverted, crate::tl!("Inverted"));
             ui.end_row();
             ui.label("");
-            ui.checkbox(&mut f.centered, crate::tl!("Centered"));
+            ui.check(&mut f.centered, crate::tl!("Centered"));
             ui.end_row();
             ui.label(crate::tl!("Angle"));
             ui.add(egui::DragValue::new(&mut f.angle).speed(1.0).range(-360.0..=360.0).clamp_existing_to_range(false).suffix("°"));
@@ -531,8 +532,8 @@ fn fill_ui(ui: &mut egui::Ui, f: &mut Fill, action: &mut Action) {
     }
     ui.separator();
     ui.strong(crate::tl!("Hatch origin"));
-    ui.radio_value(&mut f.specified, false, crate::tl!("Use current origin"));
-    ui.radio_value(&mut f.specified, true, crate::tl!("Specified origin"));
+    ui.radio_choice(&mut f.specified, false, crate::tl!("Use current origin"));
+    ui.radio_choice(&mut f.specified, true, crate::tl!("Specified origin"));
     ui.add_enabled_ui(f.specified, |ui| {
         if ui.button(crate::tl!("Click to set new origin")).clicked() {
             *action = Action::Pick(PickMode::Origin);
@@ -545,7 +546,7 @@ fn fill_ui(ui: &mut egui::Ui, f: &mut Fill, action: &mut Action) {
             f.origin = None;
         }
         ui.add_enabled_ui(f.origin.is_none(), |ui| {
-            craft_ui::ComboBox::from_id_salt("hatch_origin_mode").selected_text(origin_label(&f.origin_mode)).show_ui(ui, |ui| {
+            crate::ndl_widgets::combo("hatch_origin_mode").selected_text(origin_label(&f.origin_mode)).show_ui(ui, |ui| {
                 for m in ORIGIN_MODES {
                     ui.selectable_value(&mut f.origin_mode, m.to_string(), origin_label(m));
                 }
@@ -576,7 +577,7 @@ fn options_ui(ui: &mut egui::Ui, st: &mut HatchDlgState, action: &mut Action) {
                 for (i, outer) in st.loop_outer.iter().enumerate() {
                     let mut remove = st.remove_loops.contains(&i);
                     let label = format!("{} {} ({})", crate::tl!("Boundary"), i + 1, if *outer { crate::tl!("Outer") } else { crate::tl!("Island") });
-                    if ui.checkbox(&mut remove, label).changed() {
+                    if ui.check(&mut remove, label).changed() {
                         if remove {
                             st.remove_loops.push(i);
                         } else {
@@ -590,14 +591,14 @@ fn options_ui(ui: &mut egui::Ui, st: &mut HatchDlgState, action: &mut Action) {
         ui.separator();
     }
     ui.strong(crate::tl!("Options"));
-    ui.checkbox(&mut st.fill.associative, crate::tl!("Associative"));
+    ui.check(&mut st.fill.associative, crate::tl!("Associative"));
     if st.edit.is_empty() {
-        ui.checkbox(&mut st.separate, crate::tl!("Create separate hatches"));
+        ui.check(&mut st.separate, crate::tl!("Create separate hatches"));
     }
     ui.label(crate::tl!("Island detection"));
-    ui.radio_value(&mut st.fill.style, 0, crate::tl!("Normal"));
-    ui.radio_value(&mut st.fill.style, 1, crate::tl!("Outer"));
-    ui.radio_value(&mut st.fill.style, 2, crate::tl!("Ignore"));
+    ui.radio_choice(&mut st.fill.style, 0, crate::tl!("Normal"));
+    ui.radio_choice(&mut st.fill.style, 1, crate::tl!("Outer"));
+    ui.radio_choice(&mut st.fill.style, 2, crate::tl!("Ignore"));
 }
 
 #[cfg(test)]

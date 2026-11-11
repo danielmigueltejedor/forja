@@ -131,6 +131,20 @@ pub struct Tokens {
 const NDL_DARK: nodalia_theme::Palette = lifted_dark(nodalia_theme::Mode::Dark.palette_with(nodalia_theme::Accent::Nodalia));
 const NDL_LIGHT: nodalia_theme::Palette = nodalia_theme::Mode::Light.palette_with(nodalia_theme::Accent::Nodalia);
 
+/// The NDL palette of the theme on screen, for widgets that paint NDL's own roles (accent fills,
+/// text on the accent, fields, raised cards).
+pub fn ndl_palette() -> nodalia_theme::Palette {
+    match active() {
+        Theme::Dark => NDL_DARK,
+        Theme::Light => NDL_LIGHT,
+    }
+}
+
+/// An NDL colour as egui's.
+pub fn ndl_color(c: nodalia_theme::Rgba) -> Color32 {
+    nodalia_theme::for_egui::color(c)
+}
+
 const fn rgb(r: u8, g: u8, b: u8) -> nodalia_theme::Rgba {
     nodalia_theme::Rgba::new(r, g, b, 255)
 }
