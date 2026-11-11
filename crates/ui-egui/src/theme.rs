@@ -1,5 +1,5 @@
-//! Design tokens. Colours were measured from the reference look (dark slate chrome, near-black
-//! navy model space) and are CADCraft's own values; every widget reads them from here.
+//! Design tokens. The interface colours come from the Nodalia Design Language (`nodalia-theme`)
+//! with Forja's accent; every widget reads them from here.
 //!
 //! Two palettes: [`Tokens::DARK`] (the original look) and [`Tokens::LIGHT`]. The interface theme
 //! changes the chrome (title and tool bar, menus, palettes, tabs, command line, status bar,
@@ -126,27 +126,44 @@ pub struct Tokens {
     pub paper: Color32,
 }
 
+/// The Nodalia Design Language palettes with Forja's accent: every interface colour below comes
+/// from them.
+const NDL_DARK: nodalia_theme::Palette = nodalia_theme::Mode::Dark.palette_with(nodalia_theme::Accent::Forja);
+const NDL_LIGHT: nodalia_theme::Palette = nodalia_theme::Mode::Light.palette_with(nodalia_theme::Accent::Forja);
+
+/// An opaque NDL colour (every colour taken from the palettes here is opaque).
+const fn ndl(c: nodalia_theme::Rgba) -> Color32 {
+    Color32::from_rgb(c.r, c.g, c.b)
+}
+
+/// An NDL colour at `alpha` (0–255), for the translucent command-line surfaces.
+const fn ndl_alpha(c: nodalia_theme::Rgba, alpha: u8) -> Color32 {
+    Color32::from_rgba_unmultiplied_const(c.r, c.g, c.b, alpha)
+}
+
 impl Tokens {
+    /// The Nodalia dark look: a near-black window frame (`chrome`) holding the panels and the
+    /// drawing area as islands (`panel`).
     pub const DARK: Tokens = Tokens {
-        chrome: Color32::from_rgb(0x3b, 0x44, 0x53),
-        chrome_dark: Color32::from_rgb(0x31, 0x38, 0x44),
-        panel: Color32::from_rgb(0x3c, 0x44, 0x52),
-        tab_active: Color32::from_rgb(0x4e, 0x5a, 0x6e),
-        control: Color32::from_rgb(0x50, 0x5a, 0x6d),
-        control_hover: Color32::from_rgb(0x5c, 0x67, 0x7c),
-        border: Color32::from_rgb(0x23, 0x29, 0x30),
-        canvas: Color32::from_rgb(0x22, 0x28, 0x2f),
-        grid_minor: Color32::from_rgb(0x29, 0x30, 0x3a),
-        grid_major: Color32::from_rgb(0x31, 0x39, 0x45),
+        chrome: ndl(NDL_DARK.surface_window),
+        chrome_dark: ndl(NDL_DARK.surface_window),
+        panel: ndl(NDL_DARK.surface_panel),
+        tab_active: ndl(NDL_DARK.surface_raised),
+        control: ndl(NDL_DARK.control_bg),
+        control_hover: ndl(NDL_DARK.control_bg_hover),
+        border: ndl(NDL_DARK.border_subtle),
+        canvas: ndl(NDL_DARK.surface_panel),
+        grid_minor: Color32::from_rgb(0x1d, 0x20, 0x28),
+        grid_major: Color32::from_rgb(0x27, 0x2a, 0x34),
         axis_x: Color32::from_rgb(0x56, 0x28, 0x29),
         axis_y: Color32::from_rgb(0x28, 0x4a, 0x2e),
-        text: Color32::from_rgb(0xd7, 0xdb, 0xe0),
-        text_dim: Color32::from_rgb(0xa3, 0xaa, 0xb4),
-        text_faint: Color32::from_rgb(0x87, 0x8d, 0x96),
-        icon: Color32::from_rgb(0xcf, 0xd4, 0xdb),
-        icon_accent: Color32::from_rgb(0x4f, 0xa3, 0xf7),
+        text: ndl(NDL_DARK.text_primary),
+        text_dim: ndl(NDL_DARK.text_secondary),
+        text_faint: ndl(NDL_DARK.text_tertiary),
+        icon: ndl(NDL_DARK.text_primary),
+        icon_accent: ndl(NDL_DARK.accent_default),
         icon_point: Color32::from_rgb(0xf0, 0x7a, 0x3a),
-        accent: Color32::from_rgb(0x3d, 0x8b, 0xfd),
+        accent: ndl(NDL_DARK.accent_default),
         selection: Color32::from_rgb(0x4a, 0x8f, 0xff),
         hover: Color32::from_rgb(0x9c, 0xc6, 0xff),
         grip: Color32::from_rgb(0x2f, 0x6b, 0xff),
@@ -158,50 +175,51 @@ impl Tokens {
         compare_area: Color32::from_rgb(0xff, 0xb4, 0x3c),
         window_stroke: Color32::from_rgb(0x6f, 0xa8, 0xff),
         crossing_stroke: Color32::from_rgb(0x7f, 0xe0, 0x7f),
-        cmd_bg: Color32::from_rgba_premultiplied(0x34, 0x3c, 0x4a, 0xf0),
-        toggle_on: Color32::from_rgb(0x3d, 0x8b, 0xfd),
-        field: Color32::from_rgb(0x31, 0x38, 0x44),
-        select_bg: Color32::from_rgb(0x3d, 0x8b, 0xfd),
-        canvas_ink: Color32::from_rgb(0xa3, 0xaa, 0xb4),
-        cmd_history: Color32::from_rgba_unmultiplied_const(0x2a, 0x30, 0x3a, 170),
-        cmd_border: Color32::from_rgb(0x55, 0x5f, 0x70),
-        cmd_keyword: Color32::from_rgb(0x8f, 0xc1, 0xff),
-        cmd_keyword_hover: Color32::from_rgb(0x2f, 0x5e, 0xa8),
-        list_bg: Color32::from_rgb(0x2b, 0x31, 0x3b),
-        list_row: Color32::from_rgb(0x3a, 0x42, 0x50),
-        warn: Color32::from_rgb(0xff, 0xd0, 0x80),
+        cmd_bg: ndl_alpha(NDL_DARK.surface_raised, 0xf0),
+        toggle_on: ndl(NDL_DARK.accent_default),
+        field: ndl(NDL_DARK.control_field_bg),
+        select_bg: ndl(NDL_DARK.selection_bg),
+        canvas_ink: ndl(NDL_DARK.text_secondary),
+        cmd_history: ndl_alpha(NDL_DARK.surface_sunken, 200),
+        cmd_border: ndl(NDL_DARK.border_default),
+        cmd_keyword: ndl(NDL_DARK.accent_text),
+        cmd_keyword_hover: ndl(NDL_DARK.accent_subtle),
+        list_bg: ndl(NDL_DARK.surface_overlay),
+        list_row: ndl(NDL_DARK.control_bg_hover),
+        warn: ndl(NDL_DARK.status_warning_fg),
         crosshair: Color32::from_rgb(0xe8, 0xe8, 0xe8),
         paper: Color32::WHITE,
     };
 
-    /// Light grey chrome with dark text. The drawing-area colours (canvas, grid, axes, selection,
-    /// grips, snap markers, selection windows) are the same as [`Tokens::DARK`]'s.
+    /// The Nodalia light look: a grey frame with white islands. The drawing-area colours (canvas,
+    /// grid, axes, selection, grips, snap markers, selection windows) are the same as
+    /// [`Tokens::DARK`]'s.
     pub const LIGHT: Tokens = Tokens {
-        chrome: Color32::from_rgb(0xe4, 0xe7, 0xeb),
-        chrome_dark: Color32::from_rgb(0xd5, 0xd9, 0xdf),
-        panel: Color32::from_rgb(0xee, 0xf0, 0xf3),
-        tab_active: Color32::from_rgb(0xc8, 0xd3, 0xe2),
-        control: Color32::from_rgb(0xdc, 0xe0, 0xe6),
-        control_hover: Color32::from_rgb(0xcb, 0xd2, 0xdc),
-        border: Color32::from_rgb(0xb3, 0xba, 0xc4),
-        text: Color32::from_rgb(0x1d, 0x23, 0x2b),
-        text_dim: Color32::from_rgb(0x47, 0x50, 0x5c),
-        text_faint: Color32::from_rgb(0x62, 0x6a, 0x76),
-        icon: Color32::from_rgb(0x34, 0x3c, 0x48),
-        icon_accent: Color32::from_rgb(0x1b, 0x6f, 0xd6),
+        chrome: ndl(NDL_LIGHT.surface_window),
+        chrome_dark: ndl(NDL_LIGHT.surface_window),
+        panel: ndl(NDL_LIGHT.surface_panel),
+        tab_active: ndl(NDL_LIGHT.surface_sunken),
+        control: ndl(NDL_LIGHT.control_bg),
+        control_hover: ndl(NDL_LIGHT.control_bg_hover),
+        border: ndl(NDL_LIGHT.border_subtle),
+        text: ndl(NDL_LIGHT.text_primary),
+        text_dim: ndl(NDL_LIGHT.text_secondary),
+        text_faint: ndl(NDL_LIGHT.text_tertiary),
+        icon: ndl(NDL_LIGHT.text_primary),
+        icon_accent: ndl(NDL_LIGHT.accent_default),
         icon_point: Color32::from_rgb(0xd3, 0x5a, 0x1c),
-        accent: Color32::from_rgb(0x2f, 0x7c, 0xf6),
-        cmd_bg: Color32::from_rgba_unmultiplied_const(0xf9, 0xfa, 0xfb, 0xf0),
-        toggle_on: Color32::from_rgb(0x2f, 0x7c, 0xf6),
-        field: Color32::from_rgb(0xff, 0xff, 0xff),
-        select_bg: Color32::from_rgb(0xb6, 0xd3, 0xfb),
-        cmd_history: Color32::from_rgba_unmultiplied_const(0xf0, 0xf2, 0xf5, 0xdc),
-        cmd_border: Color32::from_rgb(0xa9, 0xb0, 0xba),
-        cmd_keyword: Color32::from_rgb(0x15, 0x59, 0xc0),
-        cmd_keyword_hover: Color32::from_rgb(0xcf, 0xe0, 0xfa),
-        list_bg: Color32::from_rgb(0xfb, 0xfc, 0xfd),
-        list_row: Color32::from_rgb(0xe3, 0xe8, 0xef),
-        warn: Color32::from_rgb(0x8a, 0x53, 0x00),
+        accent: ndl(NDL_LIGHT.accent_default),
+        cmd_bg: ndl_alpha(NDL_LIGHT.surface_raised, 0xf0),
+        toggle_on: ndl(NDL_LIGHT.accent_default),
+        field: ndl(NDL_LIGHT.control_field_bg),
+        select_bg: ndl(NDL_LIGHT.selection_bg),
+        cmd_history: ndl_alpha(NDL_LIGHT.surface_sunken, 0xdc),
+        cmd_border: ndl(NDL_LIGHT.border_default),
+        cmd_keyword: ndl(NDL_LIGHT.accent_text),
+        cmd_keyword_hover: ndl(NDL_LIGHT.accent_subtle),
+        list_bg: ndl(NDL_LIGHT.surface_overlay),
+        list_row: ndl(NDL_LIGHT.control_bg_hover),
+        warn: ndl(NDL_LIGHT.status_warning_fg),
         ..Tokens::DARK
     };
 
@@ -758,34 +776,16 @@ fn any_script(faces: &[cadcraft_fonts::CraftFont], script: &str) -> bool {
     faces.iter().any(|f| f.style == "Regular" && f.scripts.contains(&script))
 }
 
-/// egui's visuals for `theme`, from its tokens.
+/// egui's visuals for `theme`: the Nodalia Design Language's, with Forja's accent and the window
+/// frame behind the panels.
 fn visuals(theme: Theme) -> Visuals {
     let t = Tokens::of(theme);
-    let mut v = match theme {
-        Theme::Dark => Visuals::dark(),
-        Theme::Light => Visuals::light(),
+    let mode = match theme {
+        Theme::Dark => nodalia_theme::Mode::Dark,
+        Theme::Light => nodalia_theme::Mode::Light,
     };
-    v.panel_fill = t.panel;
-    v.window_fill = t.chrome;
-    v.extreme_bg_color = t.field;
-    v.faint_bg_color = t.chrome_dark;
+    let mut v = nodalia_theme::for_egui::visuals_with(mode, nodalia_theme::Accent::Forja);
     v.override_text_color = Some(t.text);
-    v.widgets.noninteractive.bg_fill = t.panel;
-    v.widgets.noninteractive.fg_stroke.color = t.text;
-    v.widgets.noninteractive.bg_stroke.color = t.border;
-    v.widgets.inactive.bg_fill = t.control;
-    v.widgets.inactive.weak_bg_fill = t.control;
-    v.widgets.inactive.fg_stroke.color = t.text;
-    v.widgets.hovered.bg_fill = t.control_hover;
-    v.widgets.hovered.weak_bg_fill = t.control_hover;
-    v.widgets.active.bg_fill = t.accent;
-    v.widgets.active.weak_bg_fill = t.accent;
-    v.selection.bg_fill = t.select_bg;
-    v.window_stroke = egui::Stroke::new(1.0, t.border);
-    let shadow = Color32::from_black_alpha(if theme == Theme::Dark { 90 } else { 40 });
-    v.popup_shadow = egui::epaint::Shadow { offset: [0, 4], blur: 12, spread: 0, color: shadow };
-    v.window_corner_radius = egui::CornerRadius::same(6);
-    v.menu_corner_radius = egui::CornerRadius::same(5);
     v
 }
 
@@ -800,9 +800,12 @@ pub fn apply(ctx: &egui::Context, theme: Theme, follow_system: bool) {
     // window appearance (winit then stops reporting OS changes) and the app would never follow again.
     ctx.set_theme(if follow_system { egui::ThemePreference::System } else { egui::ThemePreference::from(theme) });
     ctx.all_styles_mut(|s| {
+        // A drafting workspace is dense: NDL's compact density, kept to the 20 pt rows the
+        // palettes and dialogs are laid out for.
         s.spacing.item_spacing = egui::vec2(6.0, 4.0);
-        s.spacing.button_padding = egui::vec2(6.0, 3.0);
+        s.spacing.button_padding = egui::vec2(8.0, 3.0);
         s.spacing.interact_size.y = 20.0;
+        s.spacing.menu_margin = egui::Margin::same(6);
         s.text_styles.insert(egui::TextStyle::Body, body());
         s.text_styles.insert(egui::TextStyle::Button, body());
         s.text_styles.insert(egui::TextStyle::Small, small());

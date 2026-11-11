@@ -123,7 +123,8 @@ fn palette_icons_are_painted_in_code_and_shown_in_an_iconic_column() {
     let ctx = egui::Context::default();
     let mut paint = |panel: Panel| {
         let mut painted = false;
-        let mut content = Panels { app: &mut app };
+        let mut bodies = Vec::new();
+        let mut content = Panels { app: &mut app, bodies: &mut bodies };
         let mut output = ctx.run_ui(egui::RawInput::default(), |ui| {
             let painter = ui.ctx().layer_painter(egui::LayerId::background());
             let rect = egui::Rect::from_min_size(egui::Pos2::ZERO, vec2(20.0, 20.0));

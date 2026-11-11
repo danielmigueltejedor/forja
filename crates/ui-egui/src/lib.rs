@@ -924,7 +924,10 @@ impl CadApp {
         if has_doc && !self.ui.show_toolsets {
             palettes::toolsets_strip(self, ui);
         }
-        egui::CentralPanel::default().frame(egui::Frame::NONE.fill(t.canvas)).show(ui, |ui| {
+        // The window frame around the Nodalia islands (the docked panels and the drawing).
+        let gap = nodalia_theme::component::WINDOW_GAP as i8;
+        let frame = egui::Frame::NONE.fill(t.chrome).inner_margin(egui::Margin { left: gap, right: gap, top: 0, bottom: gap });
+        egui::CentralPanel::default().frame(if has_doc { frame } else { egui::Frame::NONE.fill(t.canvas) }).show(ui, |ui| {
             if has_doc {
                 docking::show(self, ui);
             } else {

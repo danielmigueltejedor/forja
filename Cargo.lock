@@ -769,6 +769,7 @@ dependencies = [
  "image",
  "log",
  "naga",
+ "nodalia-theme",
  "serde",
  "serde_json",
  "toml",
@@ -3083,6 +3084,14 @@ dependencies = [
  "cfg-if",
  "cfg_aliases",
  "libc",
+]
+
+[[package]]
+name = "nodalia-theme"
+version = "0.1.0-alpha.1"
+source = "git+https://github.com/danielmigueltejedor/nodalia-design?rev=2735df88232c065eaa5a5d01ef2c06aec6020d11#2735df88232c065eaa5a5d01ef2c06aec6020d11"
+dependencies = [
+ "egui",
 ]
 
 [[package]]

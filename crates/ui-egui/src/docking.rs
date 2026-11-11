@@ -325,11 +325,14 @@ pub fn show(app: &mut crate::CadApp, ui: &mut egui::Ui) {
     let mut style = DockStyle::from_ui(ui);
     style.min_pane = 96.0;
     style.background = t.panel;
-    style.tab_background = t.chrome;
+    // Nodalia islands: each group is a panel-coloured surface on the window frame, 8 pt apart and
+    // with rounded corners ([`round_islands`]); no outlines.
+    style.tab_background = t.panel;
     style.active_background = t.tab_active;
     style.text = t.text;
     style.inactive_text = t.text_dim;
-    style.border = egui::Stroke::new(1.0, t.border);
+    style.border = egui::Stroke::NONE;
+    style.gap = nodalia_theme::component::WINDOW_GAP;
     style.accent = t.accent;
     style.font = crate::theme::body();
     // AutoCAD's palettes dock only in the left and right dock columns: a window edge without a
@@ -343,7 +346,9 @@ pub fn show(app: &mut crate::CadApp, ui: &mut egui::Ui) {
     if let Some(panel) = app.raise_panel.take() {
         area = area.raise_panel(panel);
     }
-    let mut output = area.show_content(ui, &workspace.layout, &style, &mut Panels { app });
+    let mut bodies = Vec::new();
+    let mut output = area.show_content(ui, &workspace.layout, &style, &mut Panels { app, bodies: &mut bodies });
+    round_islands(ui, &bodies, style.tab_height, t.chrome);
     // Keys typed in a floating panel's own OS window run the main window's shortcuts and
     // command line; files dropped on one open like files dropped on the main window.
     app.forward_native_input(ui.ctx(), std::mem::take(&mut output.forwarded_events), output.forwarded_modifiers);
@@ -388,10 +393,56 @@ pub fn native_input_blocked(app: &crate::CadApp, ctx: &egui::Context) -> bool {
 /// The panels' contents, names, size limits and icons for the dock area.
 pub struct Panels<'a> {
     pub app: &'a mut crate::CadApp,
+    /// Where each panel body was drawn this frame, and on which layer, for [`round_islands`].
+    pub bodies: &'a mut Vec<(Panel, egui::LayerId, egui::Rect)>,
+}
+
+/// Rounds the corners of the docked islands by painting the window frame's colour over them: the
+/// shared dock renderer draws square groups. A group is its body plus, except for the drawing,
+/// the tab strip above it. Floating windows (other layers) keep their own frames.
+fn round_islands(ui: &egui::Ui, bodies: &[(Panel, egui::LayerId, egui::Rect)], tab_height: f32, frame: egui::Color32) {
+    let radius = nodalia_theme::component::PANEL_RADIUS;
+    let painter = ui.painter();
+    for (panel, layer, body) in bodies {
+        if *layer != ui.layer_id() {
+            continue;
+        }
+        let mut island = *body;
+        if *panel != Panel::Canvas {
+            island.min.y -= tab_height;
+        }
+        let r = radius.min(island.width() / 2.0).min(island.height() / 2.0);
+        if r < 1.0 {
+            continue;
+        }
+        for (corner, sx, sy) in
+            [(island.left_top(), 1.0, 1.0), (island.right_top(), -1.0, 1.0), (island.left_bottom(), 1.0, -1.0), (island.right_bottom(), -1.0, -1.0)]
+        {
+            painter.add(corner_mask(corner, sx, sy, r, frame));
+        }
+    }
+}
+
+/// The part of the `r` square at `corner` outside its quarter circle, as a fan from the corner.
+/// `sx`, `sy` point from the corner into the island.
+fn corner_mask(corner: egui::Pos2, sx: f32, sy: f32, r: f32, color: egui::Color32) -> egui::Shape {
+    const STEPS: u32 = 10;
+    let centre = corner + egui::vec2(sx * r, sy * r);
+    let mut mesh = egui::Mesh::default();
+    mesh.colored_vertex(corner, color);
+    for i in 0..=STEPS {
+        let a = std::f32::consts::FRAC_PI_2 * i as f32 / STEPS as f32;
+        mesh.colored_vertex(centre - egui::vec2(sx * r * a.cos(), sy * r * a.sin()), color);
+    }
+    for i in 1..=STEPS {
+        mesh.add_triangle(0, i, i + 1);
+    }
+    egui::Shape::mesh(mesh)
 }
 
 impl DockContent<Panel> for Panels<'_> {
     fn body(&mut self, ui: &mut egui::Ui, panel: &Panel) {
+        self.bodies.push((*panel, ui.layer_id(), ui.max_rect()));
         let app = &mut *self.app;
         match panel {
             Panel::Canvas => {
