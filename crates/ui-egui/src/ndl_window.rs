@@ -160,10 +160,17 @@ fn title_row(ui: &mut Ui, title: WidgetText, closable: bool) -> bool {
     ui.horizontal(|ui| {
         ui.set_min_height(CONTROL);
         let t = Tokens::get();
+        // NDL's round close control is Linux's; macOS and Windows keep the close control their
+        // own windows have: the red light on the left, the plain cross on the right.
+        let os = ui.ctx().os();
+        if closable && os == egui::os::OperatingSystem::Mac {
+            close = mac_close_light(ui).clicked();
+            ui.add_space(4.0);
+        }
         ui.label(title.strong().size(15.0).color(t.text));
-        if closable {
+        if closable && os != egui::os::OperatingSystem::Mac {
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                close = close_control(ui).clicked();
+                close = if os == egui::os::OperatingSystem::Windows { windows_close(ui) } else { close_control(ui) }.clicked();
             });
         }
     });
@@ -181,6 +188,46 @@ pub fn close_control(ui: &mut Ui) -> egui::Response {
     ui.painter().circle_filled(rect.center(), CONTROL / 2.0, fill);
     let glyph = egui::Rect::from_center_size(rect.center(), vec2(14.0, 14.0));
     crate::ndl_icons::paint_ink(ui.painter(), glyph, Icon::Close, t.text);
+    response
+}
+
+/// macOS's close light: a 12 px red disc that shows its cross while the pointer is over it.
+pub fn mac_close_light(ui: &mut Ui) -> egui::Response {
+    const LIGHT: f32 = 12.0;
+    let (rect, response) = ui.allocate_exact_size(vec2(LIGHT + 8.0, CONTROL), Sense::click());
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, "Close"));
+    let centre = rect.center();
+    let pressed = response.is_pointer_button_down_on();
+    let fill = if pressed { egui::Color32::from_rgb(0xbf, 0x47, 0x42) } else { egui::Color32::from_rgb(0xff, 0x5f, 0x57) };
+    let painter = ui.painter();
+    painter.circle_filled(centre, LIGHT / 2.0, fill);
+    painter.circle_stroke(centre, LIGHT / 2.0 - 0.25, egui::Stroke::new(0.5, egui::Color32::from_black_alpha(40)));
+    if response.hovered() || pressed {
+        let ink = egui::Stroke::new(1.3, egui::Color32::from_rgb(0x4d, 0x00, 0x00));
+        let d = 2.6;
+        painter.line_segment([centre + vec2(-d, -d), centre + vec2(d, d)], ink);
+        painter.line_segment([centre + vec2(-d, d), centre + vec2(d, -d)], ink);
+    }
+    response
+}
+
+/// Windows' close control: a thin cross on a square that turns red under the pointer.
+pub fn windows_close(ui: &mut Ui) -> egui::Response {
+    let (rect, response) = ui.allocate_exact_size(vec2(40.0, CONTROL), Sense::click());
+    response.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, "Close"));
+    let pressed = response.is_pointer_button_down_on();
+    let painter = ui.painter();
+    let ink = if response.hovered() || pressed {
+        let red = if pressed { egui::Color32::from_rgb(0x94, 0x1e, 0x13) } else { egui::Color32::from_rgb(0xc4, 0x2b, 0x1c) };
+        painter.rect_filled(rect, 4.0, red);
+        egui::Color32::WHITE
+    } else {
+        Tokens::get().text
+    };
+    let (c, d) = (rect.center(), 5.0);
+    let stroke = egui::Stroke::new(1.0, ink);
+    painter.line_segment([c + vec2(-d, -d), c + vec2(d, d)], stroke);
+    painter.line_segment([c + vec2(-d, d), c + vec2(d, -d)], stroke);
     response
 }
 
@@ -214,5 +261,38 @@ mod tests {
         let mut open = true;
         assert!(shows(&mut open));
         assert!(open);
+    }
+
+    /// The close control sits where each system puts it: on the left on macOS, on the right on
+    /// Linux and Windows.
+    #[test]
+    fn the_close_control_follows_the_system() {
+        use egui::os::OperatingSystem;
+        for (os, left) in [(OperatingSystem::Mac, true), (OperatingSystem::Nix, false), (OperatingSystem::Windows, false)] {
+            let ctx = egui::Context::default();
+            ctx.set_os(os);
+            ctx.enable_accesskit();
+            let mut open = true;
+            let mut output = None;
+            for _ in 0..2 {
+                let mut out = ctx.run_ui(egui::RawInput::default(), |ui| {
+                    let ctx = ui.ctx().clone();
+                    Window::new("Test").id(egui::Id::new("t")).open(&mut open).show(&ctx, |ui| ui.label("body"));
+                });
+                out.textures_delta.clear();
+                output = Some(out);
+            }
+            let update = output.and_then(|o| o.platform_output.accesskit_update).expect("accesskit tree");
+            let x = |name: &str| {
+                update
+                    .nodes
+                    .iter()
+                    .find(|(_, n)| n.label().as_deref() == Some(name) || n.value().as_deref() == Some(name))
+                    .and_then(|(_, n)| n.bounds())
+                    .map(|b| b.x0)
+            };
+            let (close, title) = (x("Close").expect("close control"), x("Test").expect("title"));
+            assert_eq!(close < title, left, "{os:?}");
+        }
     }
 }

@@ -2,7 +2,7 @@
 //! it, the version as a pill and one line on what it is, then a card of rows (website,
 //! contributors, models, licence). Contributors and Models open as pages of the same window.
 
-use egui::{Color32, RichText, Sense, TextureHandle, Ui, vec2};
+use egui::{Align, Color32, Layout, RichText, Sense, TextureHandle, Ui, vec2};
 
 use crate::icons::Icon;
 use crate::ndl_window;
@@ -20,6 +20,9 @@ enum Page {
     Contributors,
     Models,
 }
+
+/// The Contributors and Models pages' size.
+const CREDITS_SIZE: egui::Vec2 = egui::vec2(560.0, 440.0);
 
 pub fn show(ctx: &egui::Context, open: &mut bool) {
     let page_id = egui::Id::unique("about_page");
@@ -41,18 +44,17 @@ pub fn show(ctx: &egui::Context, open: &mut bool) {
                 about_page(ui, &mut page);
             }
             Page::Contributors | Page::Models => {
-                // A fixed page: the credit lists fill the room they are given (their scroll areas
-                // don't shrink), so an auto-sized window grew past the screen and left them empty.
-                let size = credits_size(ui.ctx());
-                ui.set_width(size.x);
-                if back_row(ui) {
-                    page = Page::About;
-                }
-                ui.add_space(6.0);
-                let contributors = page == Page::Contributors;
-                ui.allocate_ui(size, |ui| {
+                // A fixed page: the lists scroll inside it instead of growing the window to the
+                // height of the screen.
+                let size = vec2(CREDITS_SIZE.x, CREDITS_SIZE.y.min(ui.ctx().content_rect().height() - 120.0).max(200.0));
+                ui.allocate_ui_with_layout(size, Layout::top_down(Align::Min), |ui| {
                     ui.set_min_size(size);
-                    if contributors {
+                    ui.set_max_size(size);
+                    if back_row(ui) {
+                        page = Page::About;
+                    }
+                    ui.add_space(6.0);
+                    if page == Page::Contributors {
                         crate::credits::contributors_ui(ui);
                     } else {
                         crate::credits::models_ui(ui);
@@ -64,12 +66,6 @@ pub fn show(ctx: &egui::Context, open: &mut bool) {
         page = Page::About;
     }
     ctx.data_mut(|d| d.insert_temp(page_id, page));
-}
-
-/// The size of the Contributors and Models pages: 640 x 440, smaller on a small screen.
-fn credits_size(ctx: &egui::Context) -> egui::Vec2 {
-    let screen = ctx.content_rect().size();
-    egui::vec2(640.0_f32.min(screen.x - 80.0), 440.0_f32.min(screen.y - 160.0)).max(egui::vec2(WIDTH, 200.0))
 }
 
 fn about_page(ui: &mut Ui, page: &mut Page) {
@@ -191,11 +187,65 @@ fn chevron(ui: &Ui, right_center: egui::Pos2, color: Color32) {
 /// The way back to the About page from Contributors or Models. True when clicked.
 fn back_row(ui: &mut Ui) -> bool {
     let t = Tokens::get();
-    // One row high: a left-to-right layout would take the page's whole height and centre the
-    // button in it.
+    // A row as tall as the button: a left-to-right layout would take the page's whole height and
+    // centre the button in it.
     ui.horizontal(|ui| {
         let text = format!("‹  {}", crate::tl!("About"));
         ui.add(egui::Button::new(RichText::new(text).color(t.text)).fill(ndl_window::raised(ui, 0)).corner_radius(f32::from(u8::MAX))).clicked()
     })
     .inner
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{CREDITS_SIZE, Page};
+
+    /// Frames of the About window at 1600 × 1000 with `events` in the last one; returns the page
+    /// shown and the window's outer size.
+    fn run(page: Page, events: impl Fn(egui::Rect) -> Vec<egui::Event>) -> (Page, egui::Vec2) {
+        let ctx = egui::Context::default();
+        ctx.enable_accesskit();
+        ctx.data_mut(|d| d.insert_temp(egui::Id::unique("about_page"), page));
+        let screen = egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(1600.0, 1000.0));
+        let mut open = true;
+        let mut back = egui::Rect::NOTHING;
+        let mut size = egui::Vec2::ZERO;
+        for frame in 0..6 {
+            let input =
+                egui::RawInput { screen_rect: Some(screen), events: if frame == 5 { events(back) } else { Vec::new() }, ..Default::default() };
+            let mut out = ctx.run_ui(input, |ui| super::show(ui.ctx(), &mut open));
+            out.textures_delta.clear();
+            if let Some(update) = out.platform_output.accesskit_update {
+                for (_, node) in &update.nodes {
+                    let Some(b) = node.bounds() else { continue };
+                    let r = egui::Rect::from_min_max(egui::pos2(b.x0 as f32, b.y0 as f32), egui::pos2(b.x1 as f32, b.y1 as f32));
+                    if node.label().is_some_and(|l| l.contains("About")) && node.role() == egui::accesskit::Role::Button {
+                        back = r;
+                    }
+                    if node.role() == egui::accesskit::Role::Window {
+                        size = r.size();
+                    }
+                }
+            }
+        }
+        (ctx.data(|d| d.get_temp::<Page>(egui::Id::unique("about_page"))).unwrap_or_default(), size)
+    }
+
+    #[test]
+    fn credits_pages_keep_their_size_and_go_back_to_about() {
+        for page in [Page::Contributors, Page::Models] {
+            let (_, size) = run(page, |_| Vec::new());
+            assert!(size.y < CREDITS_SIZE.y + 120.0, "{size:?}");
+            let click = |r: egui::Rect| {
+                let pos = r.center();
+                vec![
+                    egui::Event::PointerMoved(pos),
+                    egui::Event::PointerButton { pos, button: egui::PointerButton::Primary, pressed: true, modifiers: Default::default() },
+                    egui::Event::PointerButton { pos, button: egui::PointerButton::Primary, pressed: false, modifiers: Default::default() },
+                ]
+            };
+            let (now, _) = run(page, click);
+            assert!(now == Page::About);
+        }
+    }
 }

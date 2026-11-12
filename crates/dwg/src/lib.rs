@@ -109,6 +109,7 @@ mod native {
         }
         let mut notes = read_notes(&outcome.stats);
         let mut doc = outcome.document;
+        guarded(AssertUnwindSafe(|| restore_model_space(&mut doc))).map_err(|_| "the DWG model space check failed".to_string())?;
         notes.extend(
             guarded(AssertUnwindSafe(|| application_objects(&mut doc))).map_err(|_| "the DWG application object conversion failed".to_string())?,
         );
@@ -393,6 +394,21 @@ mod native {
         table_style_rows(doc, false);
         keep_sort_handles(doc);
         drop_orphaned_dgn_components(doc)
+    }
+
+    /// Gives the model space back its name when the file damaged it. The header still names
+    /// the model space's block record by handle, and without the name every entity in it would
+    /// land in an ordinary block: the drawing would open empty and say nothing. Nothing is lost
+    /// once the name is back, so the read needs no note. True when the name was restored.
+    pub(crate) fn restore_model_space(doc: &mut acadrust::CadDocument) -> bool {
+        if doc.block_records.iter().any(|b| b.is_model_space()) {
+            return false;
+        }
+        let handle = doc.header.model_space_block_handle;
+        let Some(name) = doc.block_records.iter().find(|b| handle != acadrust::Handle::NULL && b.handle == handle).map(|b| b.name.clone()) else {
+            return false;
+        };
+        doc.block_records.rename(&name, "*Model_Space").is_ok()
     }
 
     /// Runs `f`, turning a panic into an error (the reader and writer are guarded the same way).
