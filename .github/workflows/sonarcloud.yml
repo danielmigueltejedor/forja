@@ -18,4 +18,6 @@ jobs:
   sonarcloud:
     # Tracked at @main so org-wide CI improvements propagate without PR churn.
     uses: storytold/craft-common-actions/.github/workflows/sonarcloud.yml@main
-    secrets: inherit
+    secrets:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_CLOUD_PAT: ${{ secrets.SONAR_CLOUD_PAT }}
