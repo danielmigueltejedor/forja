@@ -160,7 +160,7 @@ pub(super) struct FilletM {
     /// Multiple: keep asking for pairs until Enter.
     multiple: bool,
     /// Undo: the drawing before each fillet/chamfer made in this command.
-    undo: Vec<std::sync::Arc<cadcraft_doc::Drawing>>,
+    undo: Vec<std::sync::Arc<forja_doc::Drawing>>,
 }
 
 impl FilletM {
@@ -169,7 +169,7 @@ impl FilletM {
     }
 
     /// One fillet/chamfer done: carry on in Multiple mode, else finish.
-    fn next(&mut self, s: &mut Session, before: std::sync::Arc<cadcraft_doc::Drawing>) -> Step {
+    fn next(&mut self, s: &mut Session, before: std::sync::Arc<forja_doc::Drawing>) -> Step {
         self.undo.push(before);
         self.first = None;
         self.polyline = false;

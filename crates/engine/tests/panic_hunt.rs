@@ -6,7 +6,7 @@
 //! result can't find one, and neither can `catch_unwind` here. A panic hook counts them instead,
 //! on whichever thread they happen. `contained_panics_count_and_graceful_errors_do_not` proves it.
 
-use cadcraft_engine::{Session, command_specs};
+use forja_engine::{Session, command_specs};
 use serde_json::{Value, json};
 use std::panic::{AssertUnwindSafe, catch_unwind};
 use std::sync::atomic::{AtomicUsize, Ordering};

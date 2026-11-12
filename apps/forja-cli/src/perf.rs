@@ -2,7 +2,7 @@ use super::args::PerfTarget;
 use super::error::Result;
 use super::open;
 use super::output::Streams;
-use cadcraft_engine::Session;
+use forja_engine::Session;
 
 /// Why `perf` cannot run.
 #[derive(Debug, thiserror::Error)]
@@ -28,9 +28,9 @@ impl Rng {
 
 /// A synthetic drawing with `n` mixed entities (lines, circles, arcs, polylines, text) spread
 /// over a square whose side grows with sqrt(n), so density stays constant.
-fn synthetic(n: usize, side: f64) -> Result<cadcraft_engine::doc::Drawing, cadcraft_engine::doc::DocError> {
-    use cadcraft_engine::doc::{self as d, Common, EntityKind, Space};
-    use cadcraft_engine::geom::{PolyVertex, Vec2, Vec3};
+fn synthetic(n: usize, side: f64) -> Result<forja_engine::doc::Drawing, forja_engine::doc::DocError> {
+    use forja_engine::doc::{self as d, Common, EntityKind, Space};
+    use forja_engine::geom::{PolyVertex, Vec2, Vec3};
     let mut dr = d::Drawing::new_imperial();
     let mut r = Rng(0x9E37_79B9_7F4A_7C15);
     let v3 = |x: f64, y: f64| Vec3::new(x, y, 0.0);
@@ -77,8 +77,8 @@ fn synthetic(n: usize, side: f64) -> Result<cadcraft_engine::doc::Drawing, cadcr
 /// drawing's centre: tolerance, dash level of detail and view window from the zoom band), at
 /// zoom extents and zoomed in 4x at a time, next to the full-detail build plots use.
 fn perf_file(path: &std::path::Path, io: &mut Streams) -> Result {
-    use cadcraft_engine::geom::{Bounds2, Vec2};
-    use cadcraft_engine::render::{Options, build};
+    use forja_engine::geom::{Bounds2, Vec2};
+    use forja_engine::render::{Options, build};
     use std::time::Instant;
     let ms = |t: Instant| t.elapsed().as_secs_f64() * 1000.0;
     let mut s = Session::empty();
@@ -115,9 +115,9 @@ fn perf_file(path: &std::path::Path, io: &mut Streams) -> Result {
 }
 
 pub(crate) fn perf(target: Option<&PerfTarget>, io: &mut Streams) -> Result {
-    use cadcraft_engine::doc::Space;
-    use cadcraft_engine::geom::{Bounds2, Vec2};
-    use cadcraft_engine::{select, snap};
+    use forja_engine::doc::Space;
+    use forja_engine::geom::{Bounds2, Vec2};
+    use forja_engine::{select, snap};
     use std::time::Instant;
     let n = match target {
         Some(PerfTarget::File(path)) => return perf_file(path, io),
@@ -134,9 +134,9 @@ pub(crate) fn perf(target: Option<&PerfTarget>, io: &mut Streams) -> Result {
 
     // Display list at a 1600 px wide "zoom extents" view (tolerance = half a pixel).
     let px = side / 1600.0;
-    let opts = cadcraft_engine::render::Options { tolerance: px * 0.5, min_dash: px * 2.0, ..Default::default() };
+    let opts = forja_engine::render::Options { tolerance: px * 0.5, min_dash: px * 2.0, ..Default::default() };
     let t = Instant::now();
-    let list = cadcraft_engine::render::build(&d, &Space::Model, &opts);
+    let list = forja_engine::render::build(&d, &Space::Model, &opts);
     rows.push(("display list build".into(), ms(t), format!("{} prims, {} segments", list.prims.len(), list.segment_count())));
 
     // Hit testing on a zoomed-in view (aperture = 5 px at 0.02 units/px).
@@ -181,10 +181,10 @@ pub(crate) fn perf(target: Option<&PerfTarget>, io: &mut Streams) -> Result {
     rows.push(("osnap x1000".into(), total, format!("{snaps} hits, {:.3} ms/query", total / 1000.0)));
 
     let t = Instant::now();
-    let bytes = cadcraft_io::write(&d, "perf.dxf")?;
+    let bytes = forja_io::write(&d, "perf.dxf")?;
     rows.push(("DXF write".into(), ms(t), format!("{:.1} MB", bytes.len() as f64 / 1e6)));
     let t = Instant::now();
-    let back = cadcraft_io::read(&bytes, "perf.dxf")?;
+    let back = forja_io::read(&bytes, "perf.dxf")?;
     rows.push(("DXF read".into(), ms(t), format!("{} entities", back.entity_count())));
 
     io.outln(format_args!("{:<40} {:>12}  notes", "operation", "ms"));

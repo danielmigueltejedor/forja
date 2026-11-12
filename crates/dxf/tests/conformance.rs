@@ -5,7 +5,7 @@
 //! https://ezdxf.readthedocs.io/en/stable/dxfinternals/filestructure.html
 //! ASCII spacing is our writer's documented convention; binary fixtures specify actual bytes.
 
-use cadcraft_dxf::{DxfError, Tag, Value, parse, parse_with_limit, write_ascii_as, write_binary};
+use forja_dxf::{DxfError, Tag, Value, parse, parse_with_limit, write_ascii_as, write_binary};
 
 const SENTINEL: &[u8] = b"AutoCAD Binary DXF\r\n\x1a\0";
 

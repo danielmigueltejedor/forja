@@ -105,7 +105,7 @@ guard leaving it while changes are unsaved (that is what `forja:dirty` reports).
 
 ### Same-document host mode (no iframe)
 
-A page can also run the app in its own document — its own `<canvas id="cadcraft_canvas">`
+A page can also run the app in its own document — its own `<canvas id="forja_canvas">`
 inside a component, no iframe — by loading the wasm-bindgen module itself. It opts in with
 `data-host="page"` on that canvas — the exact value `page`; anything else, and an unframed
 `?host=parent`, keeps the normal app with downloads. The behaviour is the same as the parent
@@ -116,13 +116,13 @@ dispatches a `forja:open` event with `detail: { name, bytes }` to open a drawing
 don't bubble, so two editors on one page can't hear each other; listen on the canvas itself.
 
 ```html
-<canvas id="cadcraft_canvas" data-host="page" style="width: 100%; height: 600px; border: 0;"></canvas>
+<canvas id="forja_canvas" data-host="page" style="width: 100%; height: 600px; border: 0;"></canvas>
 ```
 
 ```js
 import init from "./forja-web-<hash>.js"; // the wasm-bindgen glue shipped with the app
 
-const canvas = document.getElementById("cadcraft_canvas");
+const canvas = document.getElementById("forja_canvas");
 // The app announces itself while `init` runs, so add the listeners first.
 canvas.addEventListener("forja:ready", () => {
   // The app is listening; hand it a drawing of the page's own now, if you have one.

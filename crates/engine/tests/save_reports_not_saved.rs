@@ -1,10 +1,10 @@
-//! Saving a drawing with entities of types CADCraft doesn't model (read from another program's
+//! Saving a drawing with entities of types Forja doesn't model (read from another program's
 //! file) as DWG says which ones the file doesn't keep, instead of dropping them silently. DXF
 //! writes them back as read: nothing to report.
 
-use cadcraft_engine::Session;
-use cadcraft_engine::cmd::file::{IoHooks, SaveAs, set_io, set_write_as};
-use cadcraft_engine::doc::{Block, Common, Drawing, EntityKind, RawTag, Space, Unknown};
+use forja_engine::Session;
+use forja_engine::cmd::file::{IoHooks, SaveAs, set_io, set_write_as};
+use forja_engine::doc::{Block, Common, Drawing, EntityKind, RawTag, Space, Unknown};
 use serde_json::json;
 
 fn unknown(kind: &str) -> EntityKind {
@@ -20,12 +20,12 @@ fn save_lists_the_entities_the_file_does_not_keep() {
     }
     let mut b = Block::new("Part");
     let h = d.new_handle();
-    b.entities.push(cadcraft_engine::doc::Entity { handle: h, common: Common::default(), kind: unknown("REGION") });
+    b.entities.push(forja_engine::doc::Entity { handle: h, common: Common::default(), kind: unknown("REGION") });
     d.blocks.insert("Part".into(), std::sync::Arc::new(b));
     let mut s = Session::empty();
     s.open_drawing(d, "foreign.dxf", None);
 
-    let path = std::env::temp_dir().join(format!("cadcraft-not-saved-{}.dwg", std::process::id()));
+    let path = std::env::temp_dir().join(format!("forja-not-saved-{}.dwg", std::process::id()));
     let r = s.execute("saveas", &json!({ "path": path.to_string_lossy() })).unwrap();
     let _ = std::fs::remove_file(&path);
     assert_eq!(r["notSaved"], json!({ "3DSOLID": 1, "MLINE": 2, "REGION": 1 }));
@@ -33,14 +33,14 @@ fn save_lists_the_entities_the_file_does_not_keep() {
     assert!(s.log.iter().any(|l| l == msg), "{:?}", s.log);
 
     // DXF keeps them.
-    let dxf = std::env::temp_dir().join(format!("cadcraft-not-saved-{}.dxf", std::process::id()));
+    let dxf = std::env::temp_dir().join(format!("forja-not-saved-{}.dxf", std::process::id()));
     let n = s.log.len();
     let r = s.execute("saveas", &json!({ "path": dxf.to_string_lossy() })).unwrap();
     let _ = std::fs::remove_file(&dxf);
     assert!(r.get("notSaved").is_none() && s.log.len() == n);
 
     // Exporting an image isn't a save of the drawing: no report.
-    let png = std::env::temp_dir().join(format!("cadcraft-not-saved-{}.png", std::process::id()));
+    let png = std::env::temp_dir().join(format!("forja-not-saved-{}.png", std::process::id()));
     let r = s.execute("saveas", &json!({ "path": png.to_string_lossy() })).unwrap();
     let _ = std::fs::remove_file(&png);
     assert!(r.get("notSaved").is_none());
@@ -59,7 +59,7 @@ fn export_and_wblock_say_what_a_dwg_leaves_out() {
     let h = d.add(&Space::Model, Common::default(), unknown("ACME_WIDGET")).unwrap().hex();
     let mut s = Session::empty();
     s.open_drawing(d, "foreign.dxf", None);
-    let file = |ext: &str| std::env::temp_dir().join(format!("cadcraft-leaves-out-{}.{ext}", std::process::id())).to_string_lossy().into_owned();
+    let file = |ext: &str| std::env::temp_dir().join(format!("forja-leaves-out-{}.{ext}", std::process::id())).to_string_lossy().into_owned();
     let said = |l: &String| l.starts_with("Not saved in the DWG file") && l.ends_with(": 1 ACME_WIDGET");
 
     let (dwg, dxf) = (file("dwg"), file("dxf"));
@@ -86,16 +86,16 @@ fn export_and_wblock_say_what_a_dwg_leaves_out() {
 
 #[test]
 fn templates_report_what_dwg_does_not_keep() {
-    use cadcraft_engine::cmd::file::drops_unknown;
+    use forja_engine::cmd::file::drops_unknown;
     assert!(drops_unknown("a.dwg") && drops_unknown("B.DWT"));
     assert!(!drops_unknown("a.dxf"));
 }
 
 #[test]
 fn solids_whose_geometry_the_data_store_keeps_are_not_reported_from_2013() {
-    use cadcraft_engine::cmd::file::{Version, not_saved_as};
-    use cadcraft_engine::doc::Handle;
-    use cadcraft_engine::doc::foreign::Foreign;
+    use forja_engine::cmd::file::{Version, not_saved_as};
+    use forja_engine::doc::Handle;
+    use forja_engine::doc::foreign::Foreign;
     let mut d = Drawing::new_imperial();
     let kept = d.add(&Space::Model, Common::default(), unknown("3DSOLID")).unwrap();
     d.add(&Space::Model, Common::default(), unknown("3DSOLID")).unwrap();
@@ -119,8 +119,8 @@ fn solids_whose_geometry_the_data_store_keeps_are_not_reported_from_2013() {
 /// before 2013, or when the file has no such class, the DWG leaves it out and says so.
 #[test]
 fn proxy_entities_are_reported_only_before_2013() {
-    use cadcraft_engine::cmd::file::{Version, not_saved_as};
-    use cadcraft_engine::doc::foreign::Foreign;
+    use forja_engine::cmd::file::{Version, not_saved_as};
+    use forja_engine::doc::foreign::Foreign;
     let proxy = |class: i64| {
         EntityKind::Unknown(Unknown {
             dxf_type: "ACAD_PROXY_ENTITY".into(),
@@ -152,9 +152,9 @@ fn proxy_entities_are_reported_only_before_2013() {
 /// said so: before 2013 always, from 2013 when the file names no class for them (#2471 review).
 #[test]
 fn proxy_objects_are_reported_like_proxy_entities() {
-    use cadcraft_engine::cmd::file::{Version, not_saved_as};
-    use cadcraft_engine::doc::Handle;
-    use cadcraft_engine::doc::foreign::{Foreign, ForeignObject};
+    use forja_engine::cmd::file::{Version, not_saved_as};
+    use forja_engine::doc::Handle;
+    use forja_engine::doc::foreign::{Foreign, ForeignObject};
     let object = |h: u64, class: i64| ForeignObject {
         handle: Handle(h),
         kind: "ACAD_PROXY_OBJECT".into(),
@@ -195,7 +195,7 @@ fn saving_sat_text_solids_as_dxf_2013_reports_them() {
     let mut s = Session::empty();
     s.open_drawing(d, "region.dxf", None);
 
-    let path = std::env::temp_dir().join(format!("cadcraft-sat-note-{}.dxf", std::process::id()));
+    let path = std::env::temp_dir().join(format!("forja-sat-note-{}.dxf", std::process::id()));
     let r = s.execute("saveas", &json!({ "path": path.to_string_lossy(), "version": 2018 })).unwrap();
     assert_eq!(r["notSaved"], json!({ "REGION": 1 }));
     assert!(s.log.iter().any(|l| l.contains("Not saved in the DXF file") && l.contains("1 REGION")), "{:?}", s.log);
@@ -215,7 +215,7 @@ fn saving_sat_text_solids_as_dxf_2013_reports_them() {
 /// DXF never drops solids on a command-line note alone (#2334).
 #[test]
 fn a_dxf_2013_loss_is_known_before_saving() {
-    use cadcraft_engine::cmd::file::loss_on_save;
+    use forja_engine::cmd::file::loss_on_save;
     set_io(IoHooks { read: |_, _| Err("no reader in this test".into()), write: |_, _| Ok(b"0\nEOF\n".to_vec()), plot: None });
     let sat = |d: &mut Drawing| {
         let tags = vec![RawTag { code: 8, value: "0".into() }, RawTag { code: 1, value: "400 1 1 0".into() }];
@@ -228,7 +228,7 @@ fn a_dxf_2013_loss_is_known_before_saving() {
     s.open_drawing(modern, "region.dxf", None);
     assert_eq!(loss_on_save(&s, "region.dxf"), [("REGION".to_string(), 1)].into_iter().collect());
 
-    let path = std::env::temp_dir().join(format!("cadcraft-sat-export-{}.dxf", std::process::id()));
+    let path = std::env::temp_dir().join(format!("forja-sat-export-{}.dxf", std::process::id()));
     let r = s.execute("export", &json!({ "path": path.to_string_lossy() })).unwrap();
     let _ = std::fs::remove_file(&path);
     assert_eq!(r["notSaved"], json!({ "REGION": 1 }));
@@ -262,7 +262,7 @@ fn the_note_counts_the_host_drawing_while_a_block_is_edited() {
     s.open_drawing(d, "region.dxf", None);
     s.execute("bedit", &json!({ "name": "Door" })).unwrap();
 
-    let path = std::env::temp_dir().join(format!("cadcraft-sat-edit-{}.dxf", std::process::id()));
+    let path = std::env::temp_dir().join(format!("forja-sat-edit-{}.dxf", std::process::id()));
     let r = s.execute("saveas", &json!({ "path": path.to_string_lossy(), "version": 2018 })).unwrap();
     let _ = std::fs::remove_file(&path);
     assert_eq!(r["notSaved"], json!({ "REGION": 1 }));
@@ -273,7 +273,7 @@ fn the_note_counts_the_host_drawing_while_a_block_is_edited() {
 /// save lists it. A solid with neither is always listed (#2334).
 #[test]
 fn a_dwg_keeps_sat_text_solids_only_before_2013() {
-    use cadcraft_engine::cmd::file::{Version, not_saved_as};
+    use forja_engine::cmd::file::{Version, not_saved_as};
     let tag = |code: i32, value: &str| RawTag { code, value: value.into() };
     let solid = |tags: Vec<RawTag>| EntityKind::Unknown(Unknown { dxf_type: "3DSOLID".into(), tags });
     let mut d = Drawing::new_imperial();
@@ -289,14 +289,14 @@ fn a_dwg_keeps_sat_text_solids_only_before_2013() {
 /// upper-case spelling into its OLE entity, so any other spelling is still reported.
 #[test]
 fn ole_objects_are_not_reported() {
-    use cadcraft_engine::cmd::file::{Version, not_saved_as};
+    use forja_engine::cmd::file::{Version, not_saved_as};
     let mut d = Drawing::new_imperial();
     d.add(&Space::Model, Common::default(), unknown("OLE2FRAME")).unwrap();
     d.add(&Space::Model, Common::default(), unknown("MLINE")).unwrap();
     d.add(&Space::Model, Common::default(), unknown("ole2frame")).unwrap();
     let mut b = Block::new("Logo");
     let h = d.new_handle();
-    b.entities.push(cadcraft_engine::doc::Entity { handle: h, common: Common::default(), kind: unknown("OLE2FRAME") });
+    b.entities.push(forja_engine::doc::Entity { handle: h, common: Common::default(), kind: unknown("OLE2FRAME") });
     d.blocks.insert("Logo".into(), std::sync::Arc::new(b));
     for v in [Version::R2000, Version::R2010, Version::R2018] {
         assert_eq!(not_saved_as(&d, v), [("MLINE".to_string(), 1), ("ole2frame".to_string(), 1)].into_iter().collect(), "{v:?}");

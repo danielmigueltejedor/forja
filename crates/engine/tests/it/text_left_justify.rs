@@ -1,8 +1,8 @@
 //! Properties moves justified TEXT by its alignment point: a TL text (placed by its alignment
 //! point, #342) lands where its new position says.
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::{EntityKind, entity_bounds};
+use forja_engine::Session;
+use forja_engine::doc::{EntityKind, entity_bounds};
 use serde_json::json;
 
 #[test]

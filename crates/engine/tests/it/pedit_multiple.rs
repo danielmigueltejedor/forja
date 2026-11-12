@@ -1,8 +1,8 @@
 //! #2182: PEDIT Multiple at the command line, as AutoCAD: select several objects, turn lines and
 //! arcs into polylines, then each option applies to all of them; Join joins them with each other.
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::EntityKind;
+use forja_engine::Session;
+use forja_engine::doc::EntityKind;
 use serde_json::json;
 
 fn polylines(s: &Session) -> Vec<(usize, bool, f64)> {

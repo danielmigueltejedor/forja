@@ -1,16 +1,16 @@
 //! INSERT's attribute questions as AutoCAD 2024 asks them from AutoLISP's `command` (accoreconsole,
 //! the attributes read back with `entget`).
 
-use cadcraft_engine::cmd::file::{EntityCodec, set_entity_codec};
-use cadcraft_engine::doc::EntityKind;
-use cadcraft_engine::geom::Vec2;
-use cadcraft_engine::{Input, Session};
+use forja_engine::cmd::file::{EntityCodec, set_entity_codec};
+use forja_engine::doc::EntityKind;
+use forja_engine::geom::Vec2;
+use forja_engine::{Input, Session};
 
 /// A session with block K: a circle and attributes (tag, DXF flags, default value), each with the
 /// prompt "P" + tag.
 fn with_block(defs: &[(&str, i32, &str)]) -> Session {
     // `entmake` goes through the DXF codec, as in the app.
-    set_entity_codec(EntityCodec { groups: cadcraft_io::entity_groups, entity: cadcraft_io::entity_from_groups });
+    set_entity_codec(EntityCodec { groups: forja_io::entity_groups, entity: forja_io::entity_from_groups });
     let mut s = Session::new();
     let mut code =
         String::from("(entmake '((0 . \"BLOCK\") (2 . \"K\") (70 . 2) (10 0.0 0.0 0.0))) (entmake '((0 . \"CIRCLE\") (10 0.0 0.0 0.0) (40 . 3.0)))");

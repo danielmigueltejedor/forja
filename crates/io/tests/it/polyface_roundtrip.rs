@@ -1,9 +1,9 @@
 //! A polyface mesh stays one object through DXF and DWG, instead of becoming loose 3D faces;
 //! its hidden edges stay hidden.
 
-use cadcraft_doc::{Drawing, EntityKind, PolyfaceMesh, Prim};
-use cadcraft_geom::Vec3;
-use cadcraft_io::{read_dxf, write_dxf};
+use forja_doc::{Drawing, EntityKind, PolyfaceMesh, Prim};
+use forja_geom::Vec3;
+use forja_io::{read_dxf, write_dxf};
 
 /// A 10 × 10 square as two triangles; the diagonal (from vertex 3) is hidden in both.
 const POLYFACE_DXF: &str = "0\nSECTION\n2\nENTITIES\n\
@@ -55,15 +55,15 @@ fn polyface_mesh_round_trips_through_dxf_and_dwg() {
     assert_eq!(mesh(&read_dxf(text.as_bytes()).unwrap()), expected());
     #[cfg(not(target_arch = "wasm32"))]
     {
-        let dwg = cadcraft_io::write(&d, "x.dwg").unwrap();
-        assert_eq!(mesh(&cadcraft_io::read(&dwg, "x.dwg").unwrap()), expected());
+        let dwg = forja_io::write(&d, "x.dwg").unwrap();
+        assert_eq!(mesh(&forja_io::read(&dwg, "x.dwg").unwrap()), expected());
     }
 }
 
 #[test]
 fn a_polyface_mesh_too_large_for_its_record_is_saved_as_3d_faces() {
-    use cadcraft_doc::{Common, Space};
-    use cadcraft_io::{SaveOptions, read, write_with};
+    use forja_doc::{Common, Space};
+    use forja_io::{SaveOptions, read, write_with};
     // 40,000 vertices: counts and indices past 32,767 don't fit the 16-bit groups 71–74.
     let vertices: Vec<Vec3> = (0..40_000).map(|i| Vec3::new(f64::from(i), 0.0, f64::from(i % 7))).collect();
     let mesh = PolyfaceMesh { vertices, faces: vec![[1, 2, 39_999, 0], [39_998, -39_999, 40_000, 3]] };
@@ -110,7 +110,7 @@ fn faces_naming_missing_vertices_are_dropped_on_read() {
 
 #[test]
 fn faces_naming_missing_vertices_are_not_written() {
-    use cadcraft_doc::{Common, Space};
+    use forja_doc::{Common, Space};
     let mut m = expected();
     m.faces.push([1, 2, 9, 0]);
     let mut d = Drawing::new_metric();

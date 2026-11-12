@@ -12,8 +12,8 @@ version_schema: semver
 release: 1
 section: graphics
 priority: optional
-maintainer: ${CADCRAFT_MAINTAINER}
-vendor: Learning Machines LLC
+maintainer: ${FORJA_MAINTAINER}
+vendor: Nodalia
 homepage: https://getartcraft.com/apps/forja
 license: MIT OR Apache-2.0
 description: |-

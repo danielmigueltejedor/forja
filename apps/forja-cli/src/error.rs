@@ -7,11 +7,11 @@ use crate::run::RunError;
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum CliError {
     #[error(transparent)]
-    Engine(#[from] cadcraft_engine::EngineError),
+    Engine(#[from] forja_engine::EngineError),
     #[error(transparent)]
-    Doc(#[from] cadcraft_engine::doc::DocError),
+    Doc(#[from] forja_engine::doc::DocError),
     #[error(transparent)]
-    Format(#[from] cadcraft_io::IoError),
+    Format(#[from] forja_io::IoError),
     #[error(transparent)]
     Io(#[from] std::io::Error),
     #[error(transparent)]

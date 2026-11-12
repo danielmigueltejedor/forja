@@ -2,7 +2,7 @@
 //! the layouts and other blocks, becomes a reference of another block at the same insertion
 //! point, scale and rotation. The unreferenced block definition can then be purged.
 
-use cadcraft_doc::{Drawing, Entity, EntityKind};
+use forja_doc::{Drawing, Entity, EntityKind};
 use serde_json::{Value, json};
 
 use super::attribs::{attdefs, synced, update_reference_entities};
@@ -30,7 +30,7 @@ fn named_block(d: &Drawing, name: &str) -> Option<String> {
 /// Why the references of block `old` cannot be replaced: a dynamic block's references keep their
 /// property values in data that names the block.
 fn not_replaceable(d: &Drawing, old: &str) -> Option<String> {
-    cadcraft_doc::dynblock::dynamic_block(d, old).map(|_| format!("Block \"{old}\" is a dynamic block; its references cannot be replaced."))
+    forja_doc::dynblock::dynamic_block(d, old).map(|_| format!("Block \"{old}\" is a dynamic block; its references cannot be replaced."))
 }
 
 /// Why block `new` cannot replace block `old`: references of `old` inside `new` would make `new`

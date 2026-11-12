@@ -1,6 +1,6 @@
 //! Hostile-input hardening of the DXF reader and writer (#1025): one regression test per finding.
 
-use cadcraft_dxf::{Tag, Value, parse, parse_with_limit, sections, write_ascii, write_binary};
+use forja_dxf::{Tag, Value, parse, parse_with_limit, sections, write_ascii, write_binary};
 
 const SENTINEL: &[u8] = b"AutoCAD Binary DXF\r\n\x1a\0";
 

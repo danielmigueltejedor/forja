@@ -3,8 +3,8 @@
 //! of the view and the writer turns it again, so a twisted view far from the origin (a site plan
 //! on a national grid) shows its own part of the drawing.
 
-use cadcraft_doc::*;
-use cadcraft_geom::{Vec2, Vec3};
+use forja_doc::*;
+use forja_geom::{Vec2, Vec3};
 
 /// The far site: a national-grid point.
 const SITE: Vec2 = Vec2 { x: 2_600_000.0, y: 1_200_000.0 };
@@ -80,13 +80,13 @@ fn a_twisted_layout_viewport_far_from_the_origin_looks_at_its_site() {
     let mut d = Drawing::new_metric();
     let sheet = Space::Paper(d.layouts[0].name.clone());
     d.add(&sheet, Common::default(), viewport(SITE)).unwrap();
-    let dxf = cadcraft_io::write_dxf(&d);
+    let dxf = forja_io::write_dxf(&d);
     // Written as other programs write it: the centre in display coordinates.
     let written = centres(&dxf, "VIEWPORT", 12, 51);
     assert_eq!(written.len(), 1, "{written:?}");
     assert!(written.first().is_some_and(|c| close(*c, dcs())), "{written:?} vs {:?}", dcs());
     // Read back, the site is at the middle of the viewport.
-    let v = sheet_viewport(&cadcraft_io::read_dxf(dxf.as_bytes()).unwrap());
+    let v = sheet_viewport(&forja_io::read_dxf(dxf.as_bytes()).unwrap());
     assert!(close(v.view_center, SITE), "{:?}", v.view_center);
     assert!(close(v.model_to_paper(SITE), Vec2::new(230.0, 80.0)), "{:?}", v.model_to_paper(SITE));
 }
@@ -98,14 +98,14 @@ fn twisted_model_views_and_named_views_store_display_centres() {
     // A saved configuration of two tiles, one twisted.
     d.vports = vec![VportConfig { name: "Site".into(), tiles: vec![tile(SITE, twist()), tile(Vec2::new(5.0, 5.0), 0.0)] }];
     d.views.push(NamedView { name: "Site".into(), center: SITE, height: 50.0, width: 75.0, twist: twist(), ..Default::default() });
-    let dxf = cadcraft_io::write_dxf(&d);
+    let dxf = forja_io::write_dxf(&d);
     let vports = centres(&dxf, "VPORT", 12, 51);
     assert_eq!(vports.len(), 1, "{vports:?}");
     assert!(vports.iter().all(|c| close(*c, dcs())), "{vports:?} vs {:?}", dcs());
     let views = centres(&dxf, "VIEW", 10, 50);
     assert_eq!(views.len(), 1, "{views:?}");
     assert!(views.iter().all(|c| close(*c, dcs())), "{views:?} vs {:?}", dcs());
-    let back = cadcraft_io::read_dxf(dxf.as_bytes()).unwrap();
+    let back = forja_io::read_dxf(dxf.as_bytes()).unwrap();
     let tiles: Vec<Vec2> = back.vports.iter().filter(|c| c.name == "Site").flat_map(|c| c.tiles.iter().map(|t| t.center)).collect();
     assert_eq!(tiles.len(), 2, "{:?}", back.vports);
     assert!(close(tiles[0], SITE) && close(tiles[1], Vec2::new(5.0, 5.0)), "{tiles:?}");
@@ -151,17 +151,17 @@ fn display_centres_are_measured_from_the_view_target() {
     let mut d = Drawing::new_metric();
     let sheet = Space::Paper(d.layouts[0].name.clone());
     d.add(&sheet, Common::default(), viewport(SITE)).unwrap();
-    let dxf = with_target(&cadcraft_io::write_dxf(&d), "VIEWPORT", 12, 17, 51, target);
-    let v = sheet_viewport(&cadcraft_io::read_dxf(dxf.as_bytes()).unwrap());
+    let dxf = with_target(&forja_io::write_dxf(&d), "VIEWPORT", 12, 17, 51, target);
+    let v = sheet_viewport(&forja_io::read_dxf(dxf.as_bytes()).unwrap());
     assert!(close(v.view_center, SITE), "{:?}", v.view_center);
     // A model view tile and a named view.
     let mut d = Drawing::new_metric();
     let tile = VportTile { min: Vec2::ZERO, max: Vec2::new(1.0, 1.0), center: SITE, height: 50.0, aspect: 1.5, twist: twist() };
     d.vports = vec![VportConfig { name: "Site".into(), tiles: vec![tile, VportTile { center: Vec2::new(5.0, 5.0), twist: 0.0, ..tile }] }];
     d.views.push(NamedView { name: "Site".into(), center: SITE, height: 50.0, width: 75.0, twist: twist(), ..Default::default() });
-    let dxf = with_target(&cadcraft_io::write_dxf(&d), "VPORT", 12, 17, 51, target);
+    let dxf = with_target(&forja_io::write_dxf(&d), "VPORT", 12, 17, 51, target);
     let dxf = with_target(&dxf, "VIEW", 10, 12, 50, target);
-    let back = cadcraft_io::read_dxf(dxf.as_bytes()).unwrap();
+    let back = forja_io::read_dxf(dxf.as_bytes()).unwrap();
     let tiles: Vec<Vec2> = back.vports.iter().filter(|c| c.name == "Site").flat_map(|c| c.tiles.iter().map(|t| t.center)).collect();
     assert!(tiles.first().is_some_and(|c| close(*c, SITE)), "{tiles:?}");
     assert!(back.views.iter().all(|v| close(v.center, SITE)), "{:?}", back.views);

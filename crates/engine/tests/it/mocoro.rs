@@ -1,9 +1,9 @@
 //! MOCORO (Express Tools Move/Copy/Rotate): select objects and a base point, then Move, Copy,
 //! Rotate, Scale, Base and Undo at one prompt until eXit.
 
-use cadcraft_engine::doc::{EntityKind, Handle};
-use cadcraft_engine::geom::Vec2;
-use cadcraft_engine::{Input, Session};
+use forja_engine::doc::{EntityKind, Handle};
+use forja_engine::geom::Vec2;
+use forja_engine::{Input, Session};
 use serde_json::{Value, json};
 
 fn line(s: &mut Session, a: [f64; 2], b: [f64; 2]) -> String {

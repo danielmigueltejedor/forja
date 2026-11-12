@@ -3,7 +3,7 @@
 
 use std::collections::{BTreeMap, HashSet};
 
-use cadcraft_doc::Drawing;
+use forja_doc::Drawing;
 use serde::Serialize;
 
 use super::{Category, Change, Comparison, Options, Out};
@@ -18,7 +18,7 @@ pub struct Census {
     pub block_entities: BTreeMap<String, usize>,
     /// Block definitions other than the model and paper space blocks and the generated ones.
     pub blocks: usize,
-    /// Blocks CADCraft generates and so doesn't read (tables' blocks, standard arrowheads
+    /// Blocks Forja generates and so doesn't read (tables' blocks, standard arrowheads
     /// nothing inserts); their entities are not counted.
     pub generated_blocks: usize,
     /// Table records per table type (LAYER, LTYPE, STYLE, DIMSTYLE, VIEW, UCS…).
@@ -38,8 +38,8 @@ fn bump(m: &mut BTreeMap<String, usize>, k: &str) {
 }
 
 /// A layout's own paper-space viewport (VIEWPORT with ID 1, group 69): part of the layout, not
-/// an entity of its own for CADCraft.
-fn is_overall_viewport(t: &str, g: &[cadcraft_dxf::Tag]) -> bool {
+/// an entity of its own for Forja.
+fn is_overall_viewport(t: &str, g: &[forja_dxf::Tag]) -> bool {
     t == "VIEWPORT" && g.iter().any(|x| x.code == 69 && x.i64() == 1)
 }
 
@@ -50,14 +50,14 @@ fn is_space_block(name: &str) -> bool {
 
 /// Count what a DXF file (ASCII or binary) holds; `None` when it can't be parsed.
 pub fn census(dxf: &[u8]) -> Option<Census> {
-    let tags = cadcraft_dxf::parse(dxf).ok()?;
+    let tags = forja_dxf::parse(dxf).ok()?;
     let mut c = Census::default();
-    // Blocks CADCraft generates (tables' blocks, standard arrowheads nothing inserts) are left out
+    // Blocks Forja generates (tables' blocks, standard arrowheads nothing inserts) are left out
     // on read and rebuilt on save: counted apart.
     let mut table_blocks: HashSet<String> = HashSet::new();
     let mut inserted: HashSet<String> = HashSet::new();
     let mut blocks: Vec<(String, BTreeMap<String, usize>)> = Vec::new();
-    let mut note_refs = |t: &str, g: &[cadcraft_dxf::Tag]| {
+    let mut note_refs = |t: &str, g: &[forja_dxf::Tag]| {
         let name = || g.iter().find(|x| x.code == 2).map(|x| x.str().trim().to_ascii_uppercase());
         match t {
             "ACAD_TABLE" => table_blocks.extend(name()),
@@ -65,8 +65,8 @@ pub fn census(dxf: &[u8]) -> Option<Census> {
             _ => {}
         }
     };
-    for s in cadcraft_dxf::sections(&tags) {
-        let records = cadcraft_dxf::records(&s.tags);
+    for s in forja_dxf::sections(&tags) {
+        let records = forja_dxf::records(&s.tags);
         match s.name.trim().to_ascii_uppercase().as_str() {
             "ENTITIES" => {
                 for (t, g) in &records {
@@ -82,7 +82,7 @@ pub fn census(dxf: &[u8]) -> Option<Census> {
                     note_refs(t, g);
                     match t.as_str() {
                         "BLOCK" => {
-                            let name = g.iter().find(|x| x.code == 2).map(cadcraft_dxf::Tag::str).unwrap_or_default();
+                            let name = g.iter().find(|x| x.code == 2).map(forja_dxf::Tag::str).unwrap_or_default();
                             space = is_space_block(&name);
                             if !space {
                                 blocks.push((name.trim().to_ascii_uppercase(), BTreeMap::new()));
@@ -184,7 +184,7 @@ fn compare_counts(out: &mut Out, place: &str, file: &BTreeMap<String, usize>, re
 }
 
 /// What a drawing read from a file holds less (or more) than the file: entities per type in the
-/// spaces and in blocks, blocks, and the table records CADCraft models. Blocks CADCraft generates
+/// spaces and in blocks, blocks, and the table records Forja models. Blocks Forja generates
 /// (tables' blocks, unused standard arrowheads) are left out on both sides.
 pub fn compare_census(file: &Census, d: &Drawing, opts: &Options) -> Comparison {
     let read = census_of(d);

@@ -1,9 +1,9 @@
 //! DWG support through a DXF bridge.
 //!
 //! DWG files are read with the `acadrust` crate (MPL-2.0, used unmodified as a dependency) and
-//! converted to DXF bytes, which CADCraft's own DXF reader maps to its document model; saving
+//! converted to DXF bytes, which Forja's own DXF reader maps to its document model; saving
 //! goes the other way. Keeping the dependency behind this byte-level API isolates it: nothing
-//! else in CADCraft depends on its types. Native targets only (it memory-maps files).
+//! else in Forja depends on its types. Native targets only (it memory-maps files).
 //!
 //! # Guardrails around the third-party decoder
 //!
@@ -109,6 +109,7 @@ mod native {
         }
         let mut notes = read_notes(&outcome.stats);
         let mut doc = outcome.document;
+        guarded(AssertUnwindSafe(|| restore_model_space(&mut doc))).map_err(|_| "the DWG model space check failed".to_string())?;
         notes.extend(
             guarded(AssertUnwindSafe(|| application_objects(&mut doc))).map_err(|_| "the DWG application object conversion failed".to_string())?,
         );
@@ -335,7 +336,7 @@ mod native {
     /// merged cells into the table's `merged_ranges` only, while its DXF writer writes each cell's
     /// own merge groups (173, 175, 176), so without this the merges would be lost. Tables whose
     /// cells already carry merges are left alone. Each range's first cell gets the span; the
-    /// cells it covers are marked merged with no span of their own, as CADCraft's DXF writer does.
+    /// cells it covers are marked merged with no span of their own, as Forja's DXF writer does.
     fn table_merges(doc: &mut acadrust::CadDocument) {
         table_merges_within(doc, MAX_MERGE_CELLS);
     }
@@ -346,7 +347,7 @@ mod native {
 
     /// A table cell's own text height only when the file says it overrides the table style's.
     /// acadrust's DXF writer writes a cell style's height (group 140) whenever the cell has a
-    /// style record, even a default 0.18 with no override flag, and CADCraft reads a 140 as an
+    /// style record, even a default 0.18 with no override flag, and Forja reads a 140 as an
     /// override (#2501). The override is the cell style's TEXT_HEIGHT property flag or the
     /// content's format override bit 128; without either the height is cleared (0 is no
     /// override), so the table style's height applies.
@@ -357,7 +358,7 @@ mod native {
             let acadrust::entities::EntityType::Table(t) = e else { continue };
             for cell in t.rows.iter_mut().flat_map(|r| r.cells.iter_mut()) {
                 // The first content's own height (group 144) when its format override sets bit 128.
-                // CADCraft keeps one height for the cell's text, so a later content's override
+                // Forja keeps one height for the cell's text, so a later content's override
                 // must not stand in for the first content's.
                 let content_height = cell
                     .contents
@@ -366,7 +367,7 @@ mod native {
                     .map(|c| c.text_height)
                     .filter(|h| h.is_finite() && *h > 0.0);
                 if let Some(h) = content_height {
-                    // CADCraft reads only the style's height (group 140), so carry it there.
+                    // Forja reads only the style's height (group 140), so carry it there.
                     cell.style.get_or_insert_with(acadrust::entities::table::CellStyle::new).text_height = h;
                     continue;
                 }
@@ -393,6 +394,21 @@ mod native {
         table_style_rows(doc, false);
         keep_sort_handles(doc);
         drop_orphaned_dgn_components(doc)
+    }
+
+    /// Gives the model space back its name when the file damaged it. The header still names
+    /// the model space's block record by handle, and without the name every entity in it would
+    /// land in an ordinary block: the drawing would open empty and say nothing. Nothing is lost
+    /// once the name is back, so the read needs no note. True when the name was restored.
+    pub(crate) fn restore_model_space(doc: &mut acadrust::CadDocument) -> bool {
+        if doc.block_records.iter().any(|b| b.is_model_space()) {
+            return false;
+        }
+        let handle = doc.header.model_space_block_handle;
+        let Some(name) = doc.block_records.iter().find(|b| handle != acadrust::Handle::NULL && b.handle == handle).map(|b| b.name.clone()) else {
+            return false;
+        };
+        doc.block_records.rename(&name, "*Model_Space").is_ok()
     }
 
     /// Runs `f`, turning a panic into an error (the reader and writer are guarded the same way).
@@ -694,7 +710,7 @@ mod native {
 
     /// The DWG dimension flags byte. Its bit 1 is DXF group 70's bit 32 (ODA DWG specification,
     /// common dimension data), which acadrust keeps no copy of from DXF: it is set here as
-    /// CADCraft's DXF writer always sets it (#1094). Bit 0, the opposite of group 70's bit 128,
+    /// Forja's DXF writer always sets it (#1094). Bit 0, the opposite of group 70's bit 128,
     /// acadrust 0.6.6 reads and writes itself.
     fn dimension_flags(doc: &mut acadrust::CadDocument) {
         for e in doc.entities_mut() {
@@ -709,7 +725,7 @@ mod native {
     /// removes them as orphaned data): in a real 83 MB site plan they were 888,483 of 889,053
     /// components and made its DXF rendition 1.2 GB, over [`Limits::DEFAULT`], so the file
     /// didn't open at all. No definition that was read refers to them (a definition the reader
-    /// skipped can't use them either) and CADCraft doesn't draw DGN line styles, so nothing
+    /// skipped can't use them either) and Forja doesn't draw DGN line styles, so nothing
     /// visible is lost.
     /// Every component a definition reaches (directly, or through compound and point
     /// components) is kept, as are the definitions; dictionary entries that named a dropped
@@ -761,7 +777,7 @@ mod native {
 
     /// Leave out what acadrust can't write as this DWG version: other programs' custom entities
     /// and objects without raw DWG data of that version. acadrust 0.6.4 refuses the whole file
-    /// for one of them (0.6.3 left them out); CADCraft already tells the user which entity types
+    /// for one of them (0.6.3 left them out); Forja already tells the user which entity types
     /// a DWG doesn't keep (`not_saved`), so the rest of the drawing is written. Returns how many
     /// records of each DXF type were left out, so a save can say so.
     fn drop_unwritable(doc: &mut acadrust::CadDocument) -> super::Unwritten {
@@ -892,7 +908,7 @@ mod native {
     }
 
     /// Like [`dxf_to_dwg_as`], for a DXF that declares an older version than the groups it carries
-    /// over from another file. CADCraft's R2000 DWG bridge holds the objects it keeps without
+    /// over from another file. Forja's R2000 DWG bridge holds the objects it keeps without
     /// modelling them (render settings, fields, associative and dynamic block data) as they were
     /// read from a file of version `kept` ("AC1032"), and acadrust reads several of those
     /// differently by version: read as R2000, an AC1032 file's mental ray render settings came out
@@ -928,7 +944,7 @@ mod native {
     /// declares, or `None` to read it as it is (binary, no `$ACADVER`, or non-ASCII text without a
     /// `$DWGCODEPAGE` to decode it by). From AutoCAD 2007 (AC1021) a DXF is UTF-8, so other bytes
     /// are first decoded with the code page the DXF declares; `\U+XXXX` escapes read the same in
-    /// every version, and CADCraft's R2000 DXF is ASCII with such escapes.
+    /// every version, and Forja's R2000 DXF is ASCII with such escapes.
     pub(super) fn declare_version(dxf: &[u8], kept: acadrust::DxfVersion) -> Option<Vec<u8>> {
         if dxf.starts_with(b"AutoCAD Binary DXF") {
             return None;
@@ -1049,7 +1065,7 @@ mod native {
     /// The DXF names of an ASCII DXF's CLASS records, in CLASSES order: a proxy's class number
     /// (group 91) is 500 plus its class's place here (DXF Reference, ACAD_PROXY_OBJECT). Empty for
     /// one without a CLASSES section. `None` for a binary DXF, whose classes this doesn't read:
-    /// CADCraft's own bridge DXF is always ASCII, and only a binary DXF given to the public
+    /// Forja's own bridge DXF is always ASCII, and only a binary DXF given to the public
     /// conversion functions comes here.
     pub(super) fn dxf_class_names(dxf: &[u8]) -> Option<Vec<String>> {
         let pairs = super::proxy_transport::text_pairs(dxf)?;
@@ -1301,7 +1317,7 @@ mod native {
     /// dictionary, with the variables it keeps there, when the drawing has none (#1813).
     /// Vectric Aspire 10.5 reads a 2004 (AC1018) DWG without it as empty ("No data was imported
     /// from the DXF / DWG file"), though it reads the same drawing as DXF — which has no such
-    /// dictionary either, as CADCraft's and ezdxf's writers don't make one. AutoCAD's AC1032 DWGs
+    /// dictionary either, as Forja's and ezdxf's writers don't make one. AutoCAD's AC1032 DWGs
     /// read there without it, so newer output is left as it was, and a dictionary the drawing
     /// does have keeps its own entries and values.
     fn add_variable_dictionary(doc: &mut acadrust::CadDocument) {
@@ -1589,7 +1605,7 @@ fn fail_in_test(_stage: &str) {
     }
 }
 
-/// The error for a DWG version CADCraft can't write.
+/// The error for a DWG version Forja can't write.
 #[cfg_attr(no_dwg_bridge, allow(dead_code))]
 fn unsupported(version: &str) -> String {
     let list: Vec<&str> = VERSIONS.iter().map(|(_, year)| *year).collect();
@@ -1802,7 +1818,7 @@ mod tests {
             assert_eq!(seen.iter().filter(|(t, _)| t == text).count(), 4, "{seen:?}");
         }
 
-        // And CADCraft reads its own DWG back as it wrote it: 128 only on the moved texts.
+        // And Forja reads its own DWG back as it wrote it: 128 only on the moved texts.
         let dxf = String::from_utf8(dwg_to_dxf(&dwg).unwrap()).unwrap();
         let lines: Vec<&str> = dxf.lines().map(str::trim).collect();
         let mut flags = Vec::new();
@@ -1950,7 +1966,7 @@ mod tests {
         assert_eq!(notes, ["DWG: 3 DGN line style components that no line style definition uses were left out"]);
     }
 
-    /// An R2000 DXF header (`\r\n` lines, as CADCraft writes them) with `extra` after `$ACADVER`.
+    /// An R2000 DXF header (`\r\n` lines, as Forja writes them) with `extra` after `$ACADVER`.
     #[cfg(not(no_dwg_bridge))]
     fn r2000(extra: &[u8]) -> Vec<u8> {
         let mut dxf = b"  0\r\nSECTION\r\n  2\r\nHEADER\r\n  9\r\n$ACADVER\r\n  1\r\nAC1015\r\n  9\r\n$DWGCODEPAGE\r\n  3\r\nANSI_1252\r\n".to_vec();
@@ -2048,7 +2064,7 @@ mod tests {
 
     /// AutoCAD's DWG scale action (BLOCKSCALEACTION) ends with a byte after its three
     /// connections that DXF doesn't carry. acadrust 0.6.4 neither read nor wrote it, so AutoCAD
-    /// read past the object and refused every DWG CADCraft wrote with a dynamic block that scales
+    /// read past the object and refused every DWG Forja wrote with a dynamic block that scales
     /// ("Error Decrypting Data"); 0.6.5 added it and 0.6.6, which this uses, still keeps it (0.6.6 also
     /// fixes multi-layout DWGs, #1463). The byte reaches the DWG, and a scale action
     /// from DXF is written whole, with the byte AutoCAD writes (0).
@@ -2113,7 +2129,7 @@ mod tests {
         assert!(unwritten.is_empty(), "{unwritten:?}");
     }
 
-    /// An OLE2FRAME, which CADCraft keeps as its DXF groups without modelling it, is written to
+    /// An OLE2FRAME, which Forja keeps as its DXF groups without modelling it, is written to
     /// the DWG with its data: it isn't in the list of what the writer left out.
     #[cfg(not(no_dwg_bridge))]
     #[test]

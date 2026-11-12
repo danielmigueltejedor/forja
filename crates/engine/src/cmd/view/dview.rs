@@ -1,4 +1,4 @@
-//! DVIEW: the dynamic view, on CADCraft's 2D plan views.
+//! DVIEW: the dynamic view, on Forja's 2D plan views.
 //!
 //! It starts with "Select objects or <use DVIEWBLOCK>:": the objects
 //! picked are the preview set, and Enter with nothing picked previews the DVIEWBLOCK block (the
@@ -15,8 +15,8 @@
 
 use std::sync::Arc;
 
-use cadcraft_doc::{Entity, EntityKind, Handle, Insert, Line, Space};
-use cadcraft_geom::{Vec2, Vec3};
+use forja_doc::{Entity, EntityKind, Handle, Insert, Line, Space};
+use forja_geom::{Vec2, Vec3};
 use serde_json::{Value, json};
 
 use super::super::machines::{SelOutcome, SelectPhase, number};
@@ -68,7 +68,7 @@ pub(super) fn target(s: &Session) -> Result<Target> {
 
 /// A twist kept as files hold it: [0, 2π).
 fn normal(twist: f64) -> f64 {
-    cadcraft_geom::norm_angle(twist)
+    forja_geom::norm_angle(twist)
 }
 
 /// The active viewport's twist, if it is `h`.
@@ -115,7 +115,7 @@ pub(super) fn set_twist(s: &mut Session, target: Target, twist: f64) -> Result<(
 /// Record a layout viewport's twist change as one undo step, `before` being the drawing (and
 /// selection) before it. Nothing when the twist did not change, and nothing inside a LISP routine
 /// (its own single step holds it).
-pub(super) fn record_viewport_edit(s: &mut Session, before: (Arc<cadcraft_doc::Drawing>, Vec<Handle>), h: Handle) -> Result<()> {
+pub(super) fn record_viewport_edit(s: &mut Session, before: (Arc<forja_doc::Drawing>, Vec<Handle>), h: Handle) -> Result<()> {
     let old = before.0.entity(h).and_then(|e| match &e.kind {
         EntityKind::Viewport(vp) => Some(vp.view_twist()),
         _ => None,
@@ -132,7 +132,7 @@ pub(super) fn record_viewport_edit(s: &mut Session, before: (Arc<cadcraft_doc::D
 }
 
 /// The drawing and selection now, for [`record_viewport_edit`].
-fn snapshot(s: &Session) -> Result<(Arc<cadcraft_doc::Drawing>, Vec<Handle>)> {
+fn snapshot(s: &Session) -> Result<(Arc<forja_doc::Drawing>, Vec<Handle>)> {
     let st = s.state()?;
     Ok((st.doc.clone(), st.selection.clone()))
 }
@@ -150,7 +150,7 @@ fn run_dview(s: &mut Session, p: &Value) -> Result<Value> {
 }
 
 /// The built-in DVIEWBLOCK: a house front in the unit square, origin at the lower-left corner
-/// (the size and origin a DVIEWBLOCK of one's own is expected to have). CADCraft's own drawing.
+/// (the size and origin a DVIEWBLOCK of one's own is expected to have). Forja's own drawing.
 fn sample_house() -> Vec<(Vec2, Vec2)> {
     let p = Vec2::new;
     let mut lines = Vec::new();
@@ -204,7 +204,7 @@ struct DviewM {
     /// What DVIEW works on, and the drawing as it started (a viewport's twist change is one
     /// undo step).
     target: Option<Target>,
-    before: Option<(Arc<cadcraft_doc::Drawing>, Vec<Handle>)>,
+    before: Option<(Arc<forja_doc::Drawing>, Vec<Handle>)>,
 }
 
 impl DviewM {

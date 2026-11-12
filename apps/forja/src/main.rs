@@ -2,15 +2,15 @@
 //!
 //! Usage: `forja [--control <port>] [--sample] [files…]` (`forja --help` lists the rest; see [`launch_args`])
 //!
-//! `--control <port>` (or `CADCRAFT_CONTROL_PORT`) starts a localhost JSON-lines control server:
+//! `--control <port>` (or `FORJA_CONTROL_PORT`) starts a localhost JSON-lines control server:
 //! `{"id":1,"method":"cmdline.input","params":{"text":"circle 0,0 5"}}` → `{"id":1,"ok":true,…}`.
-//! See `cadcraft_ui_egui::control` for the methods.
+//! See `forja_ui_egui::control` for the methods.
 //!
-//! `CADCRAFT_VSYNC=1` presents with vsync on Linux/BSD, where the default is the low-latency
-//! present mode (`CADCRAFT_VSYNC=0` selects that elsewhere); see `cadcraft_ui_egui::gpu::surface_config`.
+//! `FORJA_VSYNC=1` presents with vsync on Linux/BSD, where the default is the low-latency
+//! present mode (`FORJA_VSYNC=0` selects that elsewhere); see `forja_ui_egui::gpu::surface_config`.
 //!
 //! `log` records go to standard error and `<settings dir>/logs/forja.log` (`RUST_LOG` sets the
-//! levels); see [`logging`]. The `CADCRAFT_*` variables are read once, at startup; see [`env`].
+//! levels); see [`logging`]. The `FORJA_*` variables are read once, at startup; see [`env`].
 #![cfg_attr(all(target_os = "windows", not(debug_assertions)), windows_subsystem = "windows")]
 #![deny(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::unimplemented, clippy::todo, clippy::unreachable)]
 
@@ -27,9 +27,9 @@ mod spacemouse;
 mod system_animations;
 mod workspace;
 
-use cadcraft_engine::Session;
-use cadcraft_ui_egui::switch::Switch;
-use cadcraft_ui_egui::{CadApp, Services, i18n};
+use forja_engine::Session;
+use forja_ui_egui::switch::Switch;
+use forja_ui_egui::{CadApp, Services, i18n};
 
 struct App {
     cad: CadApp,
@@ -42,7 +42,7 @@ struct App {
     workspace_error: Option<String>,
     #[cfg(target_os = "macos")]
     native_menu: Option<native_menu::NativeMenu>,
-    /// `CADCRAFT_NO_NATIVE_MENU`: the menus stay inside the window.
+    /// `FORJA_NO_NATIVE_MENU`: the menus stay inside the window.
     #[cfg(target_os = "macos")]
     menus_in_window: bool,
     /// The `movable` flag last set on the main window.
@@ -113,7 +113,7 @@ impl eframe::App for App {
     fn raw_input_hook(&mut self, ctx: &egui::Context, raw: &mut egui::RawInput) {
         follow_desktop(raw, self.desktop_theme.current());
         self.cad.raw_input_hook(ctx, raw);
-        cadcraft_ui_egui::cmdline::capture_tab(ctx, raw);
+        forja_ui_egui::cmdline::capture_tab(ctx, raw);
     }
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         self.cad.guarded_ui(ui);
@@ -130,9 +130,9 @@ impl eframe::App for App {
     /// Preferences (the interface theme) survive restarts; eframe saves the window state itself
     /// (`persist_window`); egui state is not kept.
     fn save(&mut self, storage: &mut dyn eframe::Storage) {
-        storage.set_string(cadcraft_ui_egui::options::PROFILE_KEY, self.cad.profile_json());
-        storage.set_string(cadcraft_ui_egui::PREFS_KEY, self.cad.prefs_json());
-        storage.set_string(cadcraft_ui_egui::autosave::PREFS_KEY, cadcraft_ui_egui::autosave::prefs_json());
+        storage.set_string(forja_ui_egui::options::PROFILE_KEY, self.cad.profile_json());
+        storage.set_string(forja_ui_egui::PREFS_KEY, self.cad.prefs_json());
+        storage.set_string(forja_ui_egui::autosave::PREFS_KEY, forja_ui_egui::autosave::prefs_json());
     }
     fn persist_egui_memory(&self) -> bool {
         false
@@ -141,19 +141,19 @@ impl eframe::App for App {
 
 /// File format hooks for the engine (it stays I/O-agnostic).
 pub fn install_io() {
-    cadcraft_engine::cmd::file::set_io(cadcraft_engine::cmd::file::IoHooks {
-        read: |b, name| cadcraft_io::read(b, name).map_err(|e| e.to_string()),
-        write: |d, name| cadcraft_io::write(d, name).map_err(|e| e.to_string()),
-        plot: Some(|d, space, opts| cadcraft_io::plotter::plot(d, space, opts).map_err(|e| e.to_string())),
+    forja_engine::cmd::file::set_io(forja_engine::cmd::file::IoHooks {
+        read: |b, name| forja_io::read(b, name).map_err(|e| e.to_string()),
+        write: |d, name| forja_io::write(d, name).map_err(|e| e.to_string()),
+        plot: Some(|d, space, opts| forja_io::plotter::plot(d, space, opts).map_err(|e| e.to_string())),
     });
-    cadcraft_engine::cmd::file::set_image_decoder(|b| cadcraft_io::raster::decode(b).map_err(|e| e.to_string()));
-    cadcraft_engine::cmd::file::set_write_as(|d, name, o| {
-        cadcraft_io::write_with(d, name, &cadcraft_io::SaveOptions { version: o.version, binary: o.binary }).map_err(|e| e.to_string())
+    forja_engine::cmd::file::set_image_decoder(|b| forja_io::raster::decode(b).map_err(|e| e.to_string()));
+    forja_engine::cmd::file::set_write_as(|d, name, o| {
+        forja_io::write_with(d, name, &forja_io::SaveOptions { version: o.version, binary: o.binary }).map_err(|e| e.to_string())
     });
     // AutoLISP's entget, entmake and entmod see entities as DXF groups.
-    cadcraft_engine::cmd::file::set_entity_codec(cadcraft_engine::cmd::file::EntityCodec {
-        groups: cadcraft_io::entity_groups,
-        entity: cadcraft_io::entity_from_groups,
+    forja_engine::cmd::file::set_entity_codec(forja_engine::cmd::file::EntityCodec {
+        groups: forja_io::entity_groups,
+        entity: forja_io::entity_from_groups,
     });
 }
 
@@ -244,7 +244,7 @@ fn window_options(restoring: bool) -> eframe::NativeOptions {
     }
 }
 
-const APP_ID: &str = "ai.storyteller.forja";
+const APP_ID: &str = "dev.danielmiguelt.Forja";
 
 /// The key eframe saves the main window state under in its storage.
 const WINDOW_KEY: &str = "window";
@@ -262,21 +262,21 @@ fn app_icon() -> Option<egui::IconData> {
 }
 
 fn version_string() -> String {
-    format!("forja {}", cadcraft_engine::build_version())
+    format!("forja {}", forja_engine::build_version())
 }
 
 /// Parse CLI options (`--control`, `--sample`, files, `--version`), install logging and I/O hooks, build the services and app, and run eframe.
 fn main() -> eframe::Result {
     // A copy of this program started to read or write a DWG file does only that.
-    if let Some(code) = cadcraft_io::dwg_worker::serve_if_asked() {
+    if let Some(code) = forja_io::dwg_worker::serve_if_asked() {
         std::process::exit(code);
     }
-    cadcraft_io::dwg_worker::use_own_worker();
+    forja_io::dwg_worker::use_own_worker();
     // First, so every start-up record is captured; see `logging`.
     let logger = logging::install();
     // The update helper relaunches this binary after a self-update; it runs and exits here.
     #[cfg(not(target_arch = "wasm32"))]
-    if let Some(done) = craft_update::self_update::finish(&cadcraft_ui_egui::UPDATE_APP, &std::env::args_os().skip(1).collect::<Vec<_>>()) {
+    if let Some(done) = craft_update::self_update::finish(&forja_ui_egui::UPDATE_APP, &std::env::args_os().skip(1).collect::<Vec<_>>()) {
         if let Err(e) = done {
             eprintln!("Forja update helper failed: {e}");
             std::process::exit(1);
@@ -284,7 +284,7 @@ fn main() -> eframe::Result {
         return Ok(());
     }
     // `--help` and `--version` print to standard output and exit 0. A usage error (an unknown or
-    // repeated flag, a missing or bad value, a bad CADCRAFT_CONTROL_PORT) names the argument on
+    // repeated flag, a missing or bad value, a bad FORJA_CONTROL_PORT) names the argument on
     // standard error and exits 2 before the window opens.
     let launch = launch_args::parse(launch_args::command(), std::env::args_os().skip(1)).unwrap_or_else(|e| e.exit());
     let vars = env::Env::read();
@@ -297,25 +297,25 @@ fn main() -> eframe::Result {
             Some(Err(e)) => log::warn!("no log file: {e}"),
             None => {
                 logger.stderr_only();
-                log::warn!("no log file: no settings directory (an empty CADCRAFT_CONFIG_DIR turns it off)");
+                log::warn!("no log file: no settings directory (an empty FORJA_CONFIG_DIR turns it off)");
             }
         }
     }
     install_io();
-    cadcraft_engine::settings_dir::set(vars.config_dir.clone());
+    forja_engine::settings_dir::set(vars.config_dir.clone());
     if let Some(dir) = &vars.config_dir {
-        cadcraft_ui_egui::fault::install_report_hook(dir.join(cadcraft_ui_egui::fault::REPORT_DIR));
+        forja_ui_egui::fault::install_report_hook(dir.join(forja_ui_egui::fault::REPORT_DIR));
     }
     if let Some(name) = &vars.font_alt {
-        cadcraft_engine::fonts::ttf::set_font_alt(name);
+        forja_engine::fonts::ttf::set_font_alt(name);
     }
     if let Some(list) = &vars.font_fallback {
-        cadcraft_engine::fonts::ttf::set_fallback_fonts(list);
+        forja_engine::fonts::ttf::set_fallback_fonts(list);
     }
-    let surface = cadcraft_ui_egui::gpu::surface_config(vars.vsync, cfg!(all(unix, not(target_os = "macos"))));
+    let surface = forja_ui_egui::gpu::surface_config(vars.vsync, cfg!(all(unix, not(target_os = "macos"))));
     let mut options = eframe::NativeOptions {
         // The crosshair is drawn by the app: present without a queue on Linux/BSD, where X11
-        // swapchains hold two frames back under vsync (`CADCRAFT_VSYNC=1` restores vsync).
+        // swapchains hold two frames back under vsync (`FORJA_VSYNC=1` restores vsync).
         wgpu_options: eframe::egui_wgpu::WgpuConfiguration::default().with_surface_config(surface),
         ..window_options(restores_window())
     };
@@ -337,7 +337,7 @@ fn main() -> eframe::Result {
         });
     }
     // winit has no file drag-and-drop on Wayland (only on X11), so dropping files from the file
-    // manager showed a "no" cursor. Run through XWayland when it's there; CADCRAFT_WAYLAND=1
+    // manager showed a "no" cursor. Run through XWayland when it's there; FORJA_WAYLAND=1
     // keeps the native Wayland backend.
     #[cfg(all(unix, not(target_os = "macos")))]
     if std::env::var_os("DISPLAY").is_some() && vars.wayland != Switch::On {
@@ -372,14 +372,14 @@ fn main() -> eframe::Result {
             }
             app.system_languages = vars.locale.map(|s| vec![s]).unwrap_or_else(|| sys_locale::get_locales().collect());
             // The user profile (Options): drafting settings, selection sizes, drawing-area colours.
-            if let Some(profile) = cc.storage.and_then(|s| s.get_string(cadcraft_ui_egui::options::PROFILE_KEY)) {
+            if let Some(profile) = cc.storage.and_then(|s| s.get_string(forja_ui_egui::options::PROFILE_KEY)) {
                 app.load_profile(&profile);
             }
-            if let Some(prefs) = cc.storage.and_then(|s| s.get_string(cadcraft_ui_egui::PREFS_KEY)) {
+            if let Some(prefs) = cc.storage.and_then(|s| s.get_string(forja_ui_egui::PREFS_KEY)) {
                 app.load_prefs(&prefs);
             }
-            if let Some(prefs) = cc.storage.and_then(|s| s.get_string(cadcraft_ui_egui::autosave::PREFS_KEY)) {
-                cadcraft_ui_egui::autosave::load_prefs(&prefs);
+            if let Some(prefs) = cc.storage.and_then(|s| s.get_string(forja_ui_egui::autosave::PREFS_KEY)) {
+                forja_ui_egui::autosave::load_prefs(&prefs);
             }
             // Autosave files (SAVEFILEPATH) default to `<settings dir>/autosave`.
             if let Some(dir) = &vars.config_dir {
@@ -395,7 +395,7 @@ fn main() -> eframe::Result {
             }
             app.integrated_titlebar = cfg!(target_os = "macos");
             if surface.present_mode == eframe::wgpu::PresentMode::AutoNoVsync {
-                app.frame_cap = Some(cadcraft_ui_egui::gpu::FrameCap::new(240));
+                app.frame_cap = Some(forja_ui_egui::gpu::FrameCap::new(240));
             }
             if let Some(rs) = &cc.wgpu_render_state {
                 app.set_wgpu(rs, eframe::egui_wgpu::depth_format_from_bits(0, STENCIL_BITS));

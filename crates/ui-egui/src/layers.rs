@@ -3,9 +3,9 @@
 //! VP Color columns. Every change runs an engine command (`layer.*`, `layerstate.*`, `vplayer`,
 //! `linetype`).
 
-use cadcraft_color::{Color, Rgb, aci_rgb};
-use cadcraft_doc::{Handle, Layer, Lineweight};
 use egui::{Color32, Rect, RichText, Sense, Stroke, pos2, vec2};
+use forja_color::{Color, Rgb, aci_rgb};
+use forja_doc::{Handle, Layer, Lineweight};
 use serde_json::{Value, json};
 
 use crate::CadApp;
@@ -150,7 +150,7 @@ pub fn color_palette(ui: &mut egui::Ui, id: egui::Id, current: Color, by: bool) 
         });
         ui.data_mut(|d| d.insert_temp(rid, c));
         if ui.button(crate::tl!("Apply true color")).clicked() {
-            out = Some(Color::True(cadcraft_color::Rgb(c[0], c[1], c[2])));
+            out = Some(Color::True(forja_color::Rgb(c[0], c[1], c[2])));
             ui.data_mut(|d| d.remove::<[u8; 3]>(rid));
         }
     }
@@ -167,7 +167,7 @@ fn lw_sample(p: &egui::Painter, r: Rect, lw: Lineweight, c: Color32) {
 }
 
 /// A linetype preview drawn from its own dash pattern.
-fn lt_sample(p: &egui::Painter, r: Rect, lt: Option<&cadcraft_doc::Linetype>, c: Color32) {
+fn lt_sample(p: &egui::Painter, r: Rect, lt: Option<&forja_doc::Linetype>, c: Color32) {
     let y = r.center().y;
     let Some(lt) = lt.filter(|l| !l.pattern.is_empty() && l.pattern.iter().any(|e| e.length.abs() > 1e-9)) else {
         p.line_segment([pos2(r.left(), y), pos2(r.right(), y)], Stroke::new(1.0, c));
@@ -228,9 +228,9 @@ pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
     let d = &dst.doc;
     let cur = d.header.str("CLAYER", "0");
     let used = used_layers(d);
-    let vp: Option<(Handle, cadcraft_doc::Viewport)> = dst.active_viewport();
-    let linetypes: Vec<cadcraft_doc::Linetype> = d.linetypes.clone();
-    let library: Vec<String> = cadcraft_doc::library::standard_linetypes().into_iter().map(|l| l.name).filter(|n| d.linetype(n).is_none()).collect();
+    let vp: Option<(Handle, forja_doc::Viewport)> = dst.active_viewport();
+    let linetypes: Vec<forja_doc::Linetype> = d.linetypes.clone();
+    let library: Vec<String> = forja_doc::library::standard_linetypes().into_iter().map(|l| l.name).filter(|n| d.linetype(n).is_none()).collect();
     let states: Vec<String> = d.layer_states.iter().map(|s| s.name.clone()).collect();
     let mut layers: Vec<Layer> = d.layers.clone();
     layers.sort_by_key(|l| natural_lower(&l.name));
@@ -248,7 +248,7 @@ pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
         Some(_) => "Layer Properties Manager — current viewport",
         None => "Layer Properties Manager",
     };
-    egui::Window::new(crate::i18n::t(title))
+    crate::ndl_window::Window::new(crate::i18n::t(title))
         .id(egui::Id::unique("lpm_window"))
         .open(open)
         .default_size(vec2(1180.0, 440.0))
@@ -281,7 +281,7 @@ pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
                 // Layer states.
                 ui.label(crate::tl!("Layer State"));
                 let label = st.state_sel.clone().unwrap_or_else(|| crate::tl!("Unsaved Layer State").into());
-                craft_ui::ComboBox::from_id_salt("lpm_states").selected_text(label).width(170.0).show_ui(ui, |ui| {
+                crate::ndl_widgets::combo("lpm_states").selected_text(label).width(170.0).show_ui(ui, |ui| {
                     for s in &states {
                         if ui.selectable_label(st.state_sel.as_deref() == Some(s), s).clicked() {
                             st.state_sel = Some(s.clone());
@@ -422,8 +422,8 @@ struct LayerRow<'a> {
     layer: &'a Layer,
     current: &'a str,
     used: &'a std::collections::HashSet<String>,
-    viewport: Option<&'a (Handle, cadcraft_doc::Viewport)>,
-    linetypes: &'a [cadcraft_doc::Linetype],
+    viewport: Option<&'a (Handle, forja_doc::Viewport)>,
+    linetypes: &'a [forja_doc::Linetype],
     library: &'a [String],
     state: &'a mut LpmState,
     actions: &'a mut Vec<(&'static str, Value)>,
@@ -709,7 +709,7 @@ fn layer_identity(
     name
 }
 
-fn used_layers(d: &cadcraft_doc::Drawing) -> std::collections::HashSet<String> {
+fn used_layers(d: &forja_doc::Drawing) -> std::collections::HashSet<String> {
     let mut set = std::collections::HashSet::new();
     let ents = d.model.iter().chain(d.layouts.iter().flat_map(|l| l.entities.iter())).chain(d.blocks.values().flat_map(|b| b.entities.iter()));
     for e in ents.take(5_000_000) {
@@ -769,8 +769,8 @@ mod tests {
     /// Issue #29: just opening the dialog must not grow its window frame after frame.
     #[test]
     fn dialog_keeps_its_height() {
-        let mut session = cadcraft_engine::Session::new();
-        session.open_drawing(cadcraft_engine::sample::default_sample(), "Bracket", None);
+        let mut session = forja_engine::Session::new();
+        session.open_drawing(forja_engine::sample::default_sample(), "Bracket", None);
         let mut app = CadApp::new(session, crate::Services::default());
         let ctx = egui::Context::default();
         let screen = Rect::from_min_size(egui::Pos2::ZERO, vec2(1600.0, 1000.0));

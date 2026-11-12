@@ -1,7 +1,7 @@
 //! CPU rasteriser: draws a display list with tiny-skia (PNG export, plot preview, tests).
 
-use cadcraft_color::Rgb;
-use cadcraft_geom::{Bounds2, Vec2};
+use forja_color::Rgb;
+use forja_geom::{Bounds2, Vec2};
 use tiny_skia::{FillRule, LineCap, LineJoin, Paint, PathBuilder, Pixmap, Stroke, Transform};
 
 use crate::{DImage, DisplayList, Kind};
@@ -345,7 +345,7 @@ fn outline_path(outline: &[Vec2], view: &View) -> Option<tiny_skia::Path> {
 }
 
 /// The pixels of `r` with each colour multiplied by its alpha.
-fn premultiplied(r: &cadcraft_doc::Raster) -> Option<Pixmap> {
+fn premultiplied(r: &forja_doc::Raster) -> Option<Pixmap> {
     let mut data = Vec::with_capacity(r.rgba().len());
     for [red, green, blue, a] in r.rgba().as_chunks::<4>().0 {
         let m = |c: &u8| ((u16::from(*c) * u16::from(*a) + 127) / 255) as u8;

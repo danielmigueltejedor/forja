@@ -1,4 +1,4 @@
-//! CADCraft rendering.
+//! Forja rendering.
 //!
 //! [`build`] turns a drawing space into a [`DisplayList`]: world-space polylines, filled
 //! triangles and points, each tagged with its top-level entity handle and resolved colour.
@@ -25,9 +25,9 @@ mod tolerance;
 pub mod units;
 mod wide;
 
-use cadcraft_color::{Color, Rgb};
-use cadcraft_doc::{Drawing, Entity, EntityKind, Handle, Lineweight, Prim, Space};
-use cadcraft_geom::{Bounds2, Mat3, Polyline, Vec2};
+use forja_color::{Color, Rgb};
+use forja_doc::{Drawing, Entity, EntityKind, Handle, Lineweight, Prim, Space};
+use forja_geom::{Bounds2, Mat3, Polyline, Vec2};
 use pen::Pen;
 
 pub use dim::{ArrowGeom, Arrowhead, DimGeometry, DimText, LineRole, arrowhead, dimension_geometry, dimension_geometry_with, format_linear_value};
@@ -187,7 +187,7 @@ impl<'a> Builder<'a> {
         });
     }
     /// The pixels of image `i` over its rectangle, cut to its clip boundary.
-    fn image(&mut self, ctx: &Ctx, color: Ink, i: &cadcraft_doc::Image, raster: &std::sync::Arc<cadcraft_doc::Raster>) {
+    fn image(&mut self, ctx: &Ctx, color: Ink, i: &forja_doc::Image, raster: &std::sync::Arc<forja_doc::Raster>) {
         // Where the entity puts its picture: the top-left corner, and one of its pixels to the
         // right and down.
         let top_left = ctx.xf.apply(i.insert.xy() + i.v.xy() * i.size.y);
@@ -252,7 +252,7 @@ impl<'a> Builder<'a> {
         });
     }
     /// Shaped text: strokes as polylines; TrueType glyphs filled (TEXTFILL) or outlined.
-    fn shaped(&mut self, ctx: &Ctx, color: Ink, lw: f32, sh: &cadcraft_fonts::Shaped) {
+    fn shaped(&mut self, ctx: &Ctx, color: Ink, lw: f32, sh: &forja_fonts::Shaped) {
         for s in &sh.strokes {
             self.polyline(ctx, color, lw, s);
         }
@@ -283,7 +283,7 @@ impl<'a> Builder<'a> {
                     && let (Ok(prim), Ok(verts)) = (u32::try_from(at), u32::try_from(len))
                 {
                     let xf = &ctx.xf;
-                    let glyph = cadcraft_fonts::TextGlyph { origin: xf.apply(t.origin), x: xf.apply_vec(t.x), y: xf.apply_vec(t.y), ..t.clone() };
+                    let glyph = forja_fonts::TextGlyph { origin: xf.apply(t.origin), x: xf.apply_vec(t.x), y: xf.apply_vec(t.y), ..t.clone() };
                     let bounds = self.list.prims.get(at).map(|p| Bounds2::from_points(self.list.points(p).iter().copied())).unwrap_or(Bounds2::EMPTY);
                     self.list.texts.push(PlotText { prim, verts, bounds, glyph });
                 }
@@ -359,7 +359,7 @@ impl<'a> Builder<'a> {
 /// The clip boundary of image `i` as a closed outline, or `None` when the whole image shows.
 /// `place` gives the position of a point of the entity's pixel grid (x right, y down from the
 /// top-left corner of the image).
-fn image_clip(i: &cadcraft_doc::Image, place: impl Fn(Vec2) -> Vec2) -> Option<Vec<Vec2>> {
+fn image_clip(i: &forja_doc::Image, place: impl Fn(Vec2) -> Vec2) -> Option<Vec<Vec2>> {
     if !i.clipping {
         return None;
     }

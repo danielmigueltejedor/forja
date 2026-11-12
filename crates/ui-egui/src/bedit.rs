@@ -7,12 +7,12 @@
 
 use std::sync::Arc;
 
-use cadcraft_color::Rgb;
-use cadcraft_engine::blockedit::CURRENT_DRAWING;
-use cadcraft_engine::doc::{Drawing, EntityKind};
-use cadcraft_geom::Vec2;
-use cadcraft_render::DisplayList;
 use egui::{RichText, Stroke, vec2};
+use forja_color::Rgb;
+use forja_engine::blockedit::CURRENT_DRAWING;
+use forja_engine::doc::{Drawing, EntityKind};
+use forja_geom::Vec2;
+use forja_render::DisplayList;
 use serde_json::{Value, json};
 
 use crate::CadApp;
@@ -54,7 +54,7 @@ pub fn authoring_dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) 
         .and_then(|p| std::path::Path::new(&p).file_name().map(|f| f.to_string_lossy().into_owned()))
         .unwrap_or_else(|| crate::i18n::t("This drawing").to_string());
     let mut choice: Option<&str> = None;
-    egui::Window::new(crate::tl!("Open in Block Editor"))
+    crate::ndl_window::Window::new(crate::tl!("Open in Block Editor"))
         .id(egui::Id::unique("Open in Block Editor"))
         .open(open)
         .collapsible(false)
@@ -120,12 +120,12 @@ fn preview(app: &mut CadApp, name: &str) -> Option<Arc<DisplayList>> {
     }
     // The drawing itself shows its model space.
     let entities = if name.eq_ignore_ascii_case(CURRENT_DRAWING) { &st.doc.model } else { &st.doc.block(name)?.entities };
-    let rough = cadcraft_render::build_entities(&st.doc, entities.iter().map(|e| e.as_ref()), &cadcraft_render::Options::default());
+    let rough = forja_render::build_entities(&st.doc, entities.iter().map(|e| e.as_ref()), &forja_render::Options::default());
     let size = rough.bounds.width().max(rough.bounds.height());
     // About half a pixel of the preview's 200 points.
-    let opts = cadcraft_render::Options { tolerance: (size / 400.0).max(1e-9), ..Default::default() };
+    let opts = forja_render::Options { tolerance: (size / 400.0).max(1e-9), ..Default::default() };
     let list =
-        Arc::new(if rough.bounds.is_empty() { rough } else { cadcraft_render::build_entities(&st.doc, entities.iter().map(|e| e.as_ref()), &opts) });
+        Arc::new(if rough.bounds.is_empty() { rough } else { forja_render::build_entities(&st.doc, entities.iter().map(|e| e.as_ref()), &opts) });
     app.bedit.preview = Some((key, list.clone()));
     Some(list)
 }
@@ -169,7 +169,7 @@ pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
         save_question(app, ctx, open);
         return;
     }
-    egui::Window::new(crate::tl!("Edit Block Definition"))
+    crate::ndl_window::Window::new(crate::tl!("Edit Block Definition"))
         .id(egui::Id::unique("Edit Block Definition"))
         .open(open)
         .collapsible(false)
@@ -246,7 +246,7 @@ pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
 fn save_question(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
     let current = app.session.state().ok().and_then(|st| st.block_editor().map(str::to_string)).unwrap_or_default();
     let mut answer: Option<Option<bool>> = None;
-    egui::Window::new(crate::tl!("Edit Block Definition"))
+    crate::ndl_window::Window::new(crate::tl!("Edit Block Definition"))
         .id(egui::Id::unique("Edit Block Definition"))
         .collapsible(false)
         .resizable(false)

@@ -1,14 +1,14 @@
 //! U, UNDO and REDO inside a LISP routine, as AutoCAD 2024 runs them (accoreconsole: a line A, a
 //! line B, a circle C and a line D, then one routine, then the drawing's `entnext` order read back).
 
-use cadcraft_engine::Session;
-use cadcraft_engine::cmd::file::{EntityCodec, set_entity_codec};
-use cadcraft_engine::doc::Handle;
+use forja_engine::Session;
+use forja_engine::cmd::file::{EntityCodec, set_entity_codec};
+use forja_engine::doc::Handle;
 use serde_json::json;
 
 /// A session with A, B, C and D in draw order, each its own undo step, and their handles.
 fn drawing() -> (Session, Vec<Handle>) {
-    set_entity_codec(EntityCodec { groups: cadcraft_io::entity_groups, entity: cadcraft_io::entity_from_groups });
+    set_entity_codec(EntityCodec { groups: forja_io::entity_groups, entity: forja_io::entity_from_groups });
     let mut s = Session::new();
     s.execute("line", &json!({ "points": [[0, 0], [10, 0]] })).unwrap();
     s.execute("line", &json!({ "points": [[0, 10], [10, 10]] })).unwrap();
@@ -141,7 +141,7 @@ fn undo_control_one_keeps_only_the_routines_last_command() {
 
 #[test]
 fn a_routine_keeps_as_many_steps_as_the_drawing() {
-    use cadcraft_engine::undoctl::MAX_UNDO;
+    use forja_engine::undoctl::MAX_UNDO;
     let (mut s, hs) = drawing();
     // Two lines more than the routine keeps steps for, then a U for each kept step and one more,
     // which goes on to the drawing's step before the routine (D's line): the drawing as it was

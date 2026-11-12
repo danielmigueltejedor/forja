@@ -1,8 +1,8 @@
 //! Portable fonts: a drawing saved with them gets the Windows font for each Linux font in its
-//! STYLE table, keeps its own in CADCraft xdata, and reopens with it, from DXF and DWG.
+//! STYLE table, keeps its own in Forja xdata, and reopens with it, from DXF and DWG.
 
-use cadcraft_doc::{Drawing, TextStyle};
-use cadcraft_io::{read, read_dxf, write, write_dxf};
+use forja_doc::{Drawing, TextStyle};
+use forja_io::{read, read_dxf, write, write_dxf};
 
 fn drawing(portable_fonts: bool) -> Drawing {
     let mut d = Drawing { portable_fonts, ..Drawing::new_metric() };
@@ -22,7 +22,7 @@ fn fonts(d: &Drawing) -> Vec<(String, String)> {
 fn style_files(dxf: &str) -> Vec<(String, String)> {
     let mut out: Vec<(String, String)> = Vec::new();
     let mut style = false;
-    for t in cadcraft_dxf::parse(dxf.as_bytes()).unwrap() {
+    for t in forja_dxf::parse(dxf.as_bytes()).unwrap() {
         match t.code {
             0 => style = t.str() == "STYLE",
             2 if style => out.push((t.str(), String::new())),

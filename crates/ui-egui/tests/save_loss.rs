@@ -4,13 +4,13 @@
 
 use std::path::{Path, PathBuf};
 
-use cadcraft_engine::Session;
-use cadcraft_engine::cmd::file::{IoHooks, set_io};
-use cadcraft_engine::doc::{Common, Drawing, EntityKind, RawTag, Space, Unknown};
+use forja_engine::Session;
+use forja_engine::cmd::file::{IoHooks, set_io};
+use forja_engine::doc::{Common, Drawing, EntityKind, RawTag, Space, Unknown};
 use serde_json::json;
 
-use cadcraft_ui_egui::save_loss::{Choice, Pending};
-use cadcraft_ui_egui::{CadApp, Services, menus};
+use forja_ui_egui::save_loss::{Choice, Pending};
+use forja_ui_egui::{CadApp, Services, menus};
 
 const ORIGINAL: &[u8] = b"original";
 
@@ -21,7 +21,7 @@ fn unknown(kind: &str) -> EntityKind {
 /// A drawing with objects of `types`, which DWG can't keep, opened from a DWG file on disk.
 fn opened(tag: &str, types: &[&str]) -> (CadApp, PathBuf) {
     set_io(IoHooks { read: |_, _| Err("no reader in this test".into()), write: |_, _| Ok(b"0\nEOF\n".to_vec()), plot: None });
-    let dir = std::env::temp_dir().join(format!("cadcraft-loss-{tag}-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("forja-loss-{tag}-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).unwrap();
     let path = dir.join("Plan.dwg");

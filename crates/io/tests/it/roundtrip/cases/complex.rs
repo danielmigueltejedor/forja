@@ -2,11 +2,11 @@
 //! unsupported versions are selected by callers rather than normalized after reading.
 
 use super::{Case, entity_case, geometry};
-use cadcraft_doc::{
+use forja_doc::{
     Block, Common, DimKind, DimMarks, Dimension, Entity, EntityKind, Helix, HelixConstrain, Line, MLeader, MLine, MLineJust, MLineStyle, Region,
     Tolerance,
 };
-use cadcraft_geom::{PolyVertex, Vec2, Vec3};
+use forja_geom::{PolyVertex, Vec2, Vec3};
 use std::sync::Arc;
 
 pub(crate) fn helices() -> Vec<Case> {
@@ -58,7 +58,7 @@ pub(crate) fn mleaders() -> Vec<Case> {
                     leaders: vec![vec![Vec3::ZERO, Vec3::new(2.0, 3.0, 0.0)], vec![Vec3::new(1.0, -2.0, 0.0)]],
                     landing: Vec3::new(5.0, 4.0, 0.0),
                     dogleg: 0.75,
-                    text: Some(cadcraft_doc::MText { insert: Vec3::new(5.9, 4.0, 0.0), rotation: 0.0, ..geometry::mtext() }),
+                    text: Some(forja_doc::MText { insert: Vec3::new(5.9, 4.0, 0.0), rotation: 0.0, ..geometry::mtext() }),
                     style: "Standard".into(),
                     arrow_size: 0.3,
                     spline,

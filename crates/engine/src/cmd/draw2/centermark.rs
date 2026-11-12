@@ -10,7 +10,7 @@ use super::{
 fn add_center_line(s: &mut Session, a: Vec2, b: Vec2) -> Result<Handle> {
     let d = s.doc_mut()?;
     if d.linetype("CENTER").is_none()
-        && let Some(lt) = cadcraft_doc::library::standard_linetypes_for(d).into_iter().find(|l| l.name == "CENTER")
+        && let Some(lt) = forja_doc::library::standard_linetypes_for(d).into_iter().find(|l| l.name == "CENTER")
     {
         d.linetypes.push(lt);
     }

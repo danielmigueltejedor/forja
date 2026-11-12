@@ -1,4 +1,4 @@
-use cadcraft_geom::Bounds2;
+use forja_geom::Bounds2;
 
 use super::{Deserialize, Serialize, Vec2};
 
@@ -37,7 +37,7 @@ pub(crate) fn usable_view(v: &View) -> bool {
 
 /// The view drawing `d` was saved at, when it records a usable one: OPEN opens on it, and nothing
 /// after the open (resolving xrefs, the UI's first frame) fits the extents over it.
-pub(crate) fn saved_view(d: &cadcraft_doc::Drawing) -> Option<View> {
+pub(crate) fn saved_view(d: &forja_doc::Drawing) -> Option<View> {
     d.header.saved_view().map(|(center, height)| View { center, height, twist: 0.0 }).filter(usable_view)
 }
 

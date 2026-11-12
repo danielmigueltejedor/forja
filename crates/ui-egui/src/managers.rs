@@ -12,6 +12,7 @@ use egui::{RichText, Sense, Stroke, vec2};
 use serde_json::{Value, json};
 
 use crate::CadApp;
+use crate::ndl_widgets::NdlUi as _;
 use crate::parametric::expr_field;
 use crate::theme::Tokens;
 
@@ -94,7 +95,7 @@ fn set_temp<T: Clone + Send + Sync + 'static>(ctx: &egui::Context, id: &str, v: 
 }
 
 fn no_drawing(ctx: &egui::Context, title: &str, open: &mut bool) {
-    egui::Window::new(title).open(open).collapsible(false).resizable(false).show(ctx, |ui| {
+    crate::ndl_window::Window::new(title).open(open).collapsible(false).resizable(false).show(ctx, |ui| {
         ui.label("Open a drawing first.");
     });
 }
@@ -118,12 +119,12 @@ fn linetype(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) -> Action {
             .filter(|l| !l.name.eq_ignore_ascii_case("ByLayer") && !l.name.eq_ignore_ascii_case("ByBlock"))
             .map(|l| (l.name.clone(), l.description.clone(), l.pattern.iter().map(|e| e.length).collect())),
     );
-    let library: Vec<String> = cadcraft_doc::library::standard_linetypes().into_iter().map(|l| l.name).filter(|n| d.linetype(n).is_none()).collect();
+    let library: Vec<String> = forja_doc::library::standard_linetypes().into_iter().map(|l| l.name).filter(|n| d.linetype(n).is_none()).collect();
     let mut sel = temp::<String>(ctx, "ltmgr_sel").filter(|s| rows.iter().any(|r| r.0.eq_ignore_ascii_case(s))).unwrap_or_else(|| current.clone());
     let mut action = None;
-    egui::Window::new("Linetype Manager").open(open).default_size(vec2(520.0, 360.0)).resizable(true).show(ctx, |ui| {
+    crate::ndl_window::Window::new("Linetype Manager").open(open).default_size(vec2(520.0, 360.0)).resizable(true).show(ctx, |ui| {
         ui.horizontal(|ui| {
-            craft_ui::ComboBox::from_id_salt("ltmgr_load").selected_text("Load...").width(110.0).show_ui(ui, |ui| {
+            crate::ndl_widgets::combo("ltmgr_load").selected_text("Load...").width(110.0).show_ui(ui, |ui| {
                 if library.is_empty() {
                     ui.label("Every library linetype is loaded.");
                 } else if ui.selectable_label(false, "All").clicked() {
@@ -261,7 +262,7 @@ fn point_style(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) -> Action
     let size = if pdsize == 0.0 { 5.0 } else { pdsize.abs() };
     let set = |m: i64, size: f64, rel: bool| Some(("ddptype", json!({ "pdmode": m, "pdsize": if rel { -size } else { size } })));
     let mut action = None;
-    egui::Window::new("Point Style").open(open).collapsible(false).resizable(false).show(ctx, |ui| {
+    crate::ndl_window::Window::new("Point Style").open(open).collapsible(false).resizable(false).show(ctx, |ui| {
         egui::Grid::new("ptype_grid").spacing(vec2(6.0, 6.0)).show(ui, |ui| {
             for (i, v) in PDMODES.iter().enumerate() {
                 let (rect, r) = ui.allocate_exact_size(vec2(44.0, 36.0), Sense::click());
@@ -290,10 +291,10 @@ fn point_style(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) -> Action
             }
             ui.label(if rel { "%" } else { "units" });
         });
-        if ui.radio(rel, "Set Size Relative to Screen").clicked() && !rel {
+        if ui.choice(rel, "Set Size Relative to Screen").clicked() && !rel {
             action = set(mode, size, true);
         }
-        if ui.radio(!rel, "Set Size in Absolute Units").clicked() && rel {
+        if ui.choice(!rel, "Set Size in Absolute Units").clicked() && rel {
             action = set(mode, size, false);
         }
     });
@@ -333,7 +334,7 @@ fn text_style(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) -> Action 
         })
         .collect();
     if styles.is_empty() {
-        let s = cadcraft_doc::TextStyle::default();
+        let s = forja_doc::TextStyle::default();
         styles.push(Style { name: s.name, fields: Vec::new() });
     }
     let current = d.header.str("TEXTSTYLE", "Standard");
@@ -359,7 +360,7 @@ fn table_style(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) -> Action
         })
         .collect();
     if styles.is_empty() {
-        let s = cadcraft_doc::TableStyle::default();
+        let s = forja_doc::TableStyle::default();
         styles.push(Style { name: s.name, fields: Vec::new() });
     }
     let current = d.header.str("CTABLESTYLE", "Standard");
@@ -387,7 +388,7 @@ fn mleader_style(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) -> Acti
         })
         .collect();
     if styles.is_empty() {
-        let s = cadcraft_doc::MLeaderStyle::default();
+        let s = forja_doc::MLeaderStyle::default();
         styles.push(Style { name: s.name, fields: Vec::new() });
     }
     let current = d.header.str("CMLEADERSTYLE", "Standard");
@@ -403,7 +404,7 @@ fn style_manager(ctx: &egui::Context, open: &mut bool, title: &str, cmd: &'stati
     let mut sel = temp::<String>(ctx, &sel_key).filter(|s| styles.iter().any(|x| x.name == *s)).unwrap_or_else(|| current.to_string());
     let mut new_name = temp::<String>(ctx, &new_key).unwrap_or_default();
     let mut action = None;
-    egui::Window::new(title).open(open).default_size(vec2(520.0, 280.0)).resizable(true).show(ctx, |ui| {
+    crate::ndl_window::Window::new(title).open(open).default_size(vec2(520.0, 280.0)).resizable(true).show(ctx, |ui| {
         ui.label(RichText::new(format!("Current style: {current}")).color(t.text_dim));
         ui.separator();
         ui.columns(2, |cols| {
@@ -445,12 +446,12 @@ fn style_manager(ctx: &egui::Context, open: &mut bool, title: &str, cmd: &'stati
                         Field::Bool(key, label, v) => {
                             ui.label("");
                             let mut b = *v;
-                            ui.checkbox(&mut b, *label).changed().then(|| (*key, json!(b)))
+                            ui.check(&mut b, *label).changed().then(|| (*key, json!(b)))
                         }
                         Field::Choice(key, label, v, choices) => {
                             ui.label(*label);
                             let mut picked = None;
-                            craft_ui::ComboBox::from_id_salt((cmd, *key)).selected_text(v.as_str()).show_ui(ui, |ui| {
+                            crate::ndl_widgets::combo((cmd, *key)).selected_text(v.as_str()).show_ui(ui, |ui| {
                                 for c in choices {
                                     if ui.selectable_label(c == v, c).clicked() && c != v {
                                         picked = Some(c.clone());
@@ -482,7 +483,7 @@ fn page_setup(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) -> Action 
         no_drawing(ctx, "Page Setup Manager", open);
         return None;
     };
-    let mut layouts: Vec<(u32, String, cadcraft_doc::PageSetup)> = d.layouts.iter().map(|l| (l.tab_order, l.name.clone(), l.page.clone())).collect();
+    let mut layouts: Vec<(u32, String, forja_doc::PageSetup)> = d.layouts.iter().map(|l| (l.tab_order, l.name.clone(), l.page.clone())).collect();
     layouts.sort_by_key(|l| l.0);
     let shown = app.session.layout_space().layout().map(str::to_string);
     let mut sel = temp::<String>(ctx, "pagesetup_sel")
@@ -492,7 +493,7 @@ fn page_setup(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) -> Action 
         .unwrap_or_default();
     let mut action = None;
     let choices = PageChoices::new(ctx, d);
-    egui::Window::new("Page Setup Manager").open(open).default_size(vec2(560.0, 300.0)).resizable(true).show(ctx, |ui| {
+    crate::ndl_window::Window::new("Page Setup Manager").open(open).default_size(vec2(560.0, 300.0)).resizable(true).show(ctx, |ui| {
         if layouts.is_empty() {
             ui.label("This drawing has no layouts.");
             return;
@@ -534,39 +535,39 @@ struct PageRows {
 
 /// The devices and plot style tables the page-setup rows offer.
 struct PageChoices {
-    devices: std::sync::Arc<Vec<cadcraft_doc::PlotterConfig>>,
+    devices: std::sync::Arc<Vec<forja_doc::PlotterConfig>>,
     styles: Vec<String>,
 }
 
 impl PageChoices {
-    fn new(ctx: &egui::Context, d: &cadcraft_doc::Drawing) -> Self {
-        PageChoices { devices: device_choices(ctx), styles: cadcraft_doc::plot_style_table_names(d) }
+    fn new(ctx: &egui::Context, d: &forja_doc::Drawing) -> Self {
+        PageChoices { devices: device_choices(ctx), styles: forja_doc::plot_style_table_names(d) }
     }
 }
 
 /// The plotter devices (built-in, then the user's files), read again at most every 2 s: the
 /// dialogs ask every frame and user devices are files.
-fn device_choices(ctx: &egui::Context) -> std::sync::Arc<Vec<cadcraft_doc::PlotterConfig>> {
-    type Cached = (f64, std::sync::Arc<Vec<cadcraft_doc::PlotterConfig>>);
+fn device_choices(ctx: &egui::Context) -> std::sync::Arc<Vec<forja_doc::PlotterConfig>> {
+    type Cached = (f64, std::sync::Arc<Vec<forja_doc::PlotterConfig>>);
     let now = crate::now_ms();
     if let Some((at, list)) = temp::<Cached>(ctx, "plot_devices")
         && now - at < 2000.0
     {
         return list;
     }
-    let list = std::sync::Arc::new(cadcraft_engine::cmd::plotters::devices());
+    let list = std::sync::Arc::new(forja_engine::cmd::plotters::devices());
     set_temp::<Cached>(ctx, "plot_devices", (now, list.clone()));
     list
 }
 
 /// A page setup's device, or `"None"` (plot to PDF on the page's paper).
-fn device_label(page: &cadcraft_doc::PageSetup) -> &str {
+fn device_label(page: &forja_doc::PageSetup) -> &str {
     if page.device.trim().is_empty() { "None" } else { page.device.as_str() }
 }
 
 /// A page setup's plot style table, or `"None"`.
-fn style_label(page: &cadcraft_doc::PageSetup) -> &str {
-    if cadcraft_doc::no_plot_style_table(&page.plot_style_table) { "None" } else { page.plot_style_table.as_str() }
+fn style_label(page: &forja_doc::PageSetup) -> &str {
+    if forja_doc::no_plot_style_table(&page.plot_style_table) { "None" } else { page.plot_style_table.as_str() }
 }
 
 fn area_label(a: &str) -> &str {
@@ -597,14 +598,14 @@ fn parse_ratio(t: &str) -> Option<f64> {
 fn page_rows(
     ui: &mut egui::Ui,
     salt: egui::Id,
-    page: &cadcraft_doc::PageSetup,
+    page: &forja_doc::PageSetup,
     rows: &PageRows,
     choices: &PageChoices,
     placement: Option<(&mut bool, &mut [f64; 2], bool)>,
 ) -> Option<(&'static str, Value)> {
     let mut change = None;
     ui.label("Printer/plotter");
-    craft_ui::ComboBox::from_id_salt(salt.with("device")).selected_text(device_label(page)).width(190.0).show_ui(ui, |ui| {
+    crate::ndl_widgets::combo(salt.with("device")).selected_text(device_label(page)).width(190.0).show_ui(ui, |ui| {
         if ui.selectable_label(device_label(page) == "None", "None").on_hover_text("PDF on the paper chosen below").clicked()
             && device_label(page) != "None"
         {
@@ -623,7 +624,7 @@ fn page_rows(
     // The device's papers, else the standard sizes.
     let device = choices.devices.iter().find(|dv| dv.name.eq_ignore_ascii_case(&page.device));
     ui.label("Paper size");
-    craft_ui::ComboBox::from_id_salt(salt.with("paper")).selected_text(page.paper.as_str()).width(190.0).show_ui(ui, |ui| match device {
+    crate::ndl_widgets::combo(salt.with("paper")).selected_text(page.paper.as_str()).width(190.0).show_ui(ui, |ui| match device {
         Some(dev) => {
             for p in &dev.papers {
                 if ui.selectable_label(p.name == page.paper, &p.name).clicked() && p.name != page.paper {
@@ -632,7 +633,7 @@ fn page_rows(
             }
         }
         None => {
-            for p in cadcraft_render::PAPER_SIZES {
+            for p in forja_render::PAPER_SIZES {
                 if ui.selectable_label(p.name == page.paper, p.name).clicked() && p.name != page.paper {
                     change = Some(("paper", json!(p.name)));
                 }
@@ -642,17 +643,17 @@ fn page_rows(
     ui.end_row();
     ui.label("Orientation");
     ui.horizontal(|ui| {
-        if ui.radio(!page.landscape, "Portrait").clicked() && page.landscape {
+        if ui.choice(!page.landscape, "Portrait").clicked() && page.landscape {
             change = Some(("landscape", json!(false)));
         }
-        if ui.radio(page.landscape, "Landscape").clicked() && !page.landscape {
+        if ui.choice(page.landscape, "Landscape").clicked() && !page.landscape {
             change = Some(("landscape", json!(true)));
         }
     });
     ui.end_row();
     ui.label("Plot area");
     ui.add_enabled_ui(rows.areas.len() > 1, |ui| {
-        craft_ui::ComboBox::from_id_salt(salt.with("area")).selected_text(area_label(&page.plot_area)).show_ui(ui, |ui| {
+        crate::ndl_widgets::combo(salt.with("area")).selected_text(area_label(&page.plot_area)).show_ui(ui, |ui| {
             for a in rows.areas {
                 if ui.selectable_label(page.plot_area == *a, area_label(a)).clicked() && page.plot_area != *a {
                     change = Some(("plotArea", json!(a)));
@@ -663,13 +664,13 @@ fn page_rows(
     ui.end_row();
     ui.label("");
     let mut fit = page.scale_to_fit;
-    if ui.checkbox(&mut fit, "Fit to paper").changed() {
+    if ui.check(&mut fit, "Fit to paper").changed() {
         change = Some(("scaleToFit", json!(fit)));
     }
     ui.end_row();
     if let Some((center, offset_mm, supported)) = placement {
         ui.label("Plot offset");
-        ui.add_enabled_ui(supported, |ui| ui.checkbox(center, "Center the plot")).response.on_hover_text(if supported {
+        ui.add_enabled_ui(supported, |ui| ui.check(center, "Center the plot")).response.on_hover_text(if supported {
             "Center the plotted model bounds on the printable area"
         } else {
             "Model-space offset placement is not supported by SVG"
@@ -686,7 +687,7 @@ fn page_rows(
             .on_hover_text("Distance from the printable area's lower-left corner; values range from −100000 to 100000 mm");
             ui.end_row();
         }
-        if supported && !*center && offset_mm.iter().any(|v| !v.is_finite() || v.abs() > cadcraft_render::paper::MAX_PLOT_OFFSET_MM) {
+        if supported && !*center && offset_mm.iter().any(|v| !v.is_finite() || v.abs() > forja_render::paper::MAX_PLOT_OFFSET_MM) {
             ui.label("");
             ui.colored_label(Tokens::get().warn, "Offsets must be within ±100000 mm");
             ui.end_row();
@@ -706,21 +707,21 @@ fn page_rows(
     if rows.center {
         ui.label("");
         let mut center = page.center;
-        if ui.checkbox(&mut center, "Center the plot").changed() {
+        if ui.check(&mut center, "Center the plot").changed() {
             change = Some(("center", json!(center)));
         }
         ui.end_row();
     }
     ui.label("");
     let mut lw = page.lineweights;
-    if ui.checkbox(&mut lw, "Plot object lineweights").changed() {
+    if ui.check(&mut lw, "Plot object lineweights").changed() {
         change = Some(("lineweights", json!(lw)));
     }
     ui.end_row();
     ui.label("");
     let mut transparency = page.plot_transparency;
     if ui
-        .checkbox(&mut transparency, "Plot transparency")
+        .check(&mut transparency, "Plot transparency")
         .on_hover_text("Plot objects with their transparency (PLOTTRANSPARENCYOVERRIDE can override it)")
         .changed()
     {
@@ -728,7 +729,7 @@ fn page_rows(
     }
     ui.end_row();
     ui.label("Plot style table");
-    craft_ui::ComboBox::from_id_salt(salt.with("styles")).selected_text(style_label(page)).width(190.0).show_ui(ui, |ui| {
+    crate::ndl_widgets::combo(salt.with("styles")).selected_text(style_label(page)).width(190.0).show_ui(ui, |ui| {
         if ui.selectable_label(style_label(page) == "None", "None").clicked() && style_label(page) != "None" {
             change = Some(("plotStyleTable", json!("None")));
         }
@@ -746,8 +747,8 @@ fn page_rows(
 /// Apply a [`page_rows`] change to a page setup held by a dialog.
 /// Device and paper changes follow PAGESETUP's rules (`plotters::page_device`): a device brings
 /// its papers, orientation and printable areas.
-fn apply_page_change(page: &mut cadcraft_doc::PageSetup, key: &str, v: &Value) {
-    use cadcraft_engine::cmd::plotters::page_device;
+fn apply_page_change(page: &mut forja_doc::PageSetup, key: &str, v: &Value) {
+    use forja_engine::cmd::plotters::page_device;
     match key {
         "device" => {
             let _ = page_device("plot", &json!({ "device": v }), page);
@@ -755,7 +756,7 @@ fn apply_page_change(page: &mut cadcraft_doc::PageSetup, key: &str, v: &Value) {
         "paper" => {
             // A device's paper, else a standard size (no device).
             if !page_device("plot", &json!({ "paper": v }), page).unwrap_or(false)
-                && let Some(ps) = v.as_str().and_then(cadcraft_render::paper_size)
+                && let Some(ps) = v.as_str().and_then(forja_render::paper_size)
             {
                 page.paper = ps.name.into();
                 page.width_mm = ps.width_mm;
@@ -818,7 +819,7 @@ struct PlotState {
     generation: u32,
     /// "Model" or a layout name.
     target: String,
-    page: cadcraft_doc::PageSetup,
+    page: forja_doc::PageSetup,
     /// Plot area "window" corners in drawing units: [x1, y1, x2, y2].
     window: [f64; 4],
     /// Model-space placement; stays outside PageSetup so layouts keep their existing behavior.
@@ -828,15 +829,15 @@ struct PlotState {
 
 /// The page setup a plot of `target` starts from: the layout's, or model-space defaults (fitted
 /// extents on A4 in metric drawings, ANSI A otherwise).
-fn plot_page(d: &cadcraft_doc::Drawing, target: &str) -> cadcraft_doc::PageSetup {
+fn plot_page(d: &forja_doc::Drawing, target: &str) -> forja_doc::PageSetup {
     if let Some(l) = d.layouts.iter().find(|l| l.name == target) {
         let mut page = l.page.clone();
         page.plot_area = "layout".into();
         return page;
     }
-    let mut page = cadcraft_doc::PageSetup { plot_area: "extents".into(), scale_to_fit: true, ..Default::default() };
-    if cadcraft_render::paper::paper_unit_mm(d) == 1.0
-        && let Some(a4) = cadcraft_render::paper_size("A4")
+    let mut page = forja_doc::PageSetup { plot_area: "extents".into(), scale_to_fit: true, ..Default::default() };
+    if forja_render::paper::paper_unit_mm(d) == 1.0
+        && let Some(a4) = forja_render::paper_size("A4")
     {
         page.paper = a4.name.into();
         page.width_mm = a4.width_mm;
@@ -858,7 +859,7 @@ fn plot_params(st: &PlotState, preview_dpi: Option<f64>) -> Value {
     });
     if let Some(o) = p.as_object_mut() {
         let device = device_label(page) != "None";
-        let output = cadcraft_engine::cmd::plotters::find_device(&page.device).map_or("pdf", |d| d.output.as_str());
+        let output = forja_engine::cmd::plotters::find_device(&page.device).map_or("pdf", |d| d.output.as_str());
         match preview_dpi {
             // The page's own sheet, so a device's paper and printable area show as they plot.
             Some(dpi) => {
@@ -873,7 +874,7 @@ fn plot_params(st: &PlotState, preview_dpi: Option<f64>) -> Value {
                 o.insert("device".into(), json!(page.device));
                 o.insert("paper".into(), json!(page.paper));
             }
-            None if cadcraft_render::paper_size(&page.paper).is_some() => {
+            None if forja_render::paper_size(&page.paper).is_some() => {
                 o.insert("device".into(), json!("None"));
                 o.insert("paper".into(), json!(page.paper));
             }
@@ -921,9 +922,9 @@ fn plot(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) -> Action {
     let generation = PLOT_GEN.load(Ordering::Relaxed);
     let mut st = temp::<PlotState>(ctx, "plot_state").filter(|s| s.generation == generation && targets.contains(&s.target)).unwrap_or_else(|| {
         let target = app.session.layout_space().tab_name().to_string();
-        let mut ext = d.extents(&cadcraft_doc::Space::Model);
+        let mut ext = d.extents(&forja_doc::Space::Model);
         if ext.is_empty() {
-            ext = cadcraft_geom::Bounds2::new(cadcraft_geom::Vec2::ZERO, cadcraft_geom::Vec2::new(12.0, 9.0));
+            ext = forja_geom::Bounds2::new(forja_geom::Vec2::ZERO, forja_geom::Vec2::new(12.0, 9.0));
         }
         PlotState {
             generation,
@@ -943,77 +944,83 @@ fn plot(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) -> Action {
     set_temp(ctx, PLOT_NOW, false);
     let (mut cancel, mut action, mut pick, mut preview) = (false, None, false, false);
     let center = ctx.content_rect().center();
-    egui::Window::new("Plot").open(open).collapsible(false).resizable(false).pivot(egui::Align2::CENTER_CENTER).default_pos(center).show(ctx, |ui| {
-        egui::Grid::new("plot_target").num_columns(2).spacing(vec2(10.0, 6.0)).show(ui, |ui| {
-            ui.label("Layout");
-            craft_ui::ComboBox::from_id_salt("plot_layout").selected_text(st.target.as_str()).width(190.0).show_ui(ui, |ui| {
-                for n in &targets {
-                    if ui.selectable_label(*n == st.target, n).clicked() && *n != st.target {
-                        st.page = plot_page(d, n);
-                        st.target = n.clone();
+    crate::ndl_window::Window::new("Plot")
+        .open(open)
+        .collapsible(false)
+        .resizable(false)
+        .pivot(egui::Align2::CENTER_CENTER)
+        .default_pos(center)
+        .show(ctx, |ui| {
+            egui::Grid::new("plot_target").num_columns(2).spacing(vec2(10.0, 6.0)).show(ui, |ui| {
+                ui.label("Layout");
+                crate::ndl_widgets::combo("plot_layout").selected_text(st.target.as_str()).width(190.0).show_ui(ui, |ui| {
+                    for n in &targets {
+                        if ui.selectable_label(*n == st.target, n).clicked() && *n != st.target {
+                            st.page = plot_page(d, n);
+                            st.target = n.clone();
+                        }
                     }
-                }
+                });
+                ui.end_row();
             });
-            ui.end_row();
-        });
-        ui.separator();
-        ui.horizontal_top(|ui| {
-            egui::Grid::new("plot_grid").num_columns(2).spacing(vec2(10.0, 6.0)).show(ui, |ui| {
-                let rows = if model {
-                    PageRows { areas: MODEL_AREAS, scale: true, center: false }
-                } else {
-                    PageRows { areas: &["layout"], scale: false, center: false }
-                };
-                let placement = model.then_some((&mut st.center, &mut st.offset_mm, offset_supported));
-                if let Some((k, v)) = page_rows(ui, egui::Id::unique(("plot", st.target.as_str())), &st.page, &rows, &choices, placement) {
-                    apply_page_change(&mut st.page, k, &v);
-                }
-                if model && st.page.plot_area == "window" {
-                    for (i, label) in [(0, "First corner"), (2, "Opposite corner")] {
-                        ui.label(label);
-                        ui.horizontal(|ui| {
-                            for (j, axis) in ["X", "Y"].iter().enumerate() {
-                                let axis_label = ui.label(*axis);
-                                let k = i + j;
-                                if let Some(slot) = st.window.get_mut(k)
-                                    && let Some(v) = num_field(ui, ("plot_window", k), *slot, Some(axis_label.id))
-                                {
-                                    *slot = v;
+            ui.separator();
+            ui.horizontal_top(|ui| {
+                egui::Grid::new("plot_grid").num_columns(2).spacing(vec2(10.0, 6.0)).show(ui, |ui| {
+                    let rows = if model {
+                        PageRows { areas: MODEL_AREAS, scale: true, center: false }
+                    } else {
+                        PageRows { areas: &["layout"], scale: false, center: false }
+                    };
+                    let placement = model.then_some((&mut st.center, &mut st.offset_mm, offset_supported));
+                    if let Some((k, v)) = page_rows(ui, egui::Id::unique(("plot", st.target.as_str())), &st.page, &rows, &choices, placement) {
+                        apply_page_change(&mut st.page, k, &v);
+                    }
+                    if model && st.page.plot_area == "window" {
+                        for (i, label) in [(0, "First corner"), (2, "Opposite corner")] {
+                            ui.label(label);
+                            ui.horizontal(|ui| {
+                                for (j, axis) in ["X", "Y"].iter().enumerate() {
+                                    let axis_label = ui.label(*axis);
+                                    let k = i + j;
+                                    if let Some(slot) = st.window.get_mut(k)
+                                        && let Some(v) = num_field(ui, ("plot_window", k), *slot, Some(axis_label.id))
+                                    {
+                                        *slot = v;
+                                    }
                                 }
-                            }
-                        });
+                            });
+                            ui.end_row();
+                        }
+                        ui.label("");
+                        pick = ui.button("Window <").on_hover_text("Pick the window's corners in the drawing").clicked();
                         ui.end_row();
                     }
-                    ui.label("");
-                    pick = ui.button("Window <").on_hover_text("Pick the window's corners in the drawing").clicked();
-                    ui.end_row();
+                });
+                sheet_sketch(ui, &st.page, &t);
+            });
+            ui.separator();
+            ui.horizontal(|ui| {
+                if !model && ui.button("Apply to Layout").on_hover_text("Save these settings in the layout's page setup").clicked() {
+                    let page = &st.page;
+                    action = Some((
+                        "pagesetup",
+                        json!({
+                            "layout": st.target,
+                            "paper": page.paper,
+                            "landscape": page.landscape,
+                            "scaleToFit": page.scale_to_fit,
+                            "lineweights": page.lineweights,
+                            "plotTransparency": page.plot_transparency,
+                        }),
+                    ));
                 }
-            });
-            sheet_sketch(ui, &st.page, &t);
-        });
-        ui.separator();
-        ui.horizontal(|ui| {
-            if !model && ui.button("Apply to Layout").on_hover_text("Save these settings in the layout's page setup").clicked() {
-                let page = &st.page;
-                action = Some((
-                    "pagesetup",
-                    json!({
-                        "layout": st.target,
-                        "paper": page.paper,
-                        "landscape": page.landscape,
-                        "scaleToFit": page.scale_to_fit,
-                        "lineweights": page.lineweights,
-                        "plotTransparency": page.plot_transparency,
-                    }),
-                ));
-            }
-            preview = ui.button("Preview").on_hover_text("The sheet as these settings plot it").clicked();
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                cancel = ui.button("Cancel").clicked();
-                ok |= ui.button("OK").clicked();
+                preview = ui.button("Preview").on_hover_text("The sheet as these settings plot it").clicked();
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    cancel = ui.button("Cancel").clicked();
+                    ok |= ui.button("OK").clicked();
+                });
             });
         });
-    });
     // The output file type follows the device.
     let ext = choices.devices.iter().find(|dv| dv.name.eq_ignore_ascii_case(&st.page.device)).map_or("pdf", |dv| dv.output.as_str());
     set_temp(ctx, "plot_state", st.clone());
@@ -1066,7 +1073,7 @@ fn plot(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) -> Action {
 }
 
 /// The sheet in the chosen orientation with its printable area, and its size.
-fn sheet_sketch(ui: &mut egui::Ui, page: &cadcraft_doc::PageSetup, t: &Tokens) {
+fn sheet_sketch(ui: &mut egui::Ui, page: &forja_doc::PageSetup, t: &Tokens) {
     let (w, h) = if page.landscape { (page.height_mm, page.width_mm) } else { (page.width_mm, page.height_mm) };
     ui.vertical(|ui| {
         let (rect, _) = ui.allocate_exact_size(vec2(120.0, 120.0), Sense::hover());
@@ -1093,17 +1100,17 @@ fn constraint_settings(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) -
         return None;
     };
     let s = d.parametric.settings.clone();
-    let types = cadcraft_doc::ParametricSettings::default().auto_types;
+    let types = forja_doc::ParametricSettings::default().auto_types;
     let mut action = None;
     let set = |k: &str, v: Value| Some(("constraintsettings", json!({ k: v })));
-    egui::Window::new("Constraint Settings").open(open).collapsible(false).resizable(false).show(ctx, |ui| {
+    crate::ndl_window::Window::new("Constraint Settings").open(open).collapsible(false).resizable(false).show(ctx, |ui| {
         ui.heading("Geometric");
         let mut infer = s.infer;
-        if ui.checkbox(&mut infer, "Infer geometric constraints").changed() {
+        if ui.check(&mut infer, "Infer geometric constraints").changed() {
             action = set("infer", json!(infer));
         }
         let mut bars = s.bars_visible;
-        if ui.checkbox(&mut bars, "Show constraint bars").changed() {
+        if ui.check(&mut bars, "Show constraint bars").changed() {
             action = set("barsVisible", json!(bars));
         }
         ui.horizontal(|ui| {
@@ -1115,7 +1122,7 @@ fn constraint_settings(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) -
         ui.separator();
         ui.heading("Dimensional");
         let mut dims = s.dims_visible;
-        if ui.checkbox(&mut dims, "Show dynamic constraints").changed() {
+        if ui.check(&mut dims, "Show dynamic constraints").changed() {
             action = set("dimsVisible", json!(dims));
         }
         ui.separator();
@@ -1124,7 +1131,7 @@ fn constraint_settings(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) -
         egui::Grid::new("csettings_types").num_columns(3).show(ui, |ui| {
             for (i, ty) in types.iter().enumerate() {
                 let mut on = s.auto_types.iter().any(|a| a.eq_ignore_ascii_case(ty));
-                if ui.checkbox(&mut on, ty.as_str()).changed() {
+                if ui.check(&mut on, ty.as_str()).changed() {
                     let list: Vec<&String> =
                         types.iter().filter(|x| if *x == ty { on } else { s.auto_types.iter().any(|a| a.eq_ignore_ascii_case(x)) }).collect();
                     action = set("autoTypes", json!(list));
@@ -1153,10 +1160,10 @@ fn constraint_settings(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) -
 #[cfg(test)]
 mod plot_dialog_tests {
     use super::*;
-    use cadcraft_engine::Session;
+    use forja_engine::Session;
 
     fn state(target: &str) -> PlotState {
-        let d = cadcraft_doc::Drawing::new_metric();
+        let d = forja_doc::Drawing::new_metric();
         PlotState {
             generation: 0,
             page: plot_page(&d, target),
@@ -1170,14 +1177,14 @@ mod plot_dialog_tests {
     #[test]
     fn a_device_brings_its_papers_and_the_plot_names_them() {
         let mut st = state("Model");
-        apply_page_change(&mut st.page, "device", &json!("CADCraft PNG"));
-        assert_eq!(st.page.device, "CADCraft PNG");
-        let dev = cadcraft_engine::cmd::plotters::find_device("CADCraft PNG").unwrap();
+        apply_page_change(&mut st.page, "device", &json!("Forja PNG"));
+        assert_eq!(st.page.device, "Forja PNG");
+        let dev = forja_engine::cmd::plotters::find_device("Forja PNG").unwrap();
         assert!(dev.papers.iter().any(|p| p.name == st.page.paper), "a paper of the device: {}", st.page.paper);
         assert!(st.page.margins_mm.iter().any(|m| *m > 0.0), "the paper's printable area");
         apply_page_change(&mut st.page, "plotStyleTable", &json!("monochrome.ctb"));
         let p = plot_params(&st, None);
-        assert_eq!((p["device"].as_str(), p["paper"].as_str()), (Some("CADCraft PNG"), Some(st.page.paper.as_str())));
+        assert_eq!((p["device"].as_str(), p["paper"].as_str()), (Some("Forja PNG"), Some(st.page.paper.as_str())));
         assert_eq!(p["plotStyleTable"], json!("monochrome.ctb"));
         // The preview plots the same sheet to PNG, whatever the device.
         let q = plot_params(&st, Some(150.0));
@@ -1188,7 +1195,7 @@ mod plot_dialog_tests {
         apply_page_change(&mut st.page, "device", &json!("None"));
         apply_page_change(&mut st.page, "paper", &json!("A3"));
         let p = plot_params(&st, None);
-        let a3 = cadcraft_render::paper_size("A3").unwrap().name;
+        let a3 = forja_render::paper_size("A3").unwrap().name;
         assert_eq!((p["device"].as_str(), p["paper"].as_str()), (Some("None"), Some(a3)));
         apply_page_change(&mut st.page, "plotStyleTable", &json!("None"));
         assert!(plot_params(&st, None).get("plotStyleTable").is_none());
@@ -1226,7 +1233,7 @@ mod plot_dialog_tests {
         assert_eq!(preview["output"], json!("png"));
         assert_eq!(preview["offset"], json!([12.5, -7.0]));
 
-        let svg = cadcraft_engine::cmd::plotters::devices().into_iter().find(|dev| dev.output.as_str() == "svg").expect("built-in SVG device");
+        let svg = forja_engine::cmd::plotters::devices().into_iter().find(|dev| dev.output.as_str() == "svg").expect("built-in SVG device");
         apply_page_change(&mut st.page, "device", &json!(svg.name));
         let params = plot_params(&st, None);
         assert!(params.get("center").is_none() && params.get("offset").is_none(), "SVG does not receive unsupported placement options: {params}");
@@ -1237,7 +1244,7 @@ mod plot_dialog_tests {
         );
 
         st.target = "Layout1".into();
-        st.page = plot_page(&cadcraft_doc::Drawing::new_metric(), "Layout1");
+        st.page = plot_page(&forja_doc::Drawing::new_metric(), "Layout1");
         let params = plot_params(&st, None);
         assert!(params.get("center").is_none() && params.get("offset").is_none(), "layout plots retain their page setup mapping");
     }
@@ -1261,7 +1268,7 @@ mod plot_dialog_tests {
         app.ui.dialog = None;
         set_temp(&ctx, PICKING_WINDOW, true);
         app.start("plotwindow");
-        app.session.input(cadcraft_engine::Input::Cancel).ok();
+        app.session.input(forja_engine::Input::Cancel).ok();
         plot_window_resume(&mut app, &ctx);
         assert_eq!(app.ui.dialog.as_deref(), Some("plot"));
         assert_eq!(temp::<PlotState>(&ctx, "plot_state").unwrap().window, [2.0, 3.0, 12.0, 9.0]);

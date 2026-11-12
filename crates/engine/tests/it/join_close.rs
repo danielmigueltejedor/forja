@@ -1,8 +1,8 @@
 //! JOIN with a single arc or elliptical arc offers cLose, which makes it the full circle or
 //! ellipse (#1175).
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::{EntityKind, Handle};
+use forja_engine::Session;
+use forja_engine::doc::{EntityKind, Handle};
 use serde_json::{Value, json};
 
 fn h(r: &Value) -> String {
@@ -28,7 +28,7 @@ fn join_close_turns_a_single_arc_into_its_circle() {
     assert_eq!(count(&s), 1);
     match &s.doc().unwrap().model.iter().next().unwrap().kind {
         EntityKind::Circle(c) => {
-            assert!(c.center.xy().near(cadcraft_engine::geom::Vec2::new(50.0, 50.0), 1e-9), "{c:?}");
+            assert!(c.center.xy().near(forja_engine::geom::Vec2::new(50.0, 50.0), 1e-9), "{c:?}");
             assert!((c.radius - 30.0).abs() < 1e-9, "{c:?}");
         }
         k => panic!("not a circle: {k:?}"),
@@ -63,7 +63,7 @@ fn join_close_by_json_and_its_refusals() {
     let r = s.execute("join", &json!({ "handles": [arc], "close": true })).unwrap();
     assert_eq!(h(&r), arc, "the arc keeps its handle");
     match kind(&s, &arc) {
-        EntityKind::Circle(c) => assert!((c.radius - 30.0).abs() < 1e-9 && c.center.xy().near(cadcraft_engine::geom::Vec2::new(50.0, 50.0), 1e-9)),
+        EntityKind::Circle(c) => assert!((c.radius - 30.0).abs() < 1e-9 && c.center.xy().near(forja_engine::geom::Vec2::new(50.0, 50.0), 1e-9)),
         k => panic!("not a circle: {k:?}"),
     }
     // Close is for one arc or elliptical arc: a line, a circle or two objects are refused,

@@ -7,7 +7,6 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIR="$ROOT/assets/app-icon"
 SRC="$DIR/forja-1024.png"
-ID="ai.storyteller.forja"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 command -v sips >/dev/null || { echo "error: sips not found (macOS only)" >&2; exit 1; }
@@ -17,10 +16,9 @@ resize() {
   sips -s format png -z "$size" "$size" "$src" --out "$out" >/dev/null
 }
 
-for s in 16 24 32 48 64 128 256 512; do
-  mkdir -p "$DIR/hicolor/${s}x${s}/apps"
-  resize "$SRC" "$s" "$DIR/hicolor/${s}x${s}/apps/$ID.png"
-done
+# The Linux hicolor icons are not made here: they sit on the Nodalix/Colloid app grid (224/256
+# tile, 16 px margin, 51.5 px radius, soft shadow), drawn by tools/nodalia-app-icon.py in
+# nodalix-icon-theme into hicolor/scalable/apps/dev.danielmiguelt.Forja.svg, and each PNG size is rendered from it.
 resize "$SRC" 64 "$DIR/forja-64.png"
 resize "$SRC" 256 "$DIR/forja-256.png"
 

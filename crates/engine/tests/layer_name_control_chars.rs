@@ -1,7 +1,7 @@
 //! `layer.new` refuses control characters in a layer name (the DXF writer would turn them into
 //! spaces and the name would change on reopen).
 
-use cadcraft_engine::Session;
+use forja_engine::Session;
 use serde_json::json;
 
 #[test]

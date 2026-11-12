@@ -1,4 +1,4 @@
-//! `roundtrip`: the corpus harness of `cadcraft_io::roundtrip::corpus` over a file or folder.
+//! `roundtrip`: the corpus harness of `forja_io::roundtrip::corpus` over a file or folder.
 
 use super::args::RoundtripArgs;
 use super::error::{CliError, Result};
@@ -7,7 +7,7 @@ use super::output::Streams;
 /// Why `roundtrip` stopped.
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum RoundtripError {
-    #[error("roundtrip: give a FILE or FOLDER, or set CADCRAFT_CORPUS_DIR")]
+    #[error("roundtrip: give a FILE or FOLDER, or set FORJA_CORPUS_DIR")]
     NoPath,
     #[error("roundtrip: no such file or folder: {}", .0.display())]
     Missing(std::path::PathBuf),
@@ -21,7 +21,7 @@ pub(crate) enum RoundtripError {
 
 /// What the walk couldn't look at, so the report isn't taken for the whole corpus: said on
 /// stderr, and failures of a strict run.
-fn left_out(w: &cadcraft_io::roundtrip::corpus::Walk) -> Vec<String> {
+fn left_out(w: &forja_io::roundtrip::corpus::Walk) -> Vec<String> {
     let mut out: Vec<String> = w.unreadable.iter().map(|u| format!("not read: {u}")).collect();
     if w.truncated {
         out.push("left out: files or folders past the harness limits".to_string());
@@ -30,8 +30,8 @@ fn left_out(w: &cadcraft_io::roundtrip::corpus::Walk) -> Vec<String> {
 }
 
 pub(crate) fn roundtrip(a: &RoundtripArgs, io: &mut Streams) -> Result {
-    use cadcraft_io::roundtrip::corpus;
-    let path = a.path.clone().or_else(|| std::env::var_os("CADCRAFT_CORPUS_DIR").map(Into::into)).ok_or(RoundtripError::NoPath)?;
+    use forja_io::roundtrip::corpus;
+    let path = a.path.clone().or_else(|| std::env::var_os("FORJA_CORPUS_DIR").map(Into::into)).ok_or(RoundtripError::NoPath)?;
     let mut missed = Vec::new();
     let (root, files, out) = if path.is_dir() {
         let out = a.out.clone().unwrap_or_else(|| path.join("report"));
@@ -80,9 +80,9 @@ pub(crate) fn roundtrip(a: &RoundtripArgs, io: &mut Streams) -> Result {
     let (md, json) = report.write(&out).map_err(|source| RoundtripError::Report { path: out.clone(), source })?;
     io.outln(format_args!("report: {}", md.display()));
     io.outln(format_args!("        {}", json.display()));
-    // CADCRAFT_CORPUS_STRICT=1: a file that doesn't open, save or reopen, or records a writer
+    // FORJA_CORPUS_STRICT=1: a file that doesn't open, save or reopen, or records a writer
     // leaves out, fail the run (the report is written first).
-    if std::env::var("CADCRAFT_CORPUS_STRICT").is_ok_and(|v| v == "1") {
+    if std::env::var("FORJA_CORPUS_STRICT").is_ok_and(|v| v == "1") {
         let mut failed = report.strict_failures();
         failed.extend(missed);
         if !failed.is_empty() {

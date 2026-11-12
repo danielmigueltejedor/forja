@@ -1,6 +1,6 @@
 //! Browser panel layout storage, independent of drawings and native workspace files.
 
-use cadcraft_ui_egui::{UiState, docking};
+use forja_ui_egui::{UiState, docking};
 use serde_json::{Value, json};
 
 #[cfg(target_arch = "wasm32")]
@@ -46,8 +46,8 @@ pub fn restore(ui: &mut UiState, saved: &str) -> Result<(), String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cadcraft_engine::Session;
-    use cadcraft_ui_egui::{CadApp, Services};
+    use forja_engine::Session;
+    use forja_ui_egui::{CadApp, Services};
 
     #[test]
     fn floating_and_hidden_panels_survive_storage_without_replacing_drawing_state() {

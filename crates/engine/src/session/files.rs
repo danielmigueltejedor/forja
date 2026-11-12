@@ -24,7 +24,7 @@ impl Session {
         let saved = crate::view::saved_view(&st.doc);
         let ext = st.doc.extents(&Space::Model);
         // The current tile (the first), or the lone untiled view, keeps its saved twist.
-        let twist = cadcraft_geom::norm_angle(st.doc.vports.iter().find(|c| c.is_active()).and_then(|c| c.tiles.first()).map_or(0.0, |t| t.twist));
+        let twist = forja_geom::norm_angle(st.doc.vports.iter().find(|c| c.is_active()).and_then(|c| c.tiles.first()).map_or(0.0, |t| t.twist));
         if let Some(v) = saved {
             st.set_view_quiet(View { twist, ..v });
         } else if ext.is_empty() {

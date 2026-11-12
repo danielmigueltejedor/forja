@@ -121,13 +121,13 @@ fn circular_edge(tags: &[Tag], index: &mut usize, vertices: &mut Vec<PolyVertex>
     let (start, end) = if ccw { (start_angle, end_angle) } else { (-start_angle, -end_angle) };
     let start_point = Vec2::polar(center, radius, start);
     let end_point = Vec2::polar(center, radius, end);
-    let sweep = if ccw { cadcraft_geom::ccw_sweep(start, end) } else { -cadcraft_geom::ccw_sweep(end, start) };
+    let sweep = if ccw { forja_geom::ccw_sweep(start, end) } else { -forja_geom::ccw_sweep(end, start) };
     if vertices.last().is_none_or(|last| !last.p.near(start_point, 1e-9)) {
         vertices.push(PolyVertex::new(start_point));
     }
     // A full circle needs two bulges because one bulge cannot span coincident endpoints.
     let full = (sweep.abs() - std::f64::consts::TAU).abs() < 1e-9;
-    let bulge = cadcraft_geom::arc_to_bulge(if full { sweep / 2.0 } else { sweep });
+    let bulge = forja_geom::arc_to_bulge(if full { sweep / 2.0 } else { sweep });
     if let Some(last) = vertices.last_mut() {
         last.bulge = bulge;
     }
@@ -146,7 +146,7 @@ fn elliptic_edge(tags: &[Tag], index: &mut usize, vertices: &mut Vec<PolyVertex>
     let ccw = tags.get(*index + 7).filter(|tag| tag.code == 73).map(Tag::i64).unwrap_or(1) != 0;
     *index += 8;
     let (start, end) = if ccw { (start_angle, end_angle) } else { (-end_angle, -start_angle) };
-    let ellipse = cadcraft_geom::Ellipse { center, major, ratio, start, end };
+    let ellipse = forja_geom::Ellipse { center, major, ratio, start, end };
     let mut points = Vec::new();
     ellipse.tessellate(major.len() * 1e-3, &mut points);
     if !ccw {
@@ -248,7 +248,7 @@ const MAX_PATTERN_DASHES: usize = 256;
 /// (unit scale, no hatch rotation, base point relative to the hatch origin, offset as shift
 /// along the line and spacing), which the writer and the renderer turn back. Lines with
 /// non-finite values are skipped.
-fn pattern_definition(tags: &[Tag], scale: f64, angle: f64, origin: Vec2) -> Vec<cadcraft_doc::library::PatternLine> {
+fn pattern_definition(tags: &[Tag], scale: f64, angle: f64, origin: Vec2) -> Vec<forja_doc::library::PatternLine> {
     let Some(at) = tags.iter().position(|x| x.code == 78) else { return Vec::new() };
     let scale = if scale.is_finite() && scale > 1e-9 { scale } else { 1.0 };
     let angle = if angle.is_finite() { angle } else { 0.0 };
@@ -281,7 +281,7 @@ fn pattern_definition(tags: &[Tag], scale: f64, angle: f64, origin: Vec2) -> Vec
         .map(|(a, base, offset, dashes)| {
             let local = (base - origin).rotate(-angle) * (1.0 / scale);
             let delta = offset.rotate(-a.to_radians()) * (1.0 / scale);
-            cadcraft_doc::library::PatternLine {
+            forja_doc::library::PatternLine {
                 angle: a - angle.to_degrees(),
                 origin: (local.x, local.y),
                 delta: (delta.x, delta.y),
@@ -291,7 +291,7 @@ fn pattern_definition(tags: &[Tag], scale: f64, angle: f64, origin: Vec2) -> Vec
         .collect()
 }
 
-/// Hatch origin and background colour from `CADCRAFT` xdata: `1000 HATCH`, `1011` origin,
+/// Hatch origin and background colour from `FORJA` xdata: `1000 HATCH`, `1011` origin,
 /// `1000` background colour name (empty for none). Defaults when absent.
 fn hatch_xdata(tags: &[Tag]) -> (Vec2, Option<Color>) {
     let x = crate::dxf_ext::xdata(tags, crate::dxf_ext::APP);
@@ -310,12 +310,12 @@ fn default_gradient() -> Gradient {
 }
 
 /// A hatch's gradient fill: the native groups when present (another program may have edited
-/// them), otherwise CADCraft's `GRADIENT` xdata (kept by R2000 files and DWG conversions).
+/// them), otherwise Forja's `GRADIENT` xdata (kept by R2000 files and DWG conversions).
 fn gradient(tags: &[Tag]) -> Option<Gradient> {
     if tags.iter().any(|x| x.code == 450) { native_gradient(tags) } else { xdata_gradient(tags) }
 }
 
-/// `CADCRAFT` xdata: `1000 GRADIENT`, then name, 1040 angle, 1070 centered, colour 1 and 2 names.
+/// `FORJA` xdata: `1000 GRADIENT`, then name, 1040 angle, 1070 centered, colour 1 and 2 names.
 fn xdata_gradient(tags: &[Tag]) -> Option<Gradient> {
     let x = crate::dxf_ext::xdata(tags, crate::dxf_ext::APP);
     let at = x.iter().position(|t| t.code == 1000 && t.str() == "GRADIENT")?;

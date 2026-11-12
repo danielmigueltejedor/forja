@@ -26,9 +26,9 @@ pub(super) fn click_grip(app: &mut CadApp, g: (Handle, usize), shift: bool) {
 }
 
 /// The multifunctional options of grip `g` (Add Vertex, Lengthen…; empty: Stretch only).
-pub(super) fn grip_options(app: &CadApp, (h, i): (Handle, usize)) -> Vec<cadcraft_engine::grips::GripAction> {
+pub(super) fn grip_options(app: &CadApp, (h, i): (Handle, usize)) -> Vec<forja_engine::grips::GripAction> {
     let Ok(st) = app.session.state() else { return Vec::new() };
-    st.doc.entity(h).map(|e| cadcraft_engine::grips::grip_actions(&e.kind, i)).unwrap_or_default()
+    st.doc.entity(h).map(|e| forja_engine::grips::grip_actions(&e.kind, i)).unwrap_or_default()
 }
 
 /// The menu of a multifunctional grip: Stretch and its options. A choice makes the grip hot and
@@ -36,10 +36,10 @@ pub(super) fn grip_options(app: &CadApp, (h, i): (Handle, usize)) -> Vec<cadcraf
 pub(super) fn grip_menu(app: &mut CadApp, resp: &egui::Response) {
     let Some(g) = app.canvas.grip_menu else { return };
     let options = grip_options(app, g);
-    let mut chosen: Option<Option<cadcraft_engine::grips::GripAction>> = None;
+    let mut chosen: Option<Option<forja_engine::grips::GripAction>> = None;
     let open = resp
         .context_menu(|ui| {
-            let vertex = options.contains(&cadcraft_engine::grips::GripAction::RemoveVertex);
+            let vertex = options.contains(&forja_engine::grips::GripAction::RemoveVertex);
             if ui.button(crate::i18n::t(if vertex { "Stretch Vertex" } else { "Stretch" })).clicked() {
                 chosen = Some(None);
                 ui.close();
@@ -68,9 +68,9 @@ pub(super) fn grip_menu(app: &mut CadApp, resp: &egui::Response) {
 }
 
 /// Polyline segment midpoint grips are rectangular; vertex grips remain square.
-pub(super) fn grip_rect(kind: &cadcraft_doc::EntityKind, count: usize, index: usize, center: Pos2, size: f32) -> Rect {
+pub(super) fn grip_rect(kind: &forja_doc::EntityKind, count: usize, index: usize, center: Pos2, size: f32) -> Rect {
     // The grip list interleaves vertices and available segment midpoints, then any remaining vertices.
-    let midpoint = matches!(kind, cadcraft_doc::EntityKind::LwPolyline(p) if index % 2 == 1 && index / 2 < count.saturating_sub(p.vertices.len()));
+    let midpoint = matches!(kind, forja_doc::EntityKind::LwPolyline(p) if index % 2 == 1 && index / 2 < count.saturating_sub(p.vertices.len()));
     Rect::from_center_size(center, vec2(size * 2.0, if midpoint { size } else { size * 2.0 }))
 }
 
@@ -105,9 +105,9 @@ pub(super) fn grip_at(app: &CadApp, xf: &Xf, hover: Option<Pos2>) -> Option<(Han
 use std::ops::Range;
 use std::sync::Arc;
 
-use cadcraft_doc::Drawing;
 use egui::epaint::{RectShape, TessellationOptions, Tessellator};
 use egui::{Color32, Mesh, Painter, Shape, Stroke, StrokeKind};
+use forja_doc::Drawing;
 
 use crate::theme::Tokens;
 
@@ -227,8 +227,8 @@ fn fill(grip: (Handle, usize), rect: Rect, t: &Tokens, hot: &[(Handle, usize)], 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cadcraft_doc::{Common, EntityKind, LwPolyline, Space};
-    use cadcraft_geom::{PolyVertex, Vec2};
+    use forja_doc::{Common, EntityKind, LwPolyline, Space};
+    use forja_geom::{PolyVertex, Vec2};
 
     fn contour(n: u32) -> (Drawing, Handle) {
         let mut d = Drawing::new_metric();

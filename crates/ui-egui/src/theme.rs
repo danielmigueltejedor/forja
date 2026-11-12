@@ -1,5 +1,5 @@
-//! Design tokens. Colours were measured from the reference look (dark slate chrome, near-black
-//! navy model space) and are CADCraft's own values; every widget reads them from here.
+//! Design tokens. The interface colours come from the Nodalia Design Language (`nodalia-theme`)
+//! with Forja's accent; every widget reads them from here.
 //!
 //! Two palettes: [`Tokens::DARK`] (the original look) and [`Tokens::LIGHT`]. The interface theme
 //! changes the chrome (title and tool bar, menus, palettes, tabs, command line, status bar,
@@ -19,7 +19,7 @@ pub enum ThemePref {
     /// Follow the operating system's light/dark appearance, live.
     System,
     Light,
-    /// The default: CADCraft's original look.
+    /// The default: Forja's original look.
     #[default]
     Dark,
 }
@@ -126,27 +126,85 @@ pub struct Tokens {
     pub paper: Color32,
 }
 
+/// The Nodalia Design Language palettes with the Nodalia accent: every interface colour below
+/// comes from them. Forja's dark palette is NDL's dark one lifted a few steps ([`lifted_dark`]).
+const NDL_DARK: nodalia_theme::Palette = lifted_dark(nodalia_theme::Mode::Dark.palette_with(nodalia_theme::Accent::Nodalia));
+const NDL_LIGHT: nodalia_theme::Palette = nodalia_theme::Mode::Light.palette_with(nodalia_theme::Accent::Nodalia);
+
+/// The NDL palette of the theme on screen, for widgets that paint NDL's own roles (accent fills,
+/// text on the accent, fields, raised cards).
+pub fn ndl_palette() -> nodalia_theme::Palette {
+    match active() {
+        Theme::Dark => NDL_DARK,
+        Theme::Light => NDL_LIGHT,
+    }
+}
+
+/// An NDL colour as egui's.
+pub fn ndl_color(c: nodalia_theme::Rgba) -> Color32 {
+    nodalia_theme::for_egui::color(c)
+}
+
+const fn rgb(r: u8, g: u8, b: u8) -> nodalia_theme::Rgba {
+    nodalia_theme::Rgba::new(r, g, b, 255)
+}
+
+/// NDL's dark palette with its surfaces, controls and borders lifted: the near-black frame and
+/// islands read as too dark over a drawing session. The steps between the frame, the islands and
+/// the raised surfaces stay those of NDL, and text keeps 4.5:1 on every surface (tested).
+const fn lifted_dark(mut p: nodalia_theme::Palette) -> nodalia_theme::Palette {
+    p.surface_window = rgb(25, 27, 33);
+    p.surface_panel = rgb(36, 39, 48);
+    p.surface_raised = rgb(45, 49, 60);
+    p.surface_sunken = rgb(30, 32, 40);
+    p.surface_overlay = rgb(45, 49, 60);
+    p.text_tertiary = rgb(152, 158, 177);
+    p.border_subtle = rgb(52, 57, 70);
+    p.border_default = rgb(82, 89, 108);
+    p.control_bg = rgb(45, 49, 60);
+    p.control_bg_hover = rgb(54, 59, 72);
+    p.control_bg_pressed = rgb(65, 71, 87);
+    p.control_bg_disabled = rgb(36, 39, 48);
+    p.control_field_bg = rgb(30, 32, 40);
+    p.selection_bg = rgb(16, 72, 80);
+    p.selection_bg_inactive = rgb(45, 49, 60);
+    p.accent_subtle = rgb(16, 72, 80);
+    p
+}
+
+/// An opaque NDL colour (every colour taken from the palettes here is opaque).
+const fn ndl(c: nodalia_theme::Rgba) -> Color32 {
+    Color32::from_rgb(c.r, c.g, c.b)
+}
+
+/// An NDL colour at `alpha` (0–255), for the translucent command-line surfaces.
+const fn ndl_alpha(c: nodalia_theme::Rgba, alpha: u8) -> Color32 {
+    Color32::from_rgba_unmultiplied_const(c.r, c.g, c.b, alpha)
+}
+
 impl Tokens {
+    /// The Nodalia dark look: a near-black window frame (`chrome`) holding the panels and the
+    /// drawing area as islands (`panel`).
     pub const DARK: Tokens = Tokens {
-        chrome: Color32::from_rgb(0x3b, 0x44, 0x53),
-        chrome_dark: Color32::from_rgb(0x31, 0x38, 0x44),
-        panel: Color32::from_rgb(0x3c, 0x44, 0x52),
-        tab_active: Color32::from_rgb(0x4e, 0x5a, 0x6e),
-        control: Color32::from_rgb(0x50, 0x5a, 0x6d),
-        control_hover: Color32::from_rgb(0x5c, 0x67, 0x7c),
-        border: Color32::from_rgb(0x23, 0x29, 0x30),
-        canvas: Color32::from_rgb(0x22, 0x28, 0x2f),
-        grid_minor: Color32::from_rgb(0x29, 0x30, 0x3a),
-        grid_major: Color32::from_rgb(0x31, 0x39, 0x45),
-        axis_x: Color32::from_rgb(0x56, 0x28, 0x29),
-        axis_y: Color32::from_rgb(0x28, 0x4a, 0x2e),
-        text: Color32::from_rgb(0xd7, 0xdb, 0xe0),
-        text_dim: Color32::from_rgb(0xa3, 0xaa, 0xb4),
-        text_faint: Color32::from_rgb(0x87, 0x8d, 0x96),
-        icon: Color32::from_rgb(0xcf, 0xd4, 0xdb),
-        icon_accent: Color32::from_rgb(0x4f, 0xa3, 0xf7),
-        icon_point: Color32::from_rgb(0xf0, 0x7a, 0x3a),
-        accent: Color32::from_rgb(0x3d, 0x8b, 0xfd),
+        chrome: ndl(NDL_DARK.surface_window),
+        chrome_dark: ndl(NDL_DARK.surface_window),
+        panel: ndl(NDL_DARK.surface_panel),
+        tab_active: ndl(NDL_DARK.surface_raised),
+        control: ndl(NDL_DARK.control_bg),
+        control_hover: ndl(NDL_DARK.control_bg_hover),
+        border: ndl(NDL_DARK.border_subtle),
+        canvas: ndl(NDL_DARK.surface_panel),
+        grid_minor: Color32::from_rgb(0x2b, 0x2e, 0x38),
+        grid_major: Color32::from_rgb(0x35, 0x39, 0x45),
+        axis_x: Color32::from_rgb(0x5e, 0x32, 0x36),
+        axis_y: Color32::from_rgb(0x32, 0x56, 0x3c),
+        text: ndl(NDL_DARK.text_primary),
+        text_dim: ndl(NDL_DARK.text_secondary),
+        text_faint: ndl(NDL_DARK.text_tertiary),
+        icon: ndl(NDL_DARK.text_primary),
+        icon_accent: ndl(NDL_DARK.accent_default),
+        icon_point: ndl(NDL_DARK.accent_default),
+        accent: ndl(NDL_DARK.accent_default),
         selection: Color32::from_rgb(0x4a, 0x8f, 0xff),
         hover: Color32::from_rgb(0x9c, 0xc6, 0xff),
         grip: Color32::from_rgb(0x2f, 0x6b, 0xff),
@@ -158,50 +216,51 @@ impl Tokens {
         compare_area: Color32::from_rgb(0xff, 0xb4, 0x3c),
         window_stroke: Color32::from_rgb(0x6f, 0xa8, 0xff),
         crossing_stroke: Color32::from_rgb(0x7f, 0xe0, 0x7f),
-        cmd_bg: Color32::from_rgba_premultiplied(0x34, 0x3c, 0x4a, 0xf0),
-        toggle_on: Color32::from_rgb(0x3d, 0x8b, 0xfd),
-        field: Color32::from_rgb(0x31, 0x38, 0x44),
-        select_bg: Color32::from_rgb(0x3d, 0x8b, 0xfd),
-        canvas_ink: Color32::from_rgb(0xa3, 0xaa, 0xb4),
-        cmd_history: Color32::from_rgba_unmultiplied_const(0x2a, 0x30, 0x3a, 170),
-        cmd_border: Color32::from_rgb(0x55, 0x5f, 0x70),
-        cmd_keyword: Color32::from_rgb(0x8f, 0xc1, 0xff),
-        cmd_keyword_hover: Color32::from_rgb(0x2f, 0x5e, 0xa8),
-        list_bg: Color32::from_rgb(0x2b, 0x31, 0x3b),
-        list_row: Color32::from_rgb(0x3a, 0x42, 0x50),
-        warn: Color32::from_rgb(0xff, 0xd0, 0x80),
+        cmd_bg: ndl_alpha(NDL_DARK.surface_raised, 0xf0),
+        toggle_on: ndl(NDL_DARK.accent_default),
+        field: ndl(NDL_DARK.control_field_bg),
+        select_bg: ndl(NDL_DARK.selection_bg),
+        canvas_ink: ndl(NDL_DARK.text_secondary),
+        cmd_history: ndl_alpha(NDL_DARK.surface_sunken, 200),
+        cmd_border: ndl(NDL_DARK.border_default),
+        cmd_keyword: ndl(NDL_DARK.accent_text),
+        cmd_keyword_hover: ndl(NDL_DARK.accent_subtle),
+        list_bg: ndl(NDL_DARK.surface_overlay),
+        list_row: ndl(NDL_DARK.control_bg_hover),
+        warn: ndl(NDL_DARK.status_warning_fg),
         crosshair: Color32::from_rgb(0xe8, 0xe8, 0xe8),
         paper: Color32::WHITE,
     };
 
-    /// Light grey chrome with dark text. The drawing-area colours (canvas, grid, axes, selection,
-    /// grips, snap markers, selection windows) are the same as [`Tokens::DARK`]'s.
+    /// The Nodalia light look: a grey frame with white islands. The drawing-area colours (canvas,
+    /// grid, axes, selection, grips, snap markers, selection windows) are the same as
+    /// [`Tokens::DARK`]'s.
     pub const LIGHT: Tokens = Tokens {
-        chrome: Color32::from_rgb(0xe4, 0xe7, 0xeb),
-        chrome_dark: Color32::from_rgb(0xd5, 0xd9, 0xdf),
-        panel: Color32::from_rgb(0xee, 0xf0, 0xf3),
-        tab_active: Color32::from_rgb(0xc8, 0xd3, 0xe2),
-        control: Color32::from_rgb(0xdc, 0xe0, 0xe6),
-        control_hover: Color32::from_rgb(0xcb, 0xd2, 0xdc),
-        border: Color32::from_rgb(0xb3, 0xba, 0xc4),
-        text: Color32::from_rgb(0x1d, 0x23, 0x2b),
-        text_dim: Color32::from_rgb(0x47, 0x50, 0x5c),
-        text_faint: Color32::from_rgb(0x62, 0x6a, 0x76),
-        icon: Color32::from_rgb(0x34, 0x3c, 0x48),
-        icon_accent: Color32::from_rgb(0x1b, 0x6f, 0xd6),
-        icon_point: Color32::from_rgb(0xd3, 0x5a, 0x1c),
-        accent: Color32::from_rgb(0x2f, 0x7c, 0xf6),
-        cmd_bg: Color32::from_rgba_unmultiplied_const(0xf9, 0xfa, 0xfb, 0xf0),
-        toggle_on: Color32::from_rgb(0x2f, 0x7c, 0xf6),
-        field: Color32::from_rgb(0xff, 0xff, 0xff),
-        select_bg: Color32::from_rgb(0xb6, 0xd3, 0xfb),
-        cmd_history: Color32::from_rgba_unmultiplied_const(0xf0, 0xf2, 0xf5, 0xdc),
-        cmd_border: Color32::from_rgb(0xa9, 0xb0, 0xba),
-        cmd_keyword: Color32::from_rgb(0x15, 0x59, 0xc0),
-        cmd_keyword_hover: Color32::from_rgb(0xcf, 0xe0, 0xfa),
-        list_bg: Color32::from_rgb(0xfb, 0xfc, 0xfd),
-        list_row: Color32::from_rgb(0xe3, 0xe8, 0xef),
-        warn: Color32::from_rgb(0x8a, 0x53, 0x00),
+        chrome: ndl(NDL_LIGHT.surface_window),
+        chrome_dark: ndl(NDL_LIGHT.surface_window),
+        panel: ndl(NDL_LIGHT.surface_panel),
+        tab_active: ndl(NDL_LIGHT.surface_sunken),
+        control: ndl(NDL_LIGHT.control_bg),
+        control_hover: ndl(NDL_LIGHT.control_bg_hover),
+        border: ndl(NDL_LIGHT.border_subtle),
+        text: ndl(NDL_LIGHT.text_primary),
+        text_dim: ndl(NDL_LIGHT.text_secondary),
+        text_faint: ndl(NDL_LIGHT.text_tertiary),
+        icon: ndl(NDL_LIGHT.text_primary),
+        icon_accent: ndl(NDL_LIGHT.accent_default),
+        icon_point: ndl(NDL_LIGHT.accent_default),
+        accent: ndl(NDL_LIGHT.accent_default),
+        cmd_bg: ndl_alpha(NDL_LIGHT.surface_raised, 0xf0),
+        toggle_on: ndl(NDL_LIGHT.accent_default),
+        field: ndl(NDL_LIGHT.control_field_bg),
+        select_bg: ndl(NDL_LIGHT.selection_bg),
+        cmd_history: ndl_alpha(NDL_LIGHT.surface_sunken, 0xdc),
+        cmd_border: ndl(NDL_LIGHT.border_default),
+        cmd_keyword: ndl(NDL_LIGHT.accent_text),
+        cmd_keyword_hover: ndl(NDL_LIGHT.accent_subtle),
+        list_bg: ndl(NDL_LIGHT.surface_overlay),
+        list_row: ndl(NDL_LIGHT.control_bg_hover),
+        warn: ndl(NDL_LIGHT.status_warning_fg),
         ..Tokens::DARK
     };
 
@@ -366,7 +425,7 @@ pub fn install_fonts(ctx: &egui::Context, language: &str) {
             added.push(("system-arabic".into(), std::sync::Arc::new(egui::FontData::from_owned(bytes))));
         }
     }
-    let embedded: Vec<_> = cadcraft_fonts::CRAFT_FONTS.iter().collect();
+    let embedded: Vec<_> = forja_fonts::CRAFT_FONTS.iter().collect();
     added.extend(
         embedded_ui_faces(&embedded, language)
             .into_iter()
@@ -435,7 +494,7 @@ fn ui_font_choice<'a>(
 /// Whether `face` has every letter Vietnamese adds to Latin: the tone-marked vowels of Latin
 /// Extended Additional (U+1EA0–U+1EF9), and ơ, ư, đ.
 #[cfg(not(target_arch = "wasm32"))]
-fn covers_vietnamese(face: &cadcraft_fonts::ttf::Face) -> bool {
+fn covers_vietnamese(face: &forja_fonts::ttf::Face) -> bool {
     ('\u{1ea0}'..='\u{1ef9}').chain(['ơ', 'Ơ', 'ư', 'Ư', 'đ', 'Đ']).all(|c| face.has_glyph(c))
 }
 
@@ -451,7 +510,7 @@ pub fn vietnamese_font() -> Option<&'static std::path::Path> {
             .get_or_init(|| {
                 let has_vietnamese = |p: &str| {
                     read_capped(std::path::Path::new(p), MAX_UI_FONT_BYTES)
-                        .and_then(|bytes| cadcraft_fonts::ttf::faces(&std::sync::Arc::new(bytes)).into_iter().next())
+                        .and_then(|bytes| forja_fonts::ttf::faces(&std::sync::Arc::new(bytes)).into_iter().next())
                         .is_some_and(|face| covers_vietnamese(&face))
                 };
                 ui_font_choice(system_ui_candidates(), true, |p| std::path::Path::new(p).is_file(), has_vietnamese).map(std::path::PathBuf::from)
@@ -485,8 +544,8 @@ pub fn shows_vietnamese(language: &str) -> bool {
 /// shares most ideographs but lacks the simplified-only ones (图 园 测), which would be tofu.
 /// The Georgian face follows in every language (egui's bundled faces carry no Georgian glyphs, and
 /// the picker names the language ქართული); العربية adds its Arabic face after those.
-fn embedded_ui_faces<'a>(faces: &[&'a cadcraft_fonts::CraftFont], language: &str) -> Vec<&'a cadcraft_fonts::CraftFont> {
-    let cjk = |f: &&cadcraft_fonts::CraftFont| f.style == "Regular" && f.scripts.iter().any(|s| matches!(*s, "Jpan" | "Hans" | "Hant"));
+fn embedded_ui_faces<'a>(faces: &[&'a forja_fonts::CraftFont], language: &str) -> Vec<&'a forja_fonts::CraftFont> {
+    let cjk = |f: &&forja_fonts::CraftFont| f.style == "Regular" && f.scripts.iter().any(|s| matches!(*s, "Jpan" | "Hans" | "Hant"));
     let mut out: Vec<_> = faces.iter().copied().filter(cjk).collect();
     out.sort_by_key(|f| !f.family.contains("Gothic") && !f.family.contains("Sans"));
     if language.starts_with("zh") {
@@ -636,13 +695,13 @@ fn hangul_letters() -> &'static std::collections::BTreeSet<char> {
 
 /// Whether `face` has every Hangul letter the Korean interface shows (rejects malformed fonts
 /// and Chinese- or Japanese-only faces).
-fn covers_hangul(face: &cadcraft_fonts::ttf::Face) -> bool {
+fn covers_hangul(face: &forja_fonts::ttf::Face) -> bool {
     hangul_letters().iter().all(|c| face.has_glyph(*c))
 }
 
 /// The first face of a font file (the one egui uses) when it covers the Korean interface.
-fn korean_face(bytes: std::sync::Arc<Vec<u8>>) -> Option<cadcraft_fonts::ttf::Face> {
-    cadcraft_fonts::ttf::faces(&bytes).into_iter().find(covers_hangul)
+fn korean_face(bytes: std::sync::Arc<Vec<u8>>) -> Option<forja_fonts::ttf::Face> {
+    forja_fonts::ttf::faces(&bytes).into_iter().find(covers_hangul)
 }
 
 /// Whether the CJK fonts [`install_fonts`] loads in every language already show Hangul (Noto Sans
@@ -656,17 +715,17 @@ pub fn cjk_covers_hangul() -> bool {
             // egui uses a collection's first face, and each letter from the first font with it.
             let first_covers = |p: &std::path::Path| {
                 read_capped(p, MAX_UI_FONT_BYTES)
-                    .and_then(|bytes| cadcraft_fonts::ttf::faces(&std::sync::Arc::new(bytes)).into_iter().next())
+                    .and_then(|bytes| forja_fonts::ttf::faces(&std::sync::Arc::new(bytes)).into_iter().next())
                     .is_some_and(|face| covers_hangul(&face))
             };
             if cjk_font().is_some_and(first_covers) {
                 return true;
             }
         }
-        cadcraft_fonts::CRAFT_FONTS
+        forja_fonts::CRAFT_FONTS
             .iter()
             .filter(|f| f.style == "Regular" && f.scripts.iter().any(|s| matches!(*s, "Jpan" | "Hans" | "Hant")))
-            .any(|f| cadcraft_fonts::ttf::faces(&std::sync::Arc::new(f.bytes.to_vec())).first().is_some_and(covers_hangul))
+            .any(|f| forja_fonts::ttf::faces(&std::sync::Arc::new(f.bytes.to_vec())).first().is_some_and(covers_hangul))
     })
 }
 
@@ -675,11 +734,11 @@ pub fn cjk_covers_hangul() -> bool {
 /// Nothing is bundled or downloaded; without one the interface stays English. Only looked for
 /// when Korean is asked about. Checked once; collections are scanned with the fonts crate's
 /// face-count cap and reads are capped.
-pub fn korean_font() -> Option<&'static cadcraft_fonts::ttf::Face> {
-    static FOUND: std::sync::OnceLock<Option<cadcraft_fonts::ttf::Face>> = std::sync::OnceLock::new();
+pub fn korean_font() -> Option<&'static forja_fonts::ttf::Face> {
+    static FOUND: std::sync::OnceLock<Option<forja_fonts::ttf::Face>> = std::sync::OnceLock::new();
     FOUND
         .get_or_init(|| {
-            for font in cadcraft_fonts::CRAFT_FONTS.iter().filter(|f| f.scripts.iter().any(|s| matches!(*s, "Hang" | "Kore"))) {
+            for font in forja_fonts::CRAFT_FONTS.iter().filter(|f| f.scripts.iter().any(|s| matches!(*s, "Hang" | "Kore"))) {
                 if font.bytes.len() as u64 > MAX_UI_FONT_BYTES {
                     continue;
                 }
@@ -749,44 +808,73 @@ pub fn can_show(language: &str) -> bool {
 /// Korean gate already asks this way ([`korean_font`]) and Arabic and Chinese match it. Only a
 /// build made with `CRAFT_FONTS_DIR` embeds any (`build.rs`), so the rest is unchanged.
 fn embedded_script(script: &str) -> bool {
-    any_script(cadcraft_fonts::CRAFT_FONTS, script)
+    any_script(forja_fonts::CRAFT_FONTS, script)
 }
 
 /// Whether any face of `faces` carries `script` (ISO 15924), the question [`embedded_script`]
 /// asks of the table this build embedded.
-fn any_script(faces: &[cadcraft_fonts::CraftFont], script: &str) -> bool {
+fn any_script(faces: &[forja_fonts::CraftFont], script: &str) -> bool {
     faces.iter().any(|f| f.style == "Regular" && f.scripts.contains(&script))
 }
 
-/// egui's visuals for `theme`, from its tokens.
+/// egui's visuals for `theme`: the Nodalia Design Language's, with the Nodalia accent, Forja's
+/// lifted dark surfaces and the window frame behind the panels.
 fn visuals(theme: Theme) -> Visuals {
+    use nodalia_theme::for_egui::color;
     let t = Tokens::of(theme);
-    let mut v = match theme {
-        Theme::Dark => Visuals::dark(),
-        Theme::Light => Visuals::light(),
+    let (mode, p) = match theme {
+        Theme::Dark => (nodalia_theme::Mode::Dark, NDL_DARK),
+        Theme::Light => (nodalia_theme::Mode::Light, NDL_LIGHT),
     };
-    v.panel_fill = t.panel;
-    v.window_fill = t.chrome;
-    v.extreme_bg_color = t.field;
-    v.faint_bg_color = t.chrome_dark;
+    let mut v = nodalia_theme::for_egui::visuals_with(mode, nodalia_theme::Accent::Nodalia);
+    // `visuals_with` reads NDL's own palette; repaint its slots from Forja's (the same in light).
+    let w = &mut v.widgets;
+    for (wv, fill, border) in [
+        (&mut w.noninteractive, p.surface_panel, p.border_subtle),
+        (&mut w.inactive, p.control_bg, p.border_default),
+        (&mut w.hovered, p.control_bg_hover, p.border_strong),
+        (&mut w.active, p.control_bg_pressed, p.border_focus),
+        (&mut w.open, p.control_bg_hover, p.border_default),
+    ] {
+        wv.bg_fill = color(fill);
+        wv.weak_bg_fill = color(fill);
+        wv.bg_stroke.color = color(border);
+    }
+    v.selection.bg_fill = color(p.selection_bg);
+    v.faint_bg_color = color(p.surface_sunken);
+    v.extreme_bg_color = color(p.control_field_bg);
+    v.text_edit_bg_color = Some(color(p.control_field_bg));
+    v.code_bg_color = color(p.surface_sunken);
+    v.panel_fill = color(p.surface_panel);
+    v.window_fill = color(p.surface_overlay);
+    v.window_stroke.color = color(p.border_subtle);
+    v.weak_text_color = Some(color(p.text_secondary));
     v.override_text_color = Some(t.text);
-    v.widgets.noninteractive.bg_fill = t.panel;
-    v.widgets.noninteractive.fg_stroke.color = t.text;
-    v.widgets.noninteractive.bg_stroke.color = t.border;
-    v.widgets.inactive.bg_fill = t.control;
-    v.widgets.inactive.weak_bg_fill = t.control;
-    v.widgets.inactive.fg_stroke.color = t.text;
-    v.widgets.hovered.bg_fill = t.control_hover;
-    v.widgets.hovered.weak_bg_fill = t.control_hover;
-    v.widgets.active.bg_fill = t.accent;
-    v.widgets.active.weak_bg_fill = t.accent;
-    v.selection.bg_fill = t.select_bg;
-    v.window_stroke = egui::Stroke::new(1.0, t.border);
-    let shadow = Color32::from_black_alpha(if theme == Theme::Dark { 90 } else { 40 });
-    v.popup_shadow = egui::epaint::Shadow { offset: [0, 4], blur: 12, spread: 0, color: shadow };
-    v.window_corner_radius = egui::CornerRadius::same(6);
-    v.menu_corner_radius = egui::CornerRadius::same(5);
     v
+}
+
+/// NDL scroll bars: thin, rounded, faint handles with no track that widen under the pointer.
+/// They float, but over a gutter of their own (`floating_allocated_width`): a bar over the
+/// content would cover the controls at a panel's right edge (the Tool Sets gear). The solid
+/// style ignores the handle opacities, so its bars showed as bright full-opacity strips.
+fn scroll_style() -> egui::style::ScrollStyle {
+    egui::style::ScrollStyle {
+        floating: true,
+        bar_width: 8.0,
+        floating_width: 4.0,
+        floating_allocated_width: 10.0,
+        handle_min_length: 24.0,
+        bar_inner_margin: 2.0,
+        bar_outer_margin: 2.0,
+        foreground_color: true,
+        dormant_background_opacity: 0.0,
+        active_background_opacity: 0.0,
+        interact_background_opacity: 0.0,
+        dormant_handle_opacity: 0.22,
+        active_handle_opacity: 0.4,
+        interact_handle_opacity: 0.65,
+        ..egui::style::ScrollStyle::floating()
+    }
 }
 
 /// Install the styles of both themes and show `theme` (egui's own widgets, popups and menus
@@ -800,9 +888,13 @@ pub fn apply(ctx: &egui::Context, theme: Theme, follow_system: bool) {
     // window appearance (winit then stops reporting OS changes) and the app would never follow again.
     ctx.set_theme(if follow_system { egui::ThemePreference::System } else { egui::ThemePreference::from(theme) });
     ctx.all_styles_mut(|s| {
+        // A drafting workspace is dense: NDL's compact density, kept to the 20 pt rows the
+        // palettes and dialogs are laid out for.
         s.spacing.item_spacing = egui::vec2(6.0, 4.0);
-        s.spacing.button_padding = egui::vec2(6.0, 3.0);
+        s.spacing.button_padding = egui::vec2(8.0, 3.0);
         s.spacing.interact_size.y = 20.0;
+        s.spacing.menu_margin = egui::Margin::same(6);
+        s.spacing.scroll = scroll_style();
         s.text_styles.insert(egui::TextStyle::Body, body());
         s.text_styles.insert(egui::TextStyle::Button, body());
         s.text_styles.insert(egui::TextStyle::Small, small());
@@ -824,9 +916,9 @@ mod tests {
         assert_eq!(super::ui_font_choice(&candidates, true, installed, |_| false), None);
     }
 
-    use cadcraft_fonts::CraftFont;
+    use forja_fonts::CraftFont;
 
-    /// A face shaped like `build.rs` writes them, with no font file (as in `cadcraft-fonts`).
+    /// A face shaped like `build.rs` writes them, with no font file (as in `forja-fonts`).
     fn face(family: &'static str, scripts: &'static [&'static str]) -> CraftFont {
         CraftFont { family, style: "Regular", scripts, bytes: &[] }
     }
@@ -900,6 +992,52 @@ mod tests {
                     }
                 }
             });
+        }
+    }
+}
+
+#[cfg(test)]
+mod palette_tests {
+    use super::{NDL_DARK, Tokens};
+    use nodalia_theme::{Palette, contrast};
+
+    fn surfaces(p: &Palette) -> [nodalia_theme::Rgba; 6] {
+        [p.surface_window, p.surface_panel, p.surface_raised, p.surface_sunken, p.surface_overlay, p.control_bg]
+    }
+
+    /// Every text colour reads at 4.5:1 or better on every surface of the lifted dark palette
+    /// (the light one is NDL's own).
+    #[test]
+    fn text_keeps_its_contrast_on_every_surface() {
+        for p in [&NDL_DARK] {
+            for bg in surfaces(p) {
+                for fg in [p.text_primary, p.text_secondary, p.text_tertiary] {
+                    let c = contrast(fg, bg);
+                    assert!(c >= 4.5, "{fg:?} on {bg:?}: {c:.2}");
+                }
+            }
+        }
+    }
+
+    /// The dark frame and islands are lighter than NDL's own, and the islands stay distinct from
+    /// the frame around them.
+    #[test]
+    fn the_dark_surfaces_are_lifted_and_keep_their_steps() {
+        let ndl = nodalia_theme::Mode::Dark.palette();
+        let lum = nodalia_theme::luminance;
+        assert!(lum(NDL_DARK.surface_window) > lum(ndl.surface_window));
+        assert!(lum(NDL_DARK.surface_panel) > lum(ndl.surface_panel));
+        assert!(lum(NDL_DARK.surface_panel) > lum(NDL_DARK.surface_window));
+        assert!(lum(NDL_DARK.surface_raised) > lum(NDL_DARK.surface_panel));
+    }
+
+    /// The interface accent is Nodalia's cyan, not an orange.
+    #[test]
+    fn the_accent_is_nodalia_cyan() {
+        for (t, mode) in [(Tokens::DARK, nodalia_theme::Mode::Dark), (Tokens::LIGHT, nodalia_theme::Mode::Light)] {
+            let a = mode.palette_with(nodalia_theme::Accent::Nodalia).accent_default;
+            assert_eq!(t.accent, egui::Color32::from_rgb(a.r, a.g, a.b));
+            assert!(t.accent.b() > t.accent.r(), "{:?}", t.accent);
         }
     }
 }

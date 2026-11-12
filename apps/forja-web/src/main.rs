@@ -1,6 +1,6 @@
 //! Forja in the browser.
 //!
-//! Runs the same [`cadcraft_ui_egui::CadApp`] as the desktop app through eframe's web runner
+//! Runs the same [`forja_ui_egui::CadApp`] as the desktop app through eframe's web runner
 //! (wgpu: WebGPU where available, WebGL2 otherwise). Build with `trunk build --release` from this
 //! directory (output in `dist/web`). URL flags: `?webgl` forces WebGL2, `?cpu` draws the drawing
 //! with egui shapes instead of the GPU canvas, `?sample` opens the sample drawing. Saving downloads
@@ -22,12 +22,12 @@ mod panel_layout;
 
 #[cfg(target_arch = "wasm32")]
 mod web {
-    use cadcraft_engine::Session;
-    use cadcraft_ui_egui::{CadApp, Services};
+    use forja_engine::Session;
+    use forja_ui_egui::{CadApp, Services};
     use wasm_bindgen::JsCast as _;
 
-    const CANVAS_ID: &str = "cadcraft_canvas";
-    const LOADING_ID: &str = "cadcraft_loading";
+    const CANVAS_ID: &str = "forja_canvas";
+    const LOADING_ID: &str = "forja_loading";
 
     /// The app, the files File > Open… and drag and drop read for it in the background, the
     /// host page (`?host=parent`, or `data-host="page"` on the canvas), the browser's
@@ -58,12 +58,12 @@ mod web {
         /// Forward raw input to the web `CadApp` and capture Tab at the command line.
         fn raw_input_hook(&mut self, ctx: &egui::Context, raw: &mut egui::RawInput) {
             self.0.raw_input_hook(ctx, raw);
-            cadcraft_ui_egui::cmdline::capture_tab(ctx, raw);
+            forja_ui_egui::cmdline::capture_tab(ctx, raw);
         }
         /// Preferences and validated panel placement survive reloads; egui memory is not kept.
         fn save(&mut self, storage: &mut dyn eframe::Storage) {
-            storage.set_string(cadcraft_ui_egui::options::PROFILE_KEY, self.0.profile_json());
-            storage.set_string(cadcraft_ui_egui::PREFS_KEY, self.0.prefs_json());
+            storage.set_string(forja_ui_egui::options::PROFILE_KEY, self.0.profile_json());
+            storage.set_string(forja_ui_egui::PREFS_KEY, self.0.prefs_json());
             match crate::panel_layout::save(&self.0.ui) {
                 Ok(layout) => storage.set_string(crate::panel_layout::KEY, layout),
                 Err(error) => log::warn!("panel layout was not saved: {error}"),
@@ -114,19 +114,19 @@ mod web {
 
     pub fn start() {
         eframe::WebLogger::init(log::LevelFilter::Info).ok();
-        cadcraft_engine::cmd::file::set_io(cadcraft_engine::cmd::file::IoHooks {
-            read: |b, name| cadcraft_io::read(b, name).map_err(|e| e.to_string()),
-            write: |d, name| cadcraft_io::write(d, name).map_err(|e| e.to_string()),
-            plot: Some(|d, space, opts| cadcraft_io::plotter::plot(d, space, opts).map_err(|e| e.to_string())),
+        forja_engine::cmd::file::set_io(forja_engine::cmd::file::IoHooks {
+            read: |b, name| forja_io::read(b, name).map_err(|e| e.to_string()),
+            write: |d, name| forja_io::write(d, name).map_err(|e| e.to_string()),
+            plot: Some(|d, space, opts| forja_io::plotter::plot(d, space, opts).map_err(|e| e.to_string())),
         });
-        cadcraft_engine::cmd::file::set_image_decoder(|b| cadcraft_io::raster::decode(b).map_err(|e| e.to_string()));
-        cadcraft_engine::cmd::file::set_write_as(|d, name, o| {
-            cadcraft_io::write_with(d, name, &cadcraft_io::SaveOptions { version: o.version, binary: o.binary }).map_err(|e| e.to_string())
+        forja_engine::cmd::file::set_image_decoder(|b| forja_io::raster::decode(b).map_err(|e| e.to_string()));
+        forja_engine::cmd::file::set_write_as(|d, name, o| {
+            forja_io::write_with(d, name, &forja_io::SaveOptions { version: o.version, binary: o.binary }).map_err(|e| e.to_string())
         });
         // AutoLISP's entget, entmake and entmod see entities as DXF groups.
-        cadcraft_engine::cmd::file::set_entity_codec(cadcraft_engine::cmd::file::EntityCodec {
-            groups: cadcraft_io::entity_groups,
-            entity: cadcraft_io::entity_from_groups,
+        forja_engine::cmd::file::set_entity_codec(forja_engine::cmd::file::EntityCodec {
+            groups: forja_io::entity_groups,
+            entity: forja_io::entity_from_groups,
         });
         let Some(canvas) = app_canvas() else {
             log::error!("missing <canvas id=\"{CANVAS_ID}\">");
@@ -142,9 +142,9 @@ mod web {
         match &bridge {
             Some(bridge) => {
                 bridge.install();
-                cadcraft_engine::cmd::file::set_deliver(crate::host::deliver);
+                forja_engine::cmd::file::set_deliver(crate::host::deliver);
             }
-            None => cadcraft_engine::cmd::file::set_deliver(crate::download::download),
+            None => forja_engine::cmd::file::set_deliver(crate::download::download),
         }
         let app_bridge = bridge.clone();
         wasm_bindgen_futures::spawn_local(async move {
@@ -166,10 +166,10 @@ mod web {
                         let mut app = CadApp::new(session, services()).with_control(control);
                         app.system_languages =
                             web_sys::window().map(|w| w.navigator().languages().iter().filter_map(|v| v.as_string()).collect()).unwrap_or_default();
-                        if let Some(profile) = cc.storage.and_then(|s| s.get_string(cadcraft_ui_egui::options::PROFILE_KEY)) {
+                        if let Some(profile) = cc.storage.and_then(|s| s.get_string(forja_ui_egui::options::PROFILE_KEY)) {
                             app.load_profile(&profile);
                         }
-                        if let Some(prefs) = cc.storage.and_then(|s| s.get_string(cadcraft_ui_egui::PREFS_KEY)) {
+                        if let Some(prefs) = cc.storage.and_then(|s| s.get_string(forja_ui_egui::PREFS_KEY)) {
                             app.load_prefs(&prefs);
                         }
                         if let Some(layout) = cc.storage.and_then(|s| s.get_string(crate::panel_layout::KEY))

@@ -14,7 +14,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::mpsc::{Receiver, SyncSender, TrySendError, sync_channel};
 use std::time::Duration;
 
-use cadcraft_ui_egui::ControlRequest;
+use forja_ui_egui::ControlRequest;
 use serde_json::{Value, json};
 
 /// Resource bounds for the control server.
@@ -62,14 +62,14 @@ pub fn start(port: u16, ctx: egui::Context) -> Receiver<ControlRequest> {
             // token in an owner-only file and require it on every request (CWE-306). A client
             // (the MCP bridge) reads it from the file, which needs the desktop user's filesystem
             // access; another local account cannot.
-            let token = match cadcraft_mcp::control_token::issue(port) {
+            let token = match forja_mcp::control_token::issue(port) {
                 Ok(t) => Arc::new(t),
                 Err(e) => {
                     log::error!("control server not started: could not write the control token: {e}");
                     return sync_channel::<ControlRequest>(0).1;
                 }
             };
-            if let Ok(path) = cadcraft_mcp::control_token::token_path(port) {
+            if let Ok(path) = forja_mcp::control_token::token_path(port) {
                 log::info!("control server listening on 127.0.0.1:{port} (token in {})", path.display());
             }
             serve_listener(l, Limits::default(), ctx, token)
@@ -296,7 +296,7 @@ fn serve(stream: TcpStream, tx: &SyncSender<ControlRequest>, ctx: &egui::Context
                     // Authenticate the peer before dispatching: loopback TCP does not identify the
                     // OS user, so only a client holding the owner-only session token may drive the
                     // desktop user's commands (CWE-306).
-                    if !given.map(|g| cadcraft_mcp::control_token::matches(token, &g)).unwrap_or(false) {
+                    if !given.map(|g| forja_mcp::control_token::matches(token, &g)).unwrap_or(false) {
                         let mut r = json!({"ok": false, "error": "unauthorized: missing or invalid control token", "state": "not-run"});
                         if let Some(o) = r.as_object_mut() {
                             o.insert("id".into(), id);
@@ -385,7 +385,7 @@ mod tests {
         }
     }
 
-    /// A fixed token for tests; real tokens are random (see `cadcraft_mcp::control_token`).
+    /// A fixed token for tests; real tokens are random (see `forja_mcp::control_token`).
     const TEST_TOKEN: &str = "test-control-token";
 
     /// The control server on a loopback port under `limits`; requests arrive on the receiver.

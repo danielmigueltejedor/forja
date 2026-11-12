@@ -2,8 +2,8 @@
 //! the offset, and the transforms that would not keep it axis aligned are refused before anything
 //! reports success (review on #2587).
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::{Common, Drawing, EntityKind, RawTag, Space, Unknown};
+use forja_engine::Session;
+use forja_engine::doc::{Common, Drawing, EntityKind, RawTag, Space, Unknown};
 use serde_json::json;
 
 fn session() -> (Session, String) {
@@ -174,8 +174,8 @@ fn a_locked_ole_frame_does_not_block_an_in_place_rotation() {
     s.execute("rotate", &json!({ "handles": [ln.clone(), ole.hex()], "base": [0, 0], "angle": 90 })).unwrap();
     assert_eq!(corners(&s), before, "the locked frame is left alone");
     let d = s.doc().unwrap();
-    let e = d.entity(cadcraft_engine::doc::Handle::parse_hex(&ln).unwrap()).unwrap();
-    let cadcraft_engine::doc::EntityKind::Line(l) = &e.kind else { panic!("line") };
+    let e = d.entity(forja_engine::doc::Handle::parse_hex(&ln).unwrap()).unwrap();
+    let forja_engine::doc::EntityKind::Line(l) = &e.kind else { panic!("line") };
     assert!((l.b.y - 10.0).abs() < 1e-9 && l.b.x.abs() < 1e-9, "{l:?}");
 }
 
@@ -193,7 +193,7 @@ fn line_in(s: &mut Session) -> String {
 }
 
 fn line_ends(s: &Session, h: &str) -> ((f64, f64), (f64, f64)) {
-    let e = s.doc().unwrap().entity(cadcraft_engine::doc::Handle::parse_hex(h).unwrap()).unwrap();
+    let e = s.doc().unwrap().entity(forja_engine::doc::Handle::parse_hex(h).unwrap()).unwrap();
     let EntityKind::Line(l) = &e.kind else { panic!("line") };
     ((l.a.x, l.a.y), (l.b.x, l.b.y))
 }
@@ -271,7 +271,7 @@ fn classic_polar_array_refuses_a_turned_frame_but_not_an_upright_one() {
 /// #2587).
 #[test]
 fn ole_frame_is_not_a_trim_edge_or_snap_target() {
-    use cadcraft_engine::snap::{mode, osnap};
+    use forja_engine::snap::{mode, osnap};
     let (mut s, _frame) = session();
     let ln = s.execute("line", &json!({ "points": [[28, -20.5], [37, -20.5]] })).unwrap();
     let ln = ln["handle"].as_str().or_else(|| ln["handles"][0].as_str()).unwrap().to_string();
@@ -280,6 +280,6 @@ fn ole_frame_is_not_a_trim_edge_or_snap_target() {
     assert_eq!(line_ends(&s, &ln), ((28.0, -20.5), (37.0, -20.5)), "the line is not cut at the frame");
     assert_eq!(s.doc().unwrap().model.len(), 2);
     let all = mode::END | mode::MID | mode::INT | mode::PER | mode::CEN | mode::QUA | mode::NOD;
-    let hit = osnap(s.doc().unwrap(), &Space::Model, cadcraft_engine::geom::Vec2::new(30.0, -19.0), 0.5, all, None, false);
+    let hit = osnap(s.doc().unwrap(), &Space::Model, forja_engine::geom::Vec2::new(30.0, -19.0), 0.5, all, None, false);
     assert!(hit.is_none(), "no snap point on the frame: {hit:?}");
 }

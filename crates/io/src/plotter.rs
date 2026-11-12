@@ -7,10 +7,10 @@
 
 use std::sync::Arc;
 
-use cadcraft_color::Rgb;
-use cadcraft_doc::{Drawing, Space};
-use cadcraft_geom::{Bounds2, Vec2};
-use cadcraft_render::{Sheet, paper, raster};
+use forja_color::Rgb;
+use forja_doc::{Drawing, Space};
+use forja_geom::{Bounds2, Vec2};
+use forja_render::{Sheet, paper, raster};
 use serde_json::Value;
 
 use crate::{IoError, PdfOptions, Result, pdf};
@@ -51,7 +51,7 @@ pub fn plot(d: &Drawing, space: &Space, opts: &Value) -> Result<Vec<u8>> {
 }
 
 /// The sheet a plot draws on (a model-space plot's printable area inside the device margins).
-fn sheet(d: &Drawing, space: &Space, o: &PdfOptions) -> Result<(Sheet, cadcraft_doc::PageSetup)> {
+fn sheet(d: &Drawing, space: &Space, o: &PdfOptions) -> Result<(Sheet, forja_doc::PageSetup)> {
     let page = pdf::page_for(d, space, o)?;
     Ok((Sheet::from_page(&page, paper::page_unit_mm(d, &page)), page))
 }
@@ -77,7 +77,7 @@ fn png(d: &Drawing, space: &Space, opts: &Value) -> Result<Vec<u8>> {
     let px = |v: f64| (v * k).round().clamp(1.0, 16384.0) as u32;
     let (width, height) = (px(sheet.size.x), px(sheet.size.y));
     let lineweights = o.lineweights.unwrap_or(if space.is_paper() { page.lineweights } else { true });
-    let table = cadcraft_doc::plot_style_table(d, &page.plot_style_table).map(Arc::new);
+    let table = forja_doc::plot_style_table(d, &page.plot_style_table).map(Arc::new);
     // Paper units per drawing unit: the fitted scale for model space or a fitted layout, else the
     // `scale` option or 1:1, as PDF plots it.
     let fit = matches!(space, Space::Model) || o.fit == Some(true);
@@ -92,14 +92,14 @@ fn png(d: &Drawing, space: &Space, opts: &Value) -> Result<Vec<u8>> {
     // Chord tolerance: a fifth of a pixel.
     let tolerance = (0.2 / (k * est)).max(1e-9);
     let transparency = o.plot_transparency.unwrap_or(page.plot_transparency);
-    let ropts = cadcraft_render::Options { tolerance, lineweights, plot_style_table: table, transparency, ..cadcraft_render::Options::default() };
-    let mut list = cadcraft_render::build_plot(d, space, &ropts);
+    let ropts = forja_render::Options { tolerance, lineweights, plot_style_table: table, transparency, ..forja_render::Options::default() };
+    let mut list = forja_render::build_plot(d, space, &ropts);
     let half = Vec2::new(f64::from(width), f64::from(height)) / (2.0 * k);
     let b = window.unwrap_or(list.bounds);
     let s = if fit { fit_scale(&b, &sheet, &o) } else { est };
     // Plot style ends, joins and fill patterns at the plot scale, as PDF draws them (a layout's
     // are already drawn).
-    cadcraft_render::pen::apply(&mut list, s * sheet.unit_mm);
+    forja_render::pen::apply(&mut list, s * sheet.unit_mm);
     let (from, to) = if placed {
         // A window is placed like model space, whatever the space (as in PDF).
         pdf::placement(if window.is_some() { &Space::Model } else { space }, &b, fit, &sheet, &o)
@@ -131,25 +131,25 @@ fn svg(d: &Drawing, space: &Space, opts: &Value) -> Result<Vec<u8>> {
     // fills at the scale that fits the window (or the extents) on the device's paper.
     let (sheet, page) = sheet(d, space, &o)?;
     let window = o.window.filter(|w| !w.is_empty());
-    let table = cadcraft_doc::plot_style_table(d, &page.plot_style_table).map(Arc::new);
+    let table = forja_doc::plot_style_table(d, &page.plot_style_table).map(Arc::new);
     let lineweights = o.lineweights.unwrap_or(true);
     let est = fit_scale(&window.unwrap_or_else(|| d.extents(space)), &sheet, &o);
     // Chord tolerance: about 0.05 mm on paper.
     let tolerance = (0.05 / (sheet.unit_mm * est)).max(1e-9);
-    let tolerance = if tolerance.is_finite() { tolerance } else { cadcraft_render::Options::default().tolerance };
+    let tolerance = if tolerance.is_finite() { tolerance } else { forja_render::Options::default().tolerance };
     let transparency = o.plot_transparency.unwrap_or(page.plot_transparency);
-    let ropts = cadcraft_render::Options { tolerance, lineweights, plot_style_table: table, transparency, ..cadcraft_render::Options::default() };
-    let mut list = cadcraft_render::build_plot(d, space, &ropts);
+    let ropts = forja_render::Options { tolerance, lineweights, plot_style_table: table, transparency, ..forja_render::Options::default() };
+    let mut list = forja_render::build_plot(d, space, &ropts);
     let s = fit_scale(&window.unwrap_or(list.bounds), &sheet, &o);
-    cadcraft_render::pen::apply(&mut list, s * sheet.unit_mm);
+    forja_render::pen::apply(&mut list, s * sheet.unit_mm);
     Ok(crate::svg::export_list(&list, window).into_bytes())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cadcraft_doc::{Common, EntityKind, Line};
-    use cadcraft_geom::{Bounds2, Vec2, Vec3};
+    use forja_doc::{Common, EntityKind, Line};
+    use forja_geom::{Bounds2, Vec2, Vec3};
     use serde_json::json;
 
     /// Width and height from a PNG's header.
@@ -256,8 +256,8 @@ mod tests {
     /// 10 mm margins. A line crosses the window at y = 30 and a vertical one lies 3 units left of it.
     fn layout_drawing(scale_to_fit: bool) -> Drawing {
         let mut d = Drawing::new_metric();
-        let mut l = cadcraft_doc::Layout::new("L1", 3);
-        l.page = cadcraft_doc::PageSetup {
+        let mut l = forja_doc::Layout::new("L1", 3);
+        l.page = forja_doc::PageSetup {
             width_mm: 297.0,
             height_mm: 210.0,
             landscape: true,
@@ -267,7 +267,7 @@ mod tests {
             scale_to_fit,
             scale: 1.0,
             center: true,
-            ..cadcraft_doc::PageSetup::default()
+            ..forja_doc::PageSetup::default()
         };
         d.layouts.push(l);
         let sp = Space::Paper("L1".into());
@@ -364,7 +364,7 @@ mod tests {
     #[test]
     fn a_layout_without_saved_setup_changes_nothing() {
         let mut d = Drawing::new_metric();
-        d.layouts.push(cadcraft_doc::Layout::new("L1", 3));
+        d.layouts.push(forja_doc::Layout::new("L1", 3));
         let sp = Space::Paper("L1".into());
         let given = PdfOptions::from_json(&json!({"scale": 0.5}));
         let o = pdf::with_saved_setup(&d, &sp, &given);

@@ -12,18 +12,18 @@ repository = "https://github.com/danielmigueltejedor/forja"
 
 [workspace.dependencies]
 # internal
-cadcraft-geom = { path = "crates/geom" }
-cadcraft-dxf = { path = "crates/dxf" }
-cadcraft-dwg = { path = "crates/dwg" }
-cadcraft-color = { path = "crates/color" }
-cadcraft-doc = { path = "crates/doc" }
-cadcraft-constraints = { path = "crates/constraints" }
-cadcraft-fonts = { path = "crates/fonts" }
-cadcraft-render = { path = "crates/render" }
-cadcraft-io = { path = "crates/io" }
-cadcraft-engine = { path = "crates/engine" }
-cadcraft-ui-egui = { path = "crates/ui-egui" }
-cadcraft-mcp = { path = "crates/mcp" }
+forja-geom = { path = "crates/geom" }
+forja-dxf = { path = "crates/dxf" }
+forja-dwg = { path = "crates/dwg" }
+forja-color = { path = "crates/color" }
+forja-doc = { path = "crates/doc" }
+forja-constraints = { path = "crates/constraints" }
+forja-fonts = { path = "crates/fonts" }
+forja-render = { path = "crates/render" }
+forja-io = { path = "crates/io" }
+forja-engine = { path = "crates/engine" }
+forja-ui-egui = { path = "crates/ui-egui" }
+forja-mcp = { path = "crates/mcp" }
 # Which paths stored in a drawing (xrefs, data links) may be opened.
 craft-docpath = { version = "0.1.0", git = "https://github.com/storytold/craft-libs", rev = "92d392cff132eaf53e13afff77f38b5c11b73aa0" }
 # PDF writing (krilla) for plots, and reading them back in tests. The root patches below pin
@@ -63,6 +63,8 @@ quick-xml = "0.42"
 craft-ui = { version = "0.1.0", git = "https://github.com/storytold/craft-libs", rev = "92d392cff132eaf53e13afff77f38b5c11b73aa0", features = ["serde"] }
 craft-window = { version = "0.1.0", git = "https://github.com/storytold/craft-libs", rev = "92d392cff132eaf53e13afff77f38b5c11b73aa0", features = ["egui"] }
 egui = { version = "0.37", default-features = false, features = ["default_fonts", "monochrome_emoji_fonts"] }
+# The Nodalia Design Language: tokens and the egui style built from them.
+nodalia-theme = { git = "https://github.com/danielmigueltejedor/nodalia-design", rev = "7deb6fc122325027321751239c43d19da7b263c3", features = ["egui"] }
 # Resizable table columns (About ▸ Contributors / Models); no image loaders.
 egui_extras = { version = "0.37", default-features = false }
 egui_kittest = "0.37"

@@ -4,12 +4,12 @@ use super::{Ellipse, EntityKind, Line, Result, Segment, TAU, Vec2, ccw_sweep, cu
 // TRIM / EXTEND for ellipses and splines
 // =====================================================================================
 
-pub(super) fn ellipse_of(e: &cadcraft_doc::Ellipse) -> Ellipse {
+pub(super) fn ellipse_of(e: &forja_doc::Ellipse) -> Ellipse {
     Ellipse { center: e.center.xy(), major: e.major.xy(), ratio: e.ratio, start: e.start, end: e.end }
 }
 
 pub(super) fn ellipse_kind(e: &Ellipse) -> EntityKind {
-    EntityKind::Ellipse(cadcraft_doc::Ellipse { center: v3(e.center), major: v3(e.major), ratio: e.ratio, start: e.start, end: e.end })
+    EntityKind::Ellipse(forja_doc::Ellipse { center: v3(e.center), major: v3(e.major), ratio: e.ratio, start: e.start, end: e.end })
 }
 
 /// Intersections of a sampled curve `eval(t)` (parameters `ts`) with the cutting segments,
@@ -83,7 +83,7 @@ pub(crate) fn trim_other(k: &EntityKind, cut: &[Segment], pick: Vec2) -> Result<
                 let n = ps.len();
                 for i in 0..n {
                     let (Some(a0), Some(a1)) = (ps.get(i).copied(), ps.get((i + 1) % n).copied()) else { continue };
-                    if cadcraft_geom::angle_in_sweep(tp, a0, a1) {
+                    if forja_geom::angle_in_sweep(tp, a0, a1) {
                         return Ok(vec![ellipse_kind(&Ellipse { start: a1, end: a0, ..ge })]);
                     }
                 }
@@ -160,7 +160,7 @@ pub(crate) fn extend_other(k: &EntityKind, cut: &[Segment], pick: Vec2) -> Resul
             let hits: Vec<f64> = hits_on(&eval, &ellipse_samples(&full), cut)
                 .into_iter()
                 .map(norm_angle)
-                .filter(|t| !cadcraft_geom::angle_in_sweep(*t, ge.start, ge.end))
+                .filter(|t| !forja_geom::angle_in_sweep(*t, ge.start, ge.end))
                 .collect();
             let t = if from_end {
                 hits.iter().copied().min_by(|x, y| ccw_sweep(ge.end, *x).total_cmp(&ccw_sweep(ge.end, *y)))

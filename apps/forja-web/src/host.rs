@@ -24,8 +24,8 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use cadcraft_ui_egui::CadApp;
 use craft_web_host::web::{FileData, Host, Message};
+use forja_ui_egui::CadApp;
 
 /// The app id in the host messages (`forja:ready`).
 const APP: &str = "forja";
@@ -85,7 +85,7 @@ impl Bridge {
     }
 }
 
-/// The engine's delivery hook in host mode ([`cadcraft_engine::cmd::file::set_deliver`]): hand
+/// The engine's delivery hook in host mode ([`forja_engine::cmd::file::set_deliver`]): hand
 /// the file to the host page. `Ok` once it was sent; the engine then counts a drawing as saved.
 pub fn deliver(name: &str, _mime: &str, bytes: &[u8]) -> Result<(), String> {
     let bridge = BRIDGE.with(|b| b.borrow().clone()).ok_or("the page that embeds Forja is gone")?;

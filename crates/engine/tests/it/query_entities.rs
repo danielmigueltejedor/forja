@@ -1,7 +1,7 @@
 //! The `entities` query (control channel `engine.execute`, MCP `query_entities`) rejects malformed
 //! filters instead of ignoring them and returning everything.
 
-use cadcraft_engine::Session;
+use forja_engine::Session;
 use serde_json::json;
 
 #[test]
@@ -82,7 +82,7 @@ fn selection_filter_combines_before_paging_without_changing_state() {
 
 #[test]
 fn selection_is_empty_by_default_and_limited_to_active_space() {
-    use cadcraft_doc::{Handle, Space};
+    use forja_doc::{Handle, Space};
     let mut s = Session::new();
     s.execute("circle", &json!({"center": [0, 0], "radius": 2})).unwrap();
     let model = s.doc().unwrap().model.iter().next().unwrap().handle;

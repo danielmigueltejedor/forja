@@ -283,12 +283,8 @@ fn add_leader(s: &mut Session, pts: &[Vec2], spline: bool, arrow: bool, ann: Ann
             vertices.insert(at, Vec2::new(end.x - dir * z.arrow, end.y));
         }
     }
-    let leader = s.add_entity(EntityKind::Leader(cadcraft_doc::Leader {
-        vertices: vertices.iter().map(|p| v3(*p)).collect(),
-        arrow,
-        spline,
-        style: style(s),
-    }))?;
+    let leader =
+        s.add_entity(EntityKind::Leader(forja_doc::Leader { vertices: vertices.iter().map(|p| v3(*p)).collect(), arrow, spline, style: style(s) }))?;
     let annotation = match ann {
         Annotation::Text(lines) => {
             let (attach, lift) = match (z.above, dir > 0.0) {

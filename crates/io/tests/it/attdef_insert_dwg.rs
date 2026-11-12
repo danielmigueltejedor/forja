@@ -2,11 +2,11 @@
 //! baseline of the displayed tag starts, which for an attribute with an empty default value is
 //! further from the alignment point than half a height.
 
-use cadcraft_doc::EntityKind;
-use cadcraft_io::{SaveOptions, Version, read, write_with};
+use forja_doc::EntityKind;
+use forja_io::{SaveOptions, Version, read, write_with};
 
 /// The `insert` x of the only ATTDEF in `d`.
-fn attdef_x(d: &cadcraft_doc::Drawing) -> f64 {
+fn attdef_x(d: &forja_doc::Drawing) -> f64 {
     d.model.iter().find_map(|e| if let EntityKind::AttDef(a) = &e.kind { Some(a.text.insert.x) } else { None }).expect("an ATTDEF")
 }
 
@@ -15,7 +15,7 @@ fn centred_attdef_with_an_empty_value_keeps_its_insertion_point() {
     // The tag "LONGTAG" at height 2.5, centred on x = 100: its baseline starts half a width left.
     // The stored point is 1 off that start (within the tolerance), so a write that recomputed
     // it from the tag would not pass for keeping it.
-    let width = cadcraft_fonts::line_width("LONGTAG", 2.5, 1.0);
+    let width = forja_fonts::line_width("LONGTAG", 2.5, 1.0);
     let start = 100.0 - width / 2.0 - 1.0;
     assert!(100.0 - start > 3.0, "the point is well over a height from the alignment point");
     assert_kept(start);
@@ -38,7 +38,7 @@ fn assert_kept(start: f64) {
         );
         let d = read(dxf.as_bytes(), "t.dxf").unwrap();
         assert!((attdef_x(&d) - start).abs() < 1e-6, "read from DXF");
-        let as_dxf = cadcraft_io::write(&d, "t.dxf").unwrap();
+        let as_dxf = forja_io::write(&d, "t.dxf").unwrap();
         assert!((attdef_x(&read(&as_dxf, "t.dxf").unwrap()) - start).abs() < 1e-6, "DXF, prompt {prompt:?}: insertion point changed");
         for version in [Version::R2000, Version::R2018] {
             let dwg = write_with(&d, "t.dwg", &SaveOptions { version: Some(version), binary: false }).unwrap();

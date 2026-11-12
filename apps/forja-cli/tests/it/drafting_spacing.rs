@@ -13,7 +13,7 @@ struct DxfFile(PathBuf);
 impl DxfFile {
     fn new() -> Self {
         let path =
-            std::env::temp_dir().join(format!("cadcraft-drafting-spacing-{}-{}.dxf", std::process::id(), NEXT_FILE.fetch_add(1, Ordering::Relaxed)));
+            std::env::temp_dir().join(format!("forja-drafting-spacing-{}-{}.dxf", std::process::id(), NEXT_FILE.fetch_add(1, Ordering::Relaxed)));
         std::fs::File::options().write(true).create_new(true).open(&path).expect("reserve test DXF");
         Self(path)
     }

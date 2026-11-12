@@ -1,7 +1,7 @@
 //! AREA's Object / Add area / Subtract area, DIST's Multiple points and MEASUREGEOM's Angle and
 //! Volume, typed as at the command line.
 
-use cadcraft_engine::Session;
+use forja_engine::Session;
 use serde_json::json;
 
 fn run(lines: &[&str]) -> (Session, Vec<String>) {
@@ -211,7 +211,7 @@ fn tools_inquiry_radius_asks_for_the_object() {
     // A selected arc is measured at once.
     let mut s = Session::new();
     let r = s.execute("arc", &json!({"center": [0, 0], "radius": 3, "start": 0, "end": 90})).unwrap();
-    s.set_selection(vec![cadcraft_doc::Handle::parse_hex(r["handle"].as_str().unwrap()).unwrap()]);
+    s.set_selection(vec![forja_doc::Handle::parse_hex(r["handle"].as_str().unwrap()).unwrap()]);
     s.start("radius.measure").unwrap();
     assert!(has(&s.log, "Radius = 3.0000"), "{:?}", s.log);
     assert!(s.running.is_none(), "{}", s.prompt_text());
@@ -304,7 +304,7 @@ fn measuregeom_angle_measures_an_arc_a_circle_two_lines_and_a_vertex() {
 
 #[test]
 fn tools_inquiry_angle_asks_for_the_objects() {
-    let spec = cadcraft_engine::find_command("angle.measure").expect("no command angle.measure");
+    let spec = forja_engine::find_command("angle.measure").expect("no command angle.measure");
     assert_eq!(spec.menu, ["Tools", "Inquiry", "Angle"]);
     let mut s = Session::new();
     s.cmdline("circle 0,0 2").unwrap();
@@ -373,7 +373,7 @@ fn measuregeom_volume_multiplies_an_area_by_a_height() {
 fn measure_with_points_that_are_not_points_is_an_error_not_the_selection() {
     let mut s = Session::new();
     let c = s.execute("circle", &json!({"center": [0, 0], "radius": 1})).unwrap();
-    s.set_selection(vec![cadcraft_engine::doc::Handle::parse_hex(c["handle"].as_str().unwrap()).unwrap()]);
+    s.set_selection(vec![forja_engine::doc::Handle::parse_hex(c["handle"].as_str().unwrap()).unwrap()]);
     for bad in [json!([[0, 0], [4, 0], "north"]), json!([[0, 0], [4, 0], [4]]), json!(7)] {
         assert!(s.execute("volume.measure", &json!({"points": bad, "height": 10})).is_err(), "{bad}");
         assert!(s.execute("area", &json!({"points": bad})).is_err(), "{bad}");
@@ -414,7 +414,7 @@ fn measuregeom_volume_too_large_to_hold_is_refused() {
 
 #[test]
 fn tools_inquiry_volume_adds_and_subtracts_a_running_total() {
-    let spec = cadcraft_engine::find_command("volume.measure").expect("no command volume.measure");
+    let spec = forja_engine::find_command("volume.measure").expect("no command volume.measure");
     assert_eq!(spec.menu, ["Tools", "Inquiry", "Volume"]);
 
     // Add a 10 x 10 square by points at height 3, subtract a 2 x 2 square object at height 5.

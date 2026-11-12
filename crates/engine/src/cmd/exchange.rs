@@ -10,11 +10,11 @@
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
-use cadcraft_color::Rgb;
-use cadcraft_doc::{Drawing, Entity, EntityKind, PageSetup, Space};
-use cadcraft_geom::{Bounds2, Mat3, Vec2};
-use cadcraft_render::paper::{self, Sheet};
-use cadcraft_render::raster::{RasterOptions, View};
+use forja_color::Rgb;
+use forja_doc::{Drawing, Entity, EntityKind, PageSetup, Space};
+use forja_geom::{Bounds2, Mat3, Vec2};
+use forja_render::paper::{self, Sheet};
+use forja_render::raster::{RasterOptions, View};
 use serde_json::{Value, json};
 
 use super::file::{base64_decode, base64_encode, io};
@@ -81,7 +81,7 @@ fn write_file(cmd: &str, path: &str, bytes: &[u8]) -> Result<()> {
     #[cfg(not(target_arch = "wasm32"))]
     {
         // Exclusively create a fresh temporary file and rename it into place so a planted
-        // `<path>.cadcraft-tmp` symlink cannot redirect the export write (CWE-59).
+        // `<path>.forja-tmp` symlink cannot redirect the export write (CWE-59).
         crate::atomic_write::write_atomic_making_folders(std::path::Path::new(path), bytes).map_err(|e| bad(cmd, format!("{path}: {e}")))
     }
     #[cfg(target_arch = "wasm32")]
@@ -300,7 +300,7 @@ fn run_preview(s: &mut Session, p: &Value) -> Result<Value> {
     // A layout's saved page setup (plot window, scale to fit, scale, centring) applies unless the call says otherwise (#2493).
     // An explicit `fit: false` without a `scale` asks for the plain 1:1 plot.
     let plain = p.get("fit").and_then(Value::as_bool) == Some(false) && p.get("scale").is_none();
-    let saved = if space.is_paper() && !plain { cadcraft_render::paper::saved_plot(&page) } else { Default::default() };
+    let saved = if space.is_paper() && !plain { forja_render::paper::saved_plot(&page) } else { Default::default() };
     let sheet = Sheet::from_page(&page, paper::page_unit_mm(d, &page));
     let lineweights = p.get("lineweights").and_then(Value::as_bool).unwrap_or(if space.is_paper() { page.lineweights } else { true });
     let transparency = super::plotters::plot_transparency(s, p).unwrap_or(page.plot_transparency);
@@ -315,7 +315,7 @@ fn run_preview(s: &mut Session, p: &Value) -> Result<Value> {
     // Curves are flattened to about half a pixel.
     let est = plot_scale(&saved.window.unwrap_or_else(|| d.extents(&space)), &sheet, fit, scale);
     let tol = 0.5 / (px_per_paper_unit * est);
-    let ropts = cadcraft_render::Options {
+    let ropts = forja_render::Options {
         tolerance: if tol.is_finite() && tol > 0.0 { tol } else { 0.01 },
         min_dash: 0.0,
         text: true,
@@ -324,7 +324,7 @@ fn run_preview(s: &mut Session, p: &Value) -> Result<Value> {
         transparency,
         ..Default::default()
     };
-    let list = cadcraft_render::build_plot(d, &space, &ropts);
+    let list = forja_render::build_plot(d, &space, &ropts);
     let b = saved.window.unwrap_or(list.bounds);
     // Paper point q shows drawing point (q - to) / k + from.
     let (from, k, to) = if saved.window.is_some() {
@@ -349,7 +349,7 @@ fn run_preview(s: &mut Session, p: &Value) -> Result<Value> {
         px_per_mm: if lineweights && px_per_mm.is_finite() { px_per_mm } else { 0.0 },
         antialias: true,
     };
-    let mut pm = cadcraft_render::raster::render(&list, &view, &ro).ok_or_else(|| bad("preview", "rendering the preview failed"))?;
+    let mut pm = forja_render::raster::render(&list, &view, &ro).ok_or_else(|| bad("preview", "rendering the preview failed"))?;
     // A placed plot (fitted, or a saved window) shows only inside the printable area, as the PDF and PNG plots clip it.
     if fit || saved.window.is_some() || space == Space::Model {
         // The view may scale and centre the sheet (the height cap), so map the printable corners
@@ -360,7 +360,7 @@ fn run_preview(s: &mut Session, p: &Value) -> Result<Value> {
         };
         let (min, max) = (sheet.printable.min, sheet.printable.max);
         let (a, b) = (screen(Vec2::new(min.x, max.y)), screen(Vec2::new(max.x, min.y)));
-        cadcraft_render::raster::blank_outside_pixels(&mut pm, a, b);
+        forja_render::raster::blank_outside_pixels(&mut pm, a, b);
     }
     let png = pm.encode_png().map_err(|_| bad("preview", "rendering the preview failed"))?;
     let layout = space.tab_name();
@@ -442,7 +442,7 @@ struct Frame {
 
 /// The ISO/ANSI paper a frame of `w` x `h` mm fits (either orientation), and whether it is landscape.
 fn paper_for(w: f64, h: f64) -> Option<(&'static str, bool)> {
-    cadcraft_render::PAPER_SIZES.iter().find_map(|p| {
+    forja_render::PAPER_SIZES.iter().find_map(|p| {
         let (pw, ph) = (p.width_mm, p.height_mm);
         if (pw - w).abs() <= FRAME_TOL_MM && (ph - h).abs() <= FRAME_TOL_MM {
             Some((p.name, false))
@@ -463,7 +463,7 @@ fn frame_books(d: &Drawing, frame_height: f64, unit: f64) -> (Vec<Vec<Frame>>, u
         if !pl.closed {
             continue;
         }
-        let b = cadcraft_doc::entity_bounds(d, e, 0);
+        let b = forja_doc::entity_bounds(d, e, 0);
         if b.is_empty() || !b.width().is_finite() || !b.height().is_finite() {
             continue;
         }
@@ -544,8 +544,8 @@ fn run_pdfbook(s: &mut Session, p: &Value) -> Result<Value> {
 
 #[cfg(test)]
 mod tests {
-    use cadcraft_doc::{Block, Circle, Common, Handle, Insert, Layer, Line};
-    use cadcraft_geom::Vec3;
+    use forja_doc::{Block, Circle, Common, Handle, Insert, Layer, Line};
+    use forja_geom::Vec3;
 
     use super::super::file::{IoHooks, set_io};
 
@@ -595,7 +595,7 @@ mod tests {
     }
 
     fn temp(name: &str) -> std::path::PathBuf {
-        std::env::temp_dir().join(format!("cadcraft-exchange-{}-{name}", std::process::id()))
+        std::env::temp_dir().join(format!("forja-exchange-{}-{name}", std::process::id()))
     }
 
     #[test]

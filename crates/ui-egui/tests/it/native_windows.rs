@@ -1,12 +1,12 @@
 //! Floating panels in their own OS windows: a modal dialog blocks their input, and keys typed in
 //! one run the main window's shortcuts and command line.
 
-use cadcraft_engine::Session;
-use cadcraft_engine::autosave::Recoverable;
-use cadcraft_ui_egui::closing::Choice;
-use cadcraft_ui_egui::docking::native_input_blocked;
-use cadcraft_ui_egui::{CadApp, Services};
 use egui::{Event, Key, Modifiers};
+use forja_engine::Session;
+use forja_engine::autosave::Recoverable;
+use forja_ui_egui::closing::Choice;
+use forja_ui_egui::docking::native_input_blocked;
+use forja_ui_egui::{CadApp, Services};
 use serde_json::json;
 
 fn frame(app: &mut CadApp, ctx: &egui::Context) {
@@ -18,7 +18,7 @@ fn frame_with(app: &mut CadApp, ctx: &egui::Context, events: Vec<Event>) {
     let mut raw =
         egui::RawInput { screen_rect: Some(egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(1280.0, 800.0))), events, ..Default::default() };
     app.raw_input_hook(ctx, &mut raw);
-    cadcraft_ui_egui::cmdline::capture_tab(ctx, &mut raw);
+    forja_ui_egui::cmdline::capture_tab(ctx, &mut raw);
     let mut out = ctx.run_ui(raw, |ui| {
         app.logic(ui.ctx());
         app.ui(ui);

@@ -1,5 +1,5 @@
 use super::*;
-use cadcraft_geom::Vec3;
+use forja_geom::Vec3;
 
 fn lin(p1: (f64, f64), p2: (f64, f64), on: (f64, f64), rot: f64) -> Dimension {
     Dimension {
@@ -29,8 +29,8 @@ fn st_with(f: impl Fn(&mut DimStyle)) -> DimStyle {
     s
 }
 
-fn bbox(pts: &[Vec<Vec2>]) -> cadcraft_geom::Bounds2 {
-    cadcraft_geom::Bounds2::from_points(pts.iter().flatten().copied())
+fn bbox(pts: &[Vec<Vec2>]) -> forja_geom::Bounds2 {
+    forja_geom::Bounds2::from_points(pts.iter().flatten().copied())
 }
 
 #[test]
@@ -415,7 +415,7 @@ fn jogged_radius_with_nan_radius_draws_no_lines() {
     let mut d = lin((0.0, 0.0), (0.0, 0.0), (0.0, 0.0), 0.0);
     d.kind = DimKind::Radius;
     d.p15 = Vec3::new(10.0, 0.0, 0.0);
-    d.marks.jogged = Some(cadcraft_doc::JoggedRadius { center: Vec3::new(0.0, -4.0, 0.0), jog: Vec3::new(5.0, -2.0, 0.0) });
+    d.marks.jogged = Some(forja_doc::JoggedRadius { center: Vec3::new(0.0, -4.0, 0.0), jog: Vec3::new(5.0, -2.0, 0.0) });
     // Finite control: the jogged line runs from the arrowhead on the arc to the override centre.
     let g = dimension_geometry(&d, &DimStyle::default(), 1.0);
     let jog = g.lines.iter().find(|l| l.len() == 4).expect("jogged dimension line");

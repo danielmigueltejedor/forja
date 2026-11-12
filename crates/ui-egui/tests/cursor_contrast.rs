@@ -1,10 +1,10 @@
 //! The thin crosshair and pickbox follow the background under the pointer, including in MSPACE.
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::{Common, EntityKind, Space, Viewport};
-use cadcraft_engine::geom::{Vec2, Vec3};
-use cadcraft_ui_egui::{CadApp, Services, theme};
 use egui::{Color32, Context, Pos2, Rect, Shape, Stroke, pos2, vec2};
+use forja_engine::Session;
+use forja_engine::doc::{Common, EntityKind, Space, Viewport};
+use forja_engine::geom::{Vec2, Vec3};
+use forja_ui_egui::{CadApp, Services, theme};
 use serde_json::json;
 
 const DARK_INK: Color32 = Color32::from_rgb(0x20, 0x20, 0x20);
@@ -134,7 +134,7 @@ fn paper_and_surround_follow_the_sheet_after_pan_and_zoom() {
 
     // One colour follows the centre even when long arms cross the sheet's boundary.
     c.app.run("options", json!({"CURSORSIZE": 100})).unwrap();
-    let sheet = cadcraft_render::sheet(c.app.session.doc().unwrap(), "Layout1").unwrap();
+    let sheet = forja_render::sheet(c.app.session.doc().unwrap(), "Layout1").unwrap();
     let edge = c.screen(Vec2::new(sheet.bounds().min.x, 40.0));
     c.assert_ink(edge + vec2(2.0, 0.0), DARK_INK, "just inside paper");
     c.assert_ink(edge - vec2(2.0, 0.0), LIGHT_INK, "just outside paper");

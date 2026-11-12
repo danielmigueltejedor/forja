@@ -1,0 +1,6 @@
+# Files this project owns. When the weekly upstream sync finds that upstream also changed
+# one of them, this project's version is kept. One path pattern per line.
+README.md
+assets/app-icon/**
+docs/upstream.md
+docs/upstream-readme.md

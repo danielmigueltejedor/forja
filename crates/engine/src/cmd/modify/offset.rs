@@ -39,7 +39,7 @@ pub(crate) fn offset_kind(k: &EntityKind, dist: f64, side: Vec2) -> Option<Entit
         }
         EntityKind::Ellipse(e) => {
             // Approximate with a polyline offset of the tessellation.
-            let ge = cadcraft_geom::Ellipse { center: e.center.xy(), major: e.major.xy(), ratio: e.ratio, start: e.start, end: e.end };
+            let ge = forja_geom::Ellipse { center: e.center.xy(), major: e.major.xy(), ratio: e.ratio, start: e.start, end: e.end };
             // Inside = on the centre side of the full ellipse, even for an open arc.
             let inside = {
                 let a = e.major.xy().len();
@@ -80,13 +80,13 @@ pub(crate) fn offset_kind(k: &EntityKind, dist: f64, side: Vec2) -> Option<Entit
             let left = (next - mid).cross(side - mid) > 0.0;
             let off = offset_points(&pts, if left { dist } else { -dist }, sp.closed);
             // A closed spline stays closed (periodic), smooth across its start point.
-            Some(EntityKind::Spline(cadcraft_geom::Spline::from_fit(&decimate(&off, 40), sp.closed)))
+            Some(EntityKind::Spline(forja_geom::Spline::from_fit(&decimate(&off, 40), sp.closed)))
         }
         EntityKind::XLine(r) | EntityKind::Ray(r) => {
             let ln = Line::new(r.base.xy(), r.base.xy() + r.dir.xy());
             let sgn = if ln.side(side) >= 0.0 { 1.0 } else { -1.0 };
             let o = ln.offset(dist * sgn);
-            let rl = cadcraft_doc::RayLine { base: v3(o.a), dir: r.dir };
+            let rl = forja_doc::RayLine { base: v3(o.a), dir: r.dir };
             Some(if matches!(k, EntityKind::XLine(_)) { EntityKind::XLine(rl) } else { EntityKind::Ray(rl) })
         }
         _ => None,
@@ -175,7 +175,7 @@ pub(crate) fn offset_polyline(pl: &Polyline, d: f64) -> Option<Vec<PolyVertex>> 
                 } else {
                     ccw_sweep(arc.center.angle_to(end), arc.center.angle_to(start))
                 };
-                cadcraft_geom::arc_to_bulge(if *ccw { sweep } else { -sweep })
+                forja_geom::arc_to_bulge(if *ccw { sweep } else { -sweep })
             }
         };
         verts.push(PolyVertex { p: start, bulge, start_width: 0.0, end_width: 0.0 });
@@ -271,7 +271,7 @@ pub(super) struct OffsetM {
     /// Multiple mode: each side point offsets the newest copy again, until Enter.
     multiple: bool,
     /// Undo: the drawing before each offset, with the object picked then.
-    undo: Vec<(std::sync::Arc<cadcraft_doc::Drawing>, Option<Handle>)>,
+    undo: Vec<(std::sync::Arc<forja_doc::Drawing>, Option<Handle>)>,
 }
 
 impl OffsetM {

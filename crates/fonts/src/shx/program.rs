@@ -17,7 +17,7 @@
 
 use std::f64::consts::{FRAC_PI_4, TAU};
 
-use cadcraft_geom::Vec2;
+use forja_geom::Vec2;
 
 use super::{ShxFont, ShxGlyph, ShxKind};
 

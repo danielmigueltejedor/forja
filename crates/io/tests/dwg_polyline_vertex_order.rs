@@ -8,8 +8,8 @@
 
 use acadrust::entities::{EntityType, Polyline3D, Vertex3DPolyline};
 use acadrust::types::{DxfVersion, Handle, Vector3};
-use cadcraft_doc::EntityKind;
-use cadcraft_geom::Vec3;
+use forja_doc::EntityKind;
+use forja_geom::Vec3;
 
 /// A drawing with one 6-vertex 3D polyline whose vertex handles are not ascending: the second
 /// vertex is the newest (highest) handle.
@@ -32,11 +32,11 @@ fn dwg_with_out_of_order_vertex_handles(version: DxfVersion) -> Vec<u8> {
     acadrust::DwgWriter::write_to_vec(&doc).expect("write the DWG")
 }
 
-/// Reads `dwg` through `cadcraft_io::read` and returns the points of its only 3D polyline, in the
+/// Reads `dwg` through `forja_io::read` and returns the points of its only 3D polyline, in the
 /// order the reader produced them; panics if the drawing cannot be read or holds no 3D polyline,
 /// since either would mean the test is no longer exercising vertex order.
 fn polyline3d_points(dwg: &[u8]) -> Vec<Vec3> {
-    let drawing = cadcraft_io::read(dwg, "x.dwg").expect("read the DWG");
+    let drawing = forja_io::read(dwg, "x.dwg").expect("read the DWG");
     let polyline = drawing.model.iter().find_map(|e| if let EntityKind::Polyline3d(p) = &e.kind { Some(p) } else { None });
     polyline.expect("one 3D polyline").points.clone()
 }

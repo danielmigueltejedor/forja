@@ -2,9 +2,9 @@
 //! (#2423): AutoCAD's WBLOCK of a 5-object symbol writes its layer, its style and the defaults,
 //! not the other 40 layers and 20 blocks of the drawing it came from.
 
-use cadcraft_engine::Session;
-use cadcraft_engine::cmd::file::{IoHooks, set_io};
-use cadcraft_engine::doc::Drawing;
+use forja_engine::Session;
+use forja_engine::cmd::file::{IoHooks, set_io};
+use forja_engine::doc::Drawing;
 use serde_json::{Value, json};
 
 #[path = "support/temp_dir.rs"]
@@ -145,7 +145,7 @@ fn purge_keeps_a_leaders_dimension_style() {
 /// style's cell style uses (from the review of #2621).
 #[test]
 fn purge_keeps_styles_used_by_multiline_and_table_styles() {
-    use cadcraft_engine::doc::{CellStyle, MLineElement, MLineStyle, TableStyle};
+    use forja_engine::doc::{CellStyle, MLineElement, MLineStyle, TableStyle};
     let mut s = Session::new();
     s.execute("linetype", &json!({ "load": "DASHED" })).unwrap();
     s.execute("style", &json!({ "name": "CELLTEXT" })).unwrap();

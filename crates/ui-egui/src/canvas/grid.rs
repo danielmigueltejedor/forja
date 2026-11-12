@@ -68,7 +68,7 @@ pub(super) fn draw_grid(app: &CadApp, p: &egui::Painter, xf: &Xf) {
 /// The isometric grid (SNAPSTYL 1): lines at 30°, 90° and 150° through the snap lattice, GRIDUNIT
 /// Y apart along the axes, coarsened while they would crowd closer than 8 pixels.
 fn draw_iso_grid(app: &CadApp, p: &egui::Painter, xf: &Xf) {
-    use cadcraft_engine::snap::iso;
+    use forja_engine::snap::iso;
     let t = Tokens::get();
     let s = app.session.drafting_settings();
     let mut d = s.gridunit.y.max(1e-12);
@@ -78,7 +78,7 @@ fn draw_iso_grid(app: &CadApp, p: &egui::Painter, xf: &Xf) {
         }
         d *= 5.0;
     }
-    let (origin, angle) = app.session.doc().map(cadcraft_engine::snap::grid_frame).unwrap_or((Vec2::ZERO, 0.0));
+    let (origin, angle) = app.session.doc().map(forja_engine::snap::grid_frame).unwrap_or((Vec2::ZERO, 0.0));
     let lines = iso::grid_lines(xf.world_bounds(), d, origin, angle, s.gridmajor);
     p.extend(
         lines.into_iter().map(|l| {
@@ -89,7 +89,7 @@ fn draw_iso_grid(app: &CadApp, p: &egui::Painter, xf: &Xf) {
 
 #[cfg(test)]
 mod grid_range_tests {
-    use cadcraft_geom::{Bounds2, Vec2};
+    use forja_geom::{Bounds2, Vec2};
 
     #[test]
     fn grid_index_ranges_survive_extreme_views() {

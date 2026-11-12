@@ -1,4 +1,4 @@
-use cadcraft_geom::Vec3;
+use forja_geom::Vec3;
 
 use super::{Entity, Handle, Mat3, Result, Session, Value, Vec2, bad, bool_or, erase_kept, f64_req, json, point_param, point_req, targets};
 
@@ -24,7 +24,7 @@ pub(crate) fn scale_entities(s: &mut Session, hs: &[Handle], base: Vec3, f: f64,
 /// An OLE2FRAME only translates or scales uniformly (its corners stay axis aligned): refuse any other `m` before anything
 /// changes, instead of reporting success and leaving the frame where it was.
 pub(crate) fn refuse_ole_frames(s: &Session, hs: &[Handle], m: &Mat3, copy: bool) -> Result<()> {
-    if cadcraft_doc::ole_frame_accepts(m) || !holds_ole_frame(s, hs, copy)? {
+    if forja_doc::ole_frame_accepts(m) || !holds_ole_frame(s, hs, copy)? {
         return Ok(());
     }
     Err(ole_refusal())
@@ -44,7 +44,7 @@ pub(crate) fn holds_ole_frame(s: &Session, hs: &[Handle], copy: bool) -> Result<
     Ok(hs.iter().any(|h| {
         d.entity(*h).is_some_and(|e| {
             let locked = !copy && d.layer(&e.common.layer).is_some_and(|l| l.locked);
-            !locked && matches!(&e.kind, cadcraft_doc::EntityKind::Unknown(u) if u.is_ole_frame())
+            !locked && matches!(&e.kind, forja_doc::EntityKind::Unknown(u) if u.is_ole_frame())
         })
     }))
 }
@@ -155,7 +155,7 @@ pub(super) fn run_mirror(s: &mut Session, p: &Value) -> Result<Value> {
     let hs = targets(s, p)?;
     let a = point_req("mirror", p, "p1")?;
     let b = point_req("mirror", p, "p2")?;
-    if a.near(b, cadcraft_geom::EPS) {
+    if a.near(b, forja_geom::EPS) {
         return Err(bad("mirror", "mirror line points coincide"));
     }
     let erase_src = bool_or(p, "erase", false);

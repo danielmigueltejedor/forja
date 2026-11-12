@@ -1,7 +1,7 @@
 //! Command-line INSERT: X/Y/Z scale prompts and the Basepoint/Scale/X/Y/Z/Rotate options (#245).
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::EntityKind;
+use forja_engine::Session;
+use forja_engine::doc::EntityKind;
 use serde_json::json;
 
 /// (x, y, x scale, y scale, rotation in degrees) of every block reference, in drawing order.
@@ -125,7 +125,7 @@ fn insert_options_match_autocad() {
     // instead of the origin, B7's call inserts 100 and 50 further on.
     let mut s = Session::new();
     block(&mut s, "B7", [612345.678, 2398765.432], 1.0);
-    s.cursor = cadcraft_engine::geom::Vec2::new(100.0, 50.0);
+    s.cursor = forja_engine::geom::Vec2::new(100.0, 50.0);
     s.cmdline("(command \"_.-INSERT\" \"B7\" \"_B\" '(612350.678 2398770.432) '(612365.678 2398775.432) 1 \"\" 0)").unwrap();
     assert_eq!(last_insert(&s), (115.0, 55.0, 1.0, 1.0, 1.0, 0.0));
 }

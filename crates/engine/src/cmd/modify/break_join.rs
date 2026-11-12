@@ -30,10 +30,10 @@ pub(crate) fn break_entity(s: &mut Session, h: Handle, p1: Vec2, p2: Vec2) -> Re
             let at3 = |t: f64| ln.at(t).to3(l.a.z + (l.b.z - l.a.z) * t);
             let mut v = Vec::new();
             if t1 > 1e-12 {
-                v.push(EntityKind::Line(cadcraft_doc::Line { a: l.a, b: at3(t1) }));
+                v.push(EntityKind::Line(forja_doc::Line { a: l.a, b: at3(t1) }));
             }
             if t2 < 1.0 - 1e-12 {
-                v.push(EntityKind::Line(cadcraft_doc::Line { a: at3(t2), b: l.b }));
+                v.push(EntityKind::Line(forja_doc::Line { a: at3(t2), b: l.b }));
             }
             v
         }
@@ -184,7 +184,7 @@ pub(crate) fn join(s: &mut Session, hs: &[Handle]) -> Result<Option<Handle>> {
             p: s.start(),
             bulge: match s {
                 Segment::Line(_) => 0.0,
-                Segment::Arc { arc, ccw } => cadcraft_geom::arc_to_bulge(if *ccw { arc.sweep() } else { -arc.sweep() }),
+                Segment::Arc { arc, ccw } => forja_geom::arc_to_bulge(if *ccw { arc.sweep() } else { -arc.sweep() }),
             },
             ..Default::default()
         })

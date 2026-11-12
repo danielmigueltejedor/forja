@@ -7,8 +7,8 @@ mod template;
 
 use std::sync::OnceLock;
 
-use cadcraft_doc::{Drawing, Format};
-pub use cadcraft_dxf::Version;
+use forja_doc::{Drawing, Format};
+pub use forja_dxf::Version;
 use serde_json::{Value, json};
 
 use super::{CommandSpec, EngineError, Interactive, always, bad, bool_or, find_command, ok, str_param};
@@ -30,7 +30,7 @@ const MAX_DRAWING_BYTES: usize = 512 << 20;
 const MAX_SCRIPT_BYTES: usize = 64 << 20;
 
 /// Plot a space to PDF bytes with JSON options (`{paper?, landscape?, fit?, lineweights?, …}`).
-pub type PlotHook = fn(&Drawing, &cadcraft_doc::Space, &Value) -> std::result::Result<Vec<u8>, String>;
+pub type PlotHook = fn(&Drawing, &forja_doc::Space, &Value) -> std::result::Result<Vec<u8>, String>;
 
 /// File format hooks (installed by the app so the engine stays I/O-agnostic and wasm-safe).
 pub struct IoHooks {
@@ -53,9 +53,9 @@ pub fn io() -> Option<&'static IoHooks> {
 /// (installed by the app with the DXF reader and writer, a lower layer).
 pub struct EntityCodec {
     /// The entity's type name and the groups of its record, without its `0` group.
-    pub groups: fn(&Drawing, &cadcraft_doc::Entity) -> (String, Vec<cadcraft_dxf::Tag>),
+    pub groups: fn(&Drawing, &forja_doc::Entity) -> (String, Vec<forja_dxf::Tag>),
     /// An entity from a type name and groups.
-    pub entity: fn(&str, &[cadcraft_dxf::Tag]) -> Option<(cadcraft_doc::Common, cadcraft_doc::EntityKind)>,
+    pub entity: fn(&str, &[forja_dxf::Tag]) -> Option<(forja_doc::Common, forja_doc::EntityKind)>,
 }
 
 static CODEC: OnceLock<EntityCodec> = OnceLock::new();
@@ -72,7 +72,7 @@ pub mod compare;
 
 /// Decode a raster image file (PNG, JPEG, BMP, TIFF) to pixels: installed by the app with the
 /// image reader, a lower layer.
-pub type ImageHook = fn(&[u8]) -> std::result::Result<cadcraft_doc::Raster, String>;
+pub type ImageHook = fn(&[u8]) -> std::result::Result<forja_doc::Raster, String>;
 
 static IMAGE: OnceLock<ImageHook> = OnceLock::new();
 
@@ -99,7 +99,7 @@ pub fn deliver() -> Option<DeliverHook> {
 }
 
 /// How a drawing file is written: its version (`None`: the drawing's own, `$ACADVER`), binary
-/// instead of ASCII DXF, and Windows fonts for Linux ones ([`cadcraft_doc::Drawing::portable_fonts`]).
+/// instead of ASCII DXF, and Windows fonts for Linux ones ([`forja_doc::Drawing::portable_fonts`]).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct SaveAs {
     pub version: Option<Version>,
@@ -166,7 +166,7 @@ fn write_bytes(s: &Session, cmd: &str, path: &str, opts: &SaveAs) -> Result<Vec<
         return Err(bad(cmd, "binary applies to DXF files only"));
     }
     // A drawing file is the drawing outside the Block Editor; an image is what is shown.
-    let d: &cadcraft_doc::Drawing = if is_drawing_file(path) { s.state()?.drawing() } else { s.doc()? };
+    let d: &forja_doc::Drawing = if is_drawing_file(path) { s.state()?.drawing() } else { s.doc()? };
     let copy = (opts.portable_fonts && is_drawing_file(path)).then(|| Drawing { portable_fonts: true, ..d.clone() });
     let d = copy.as_ref().unwrap_or(d);
     let r = if opts.version.is_none() && !opts.binary {
@@ -338,9 +338,9 @@ fn read_bytes(bytes: &[u8], name: &str, path: Option<String>) -> Result<ReadFile
     if let Some(dir) = path.as_deref().and_then(|p| std::path::Path::new(p).parent()) {
         // A bare file name is in the current folder.
         let dir = if dir.as_os_str().is_empty() { std::path::Path::new(".") } else { dir };
-        cadcraft_fonts::shx::add_drawing_dir(&std::path::absolute(dir).unwrap_or_else(|_| dir.to_path_buf()));
+        forja_fonts::shx::add_drawing_dir(&std::path::absolute(dir).unwrap_or_else(|_| dir.to_path_buf()));
     }
-    Ok(ReadFile { drawing, binary_dxf: cadcraft_dxf::is_binary(bytes), name: name.to_string(), path })
+    Ok(ReadFile { drawing, binary_dxf: forja_dxf::is_binary(bytes), name: name.to_string(), path })
 }
 
 fn add_read(s: &mut Session, drawing: Drawing, binary_dxf: bool, name: &str, path: Option<String>) -> usize {
@@ -445,7 +445,7 @@ fn save_as(s: &mut Session, cmd: &str, path: &str, opts: &SaveAs) -> Result<usiz
         let st = s.state_mut()?;
         st.binary_dxf = opts.binary;
         if let Some(v) = opts.version
-            && st.drawing().header.get("ACADVER").and_then(cadcraft_doc::HVal::as_str) != Some(v.code())
+            && st.drawing().header.get("ACADVER").and_then(forja_doc::HVal::as_str) != Some(v.code())
         {
             std::sync::Arc::make_mut(st.drawing_arc_mut()).header.set_str("ACADVER", v.code());
             st.saved = st.drawing().clone();
@@ -470,7 +470,7 @@ fn store(path: &str, bytes: &[u8]) -> Result<()> {
                 .map_err(|e| bad("save", format!("{path}: the backup copy could not be written ({e}); nothing was saved")))?;
         }
         // Exclusively create a fresh temporary file and rename it over `path`, so a planted
-        // `<path>.cadcraft-tmp` symlink cannot redirect the write onto another file (CWE-59).
+        // `<path>.forja-tmp` symlink cannot redirect the write onto another file (CWE-59).
         crate::atomic_write::write_atomic_making_folders(std::path::Path::new(path), bytes).map_err(|e| bad("save", format!("{path}: {e}")))
     }
     #[cfg(target_arch = "wasm32")]
@@ -503,7 +503,7 @@ pub fn backup_path(path: &std::path::Path) -> std::path::PathBuf {
 pub fn looks_like_drawing(bytes: &[u8]) -> bool {
     // DWG: a version tag like `AC1032` (R12 is `AC1009`).
     let dwg = bytes.len() >= 6 && bytes.starts_with(b"AC") && bytes[2..6].iter().all(|b| b.is_ascii_digit());
-    if dwg || cadcraft_dxf::is_binary(bytes) {
+    if dwg || forja_dxf::is_binary(bytes) {
         return true;
     }
     // ASCII DXF: optional comments (999), then group 0 SECTION.
@@ -533,7 +533,7 @@ pub fn completeness(head: &[u8], tail: &[u8], len: u64) -> Option<bool> {
         // Too short for any DWG's header: cut off, not unknown.
         return if head.len() < 256 { Some(false) } else { dwg_complete(head, len) };
     }
-    if cadcraft_dxf::is_binary(head) {
+    if forja_dxf::is_binary(head) {
         return Some(tail.ends_with(b"EOF\0"));
     }
     let text = String::from_utf8_lossy(tail);
@@ -723,7 +723,7 @@ fn drawing_version(s: &Session, path: &str) -> Version {
     let v = s
         .state()
         .ok()
-        .and_then(|st| st.drawing().header.get("ACADVER").and_then(cadcraft_doc::HVal::as_str).and_then(Version::for_acadver))
+        .and_then(|st| st.drawing().header.get("ACADVER").and_then(forja_doc::HVal::as_str).and_then(Version::for_acadver))
         .unwrap_or_default();
     if is_dxf(path) { v } else { v.max(Version::R2004) }
 }
@@ -759,12 +759,12 @@ fn run_bytes(s: &mut Session, p: &Value) -> Result<Value> {
     Ok(r)
 }
 
-/// Entities a DXF or DWG file doesn't keep: those of object types CADCraft doesn't model
+/// Entities a DXF or DWG file doesn't keep: those of object types Forja doesn't model
 /// (3DSOLID, MULTILEADER… read from other programs' files and kept in the drawing, but
 /// not written), counted by DXF type across model space, layouts and block definitions. Saved
 /// at the drawing's own version; see [`not_saved_as`].
 pub fn not_saved(d: &Drawing) -> std::collections::BTreeMap<String, usize> {
-    let v = d.header.get("ACADVER").and_then(cadcraft_doc::HVal::as_str).and_then(Version::for_acadver).unwrap_or_default();
+    let v = d.header.get("ACADVER").and_then(forja_doc::HVal::as_str).and_then(Version::for_acadver).unwrap_or_default();
     not_saved_as(d, v)
 }
 
@@ -772,7 +772,7 @@ pub fn not_saved(d: &Drawing) -> std::collections::BTreeMap<String, usize> {
 /// store section, which is written back with the drawing (`Foreign::data_store`).
 const MODELER_TYPES: [&str; 3] = ["3DSOLID", "REGION", "BODY"];
 
-/// Entity types CADCraft doesn't model that the DWG bridge writes all the same: acadrust reads
+/// Entity types Forja doesn't model that the DWG bridge writes all the same: acadrust reads
 /// them from our DXF into entities of its own and writes them to DWG of every version we save,
 /// an OLE object with its frame and its embedded object's bytes unchanged. Matched exactly: the
 /// bridge gets the type as stored, and acadrust knows only this spelling of it.
@@ -788,11 +788,11 @@ pub fn not_saved_as(d: &Drawing, version: Version) -> std::collections::BTreeMap
     let stored = if version >= Version::R2013 { d.foreign.data_store_entities() } else { Default::default() };
     let stores = std::iter::once(&d.model).chain(d.layouts.iter().map(|l| &l.entities)).chain(d.blocks.values().map(|b| &b.entities));
     for e in stores.flat_map(|s| s.iter()) {
-        if let cadcraft_doc::EntityKind::Unknown(u) = &e.kind {
+        if let forja_doc::EntityKind::Unknown(u) = &e.kind {
             // A DWG before 2013 writes a solid's SAT text as it is; from 2013 the geometry has to be
             // in the data store, and SAT text alone is lost (#2334).
             if MODELER_TYPES.iter().any(|t| u.dxf_type.eq_ignore_ascii_case(t))
-                && (stored.contains(&e.handle) || (version < Version::R2013 && cadcraft_doc::foreign::has_sat_text(&u.tags)))
+                && (stored.contains(&e.handle) || (version < Version::R2013 && forja_doc::foreign::has_sat_text(&u.tags)))
             {
                 continue;
             }
@@ -836,7 +836,7 @@ pub fn loss_on_save(s: &Session, path: &str) -> std::collections::BTreeMap<Strin
     let version = drawing_version(s, path);
     if is_dxf_file(path) && version >= Version::R2013 {
         // The drawing a file holds: the host while the Block Editor is open.
-        return s.state().map(|st| cadcraft_doc::foreign::sat_text_dropped(st.drawing())).unwrap_or_default();
+        return s.state().map(|st| forja_doc::foreign::sat_text_dropped(st.drawing())).unwrap_or_default();
     }
     if !drops_unknown(path) {
         return Default::default();
@@ -876,7 +876,7 @@ fn is_dxf_file(path: impl AsRef<std::path::Path>) -> bool {
 /// they hold SAT-text ACIS data, which such files keep in a data store instead (#2334).
 fn report_sat_text_dropped(s: &mut Session, r: &mut Value) {
     // The drawing a file holds: the host while the Block Editor is open.
-    let lost = s.state().map(|st| cadcraft_doc::foreign::sat_text_dropped(st.drawing())).unwrap_or_default();
+    let lost = s.state().map(|st| forja_doc::foreign::sat_text_dropped(st.drawing())).unwrap_or_default();
     if lost.is_empty() {
         return;
     }
@@ -946,7 +946,7 @@ fn save_reporting(s: &mut Session, p: &Value, run: fn(&mut Session, &Value) -> R
 /// result, and at the command line when the list changed since the last save. Styles from an xref
 /// (`XREF|name`) aren't saved: AutoCAD takes them from the xref.
 fn report_fonts(s: &mut Session, r: &mut Value) {
-    use cadcraft_fonts::windows::{missing_on_windows, windows_font, written_font};
+    use forja_fonts::windows::{missing_on_windows, windows_font, written_font};
     let portable = r.get("portableFonts").and_then(Value::as_bool).unwrap_or(false);
     let Ok(d) = s.state().map(|st| st.drawing()) else { return };
     let fonts: Vec<(String, String)> = d

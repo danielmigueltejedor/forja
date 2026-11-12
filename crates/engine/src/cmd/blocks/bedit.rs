@@ -6,7 +6,7 @@
 //! saved or discarded first (asked at the command line; `save` in JSON).
 //! The state is [`crate::blockedit`].
 
-use cadcraft_doc::{Drawing, EntityKind, Handle};
+use forja_doc::{Drawing, EntityKind, Handle};
 use serde_json::{Value, json};
 
 use crate::cmd::curves::{KW, handle_value};

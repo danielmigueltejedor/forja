@@ -1,10 +1,10 @@
 //! A layout keeps its limits (LAYOUT groups 10/11) and its page's paper image origin
 //! (groups 148/149) through a DXF and a DWG save, as the file had them, so another program puts
-//! the sheet back where it was (#2109). A layout CADCraft made writes the defaults as before.
+//! the sheet back where it was (#2109). A layout Forja made writes the defaults as before.
 
-use cadcraft_doc::geom::Vec2;
-use cadcraft_doc::{Drawing, Layout};
-use cadcraft_io::{SaveOptions, Version, read, read_dxf, write_dxf, write_with};
+use forja_doc::geom::Vec2;
+use forja_doc::{Drawing, Layout};
+use forja_io::{SaveOptions, Version, read, read_dxf, write_dxf, write_with};
 
 /// A drawing whose layout has the limits and image origin of the ZWCAD file in #2109.
 fn drawing() -> Drawing {
@@ -57,7 +57,7 @@ fn a_new_layout_writes_the_defaults() {
     assert!(after("148").iter().all(|v| v.parse::<f64>() == Ok(0.0)), "{:?}", after("148"));
     let back = read_dxf(text.as_bytes()).expect("reopen");
     let l = back.layouts.first().expect("a layout");
-    // The defaults read back as none, so a drawing CADCraft made round-trips unchanged.
+    // The defaults read back as none, so a drawing Forja made round-trips unchanged.
     assert_eq!((l.limits, l.page.image_origin), (None, None));
     let limits = (after("10"), after("11"));
     assert!(limits.0.iter().any(|v| v.parse::<f64>() == Ok(0.0)) && limits.1.iter().any(|v| v.parse::<f64>() == Ok(12.0)), "{limits:?}");

@@ -17,7 +17,7 @@ set -euo pipefail
 # shellcheck source=../env.sh
 . "$(dirname "${BASH_SOURCE[0]}")/../env.sh"
 HERE="$ROOT/packaging/linux"
-APP_ID=ai.storyteller.forja
+APP_ID=dev.danielmiguelt.Forja
 
 SKIP_BUILD=0
 FORMATS="appimage deb rpm tar"
@@ -39,7 +39,7 @@ case "$ARCH" in
   aarch64 | arm64) ARCH=aarch64; DEB_ARCH=arm64 ;;
   *) echo "unsupported architecture $ARCH" >&2; exit 2 ;;
 esac
-export CADCRAFT_MAINTAINER="${CADCRAFT_MAINTAINER:-Forja maintainers <forja@storyteller.ai>}"
+export FORJA_MAINTAINER="${FORJA_MAINTAINER:-Nodalia <https://github.com/danielmigueltejedor/forja/issues>}"
 BASENAME="forja-$VERSION-linux-$ARCH"
 
 echo "==> Forja $VERSION for Linux $ARCH ($FORMATS)"
@@ -68,7 +68,7 @@ install -Dm755 "$BIN/forja-cli" "$STAGE/usr/bin/forja-cli"
 install -Dm644 "$HERE/$APP_ID.desktop" "$STAGE/usr/share/applications/$APP_ID.desktop"
 install -Dm644 "$HERE/$APP_ID.mime.xml" "$STAGE/usr/share/mime/packages/$APP_ID.xml"
 mkdir -p "$STAGE/usr/share/metainfo"
-sed -e "s/@VERSION@/$VERSION/g" -e "s/@DATE@/$CADCRAFT_BUILD_DATE/g" \
+sed -e "s/@VERSION@/$VERSION/g" -e "s/@DATE@/$FORJA_BUILD_DATE/g" \
   "$HERE/$APP_ID.metainfo.xml.in" >"$STAGE/usr/share/metainfo/$APP_ID.metainfo.xml"
 mkdir -p "$STAGE/usr/share/icons"
 cp -R "$ROOT/assets/app-icon/hicolor" "$STAGE/usr/share/icons/"

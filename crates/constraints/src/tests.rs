@@ -1,5 +1,5 @@
-use cadcraft_doc::{Arc as DArc, Circle as DCircle, Common, DistAxis, EntityKind, Line as DLine, LwPolyline, Point as DPoint, Space, Sub};
-use cadcraft_geom::{PolyVertex, Vec3};
+use forja_doc::{Arc as DArc, Circle as DCircle, Common, DistAxis, EntityKind, Line as DLine, LwPolyline, Point as DPoint, Space, Sub};
+use forja_geom::{PolyVertex, Vec3};
 
 use super::*;
 
@@ -317,7 +317,7 @@ fn invalid_references_and_purge() {
     let c = circle(&mut d, (0.0, 5.0), 1.0);
     let t = add_e(
         &mut d,
-        EntityKind::Text(cadcraft_doc::Text {
+        EntityKind::Text(forja_doc::Text {
             insert: v(0.0, 0.0),
             align_pt: None,
             height: 1.0,
@@ -496,15 +496,15 @@ fn next_name_skips_names_in_use() {
     let mut d = Drawing::default();
     assert_eq!(next_name(&d, ConstraintKind::Radius), "rad1");
     for i in (1..=20_000).filter(|i| *i != 15_000) {
-        d.parametric.parameters.push(cadcraft_doc::Parameter { name: format!("d{i}"), expr: "1".into(), description: String::new() });
+        d.parametric.parameters.push(forja_doc::Parameter { name: format!("d{i}"), expr: "1".into(), description: String::new() });
     }
     assert_eq!(next_name(&d, ConstraintKind::Distance(DistAxis::Aligned)), "d15000");
-    d.parametric.parameters.push(cadcraft_doc::Parameter { name: "d15000".into(), expr: "1".into(), description: String::new() });
+    d.parametric.parameters.push(forja_doc::Parameter { name: "d15000".into(), expr: "1".into(), description: String::new() });
     assert_eq!(next_name(&d, ConstraintKind::Distance(DistAxis::Aligned)), "d20001");
     // A differently spelled suffix does not occupy the plain name.
     let mut d = Drawing::default();
     for name in ["d01", "d+1", "d1x", "D1"] {
-        d.parametric.parameters.push(cadcraft_doc::Parameter { name: name.into(), expr: "1".into(), description: String::new() });
+        d.parametric.parameters.push(forja_doc::Parameter { name: name.into(), expr: "1".into(), description: String::new() });
     }
     assert_eq!(next_name(&d, ConstraintKind::Distance(DistAxis::Aligned)), "d1");
     d.constraints.push(Constraint {

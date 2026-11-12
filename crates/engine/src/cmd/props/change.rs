@@ -32,8 +32,8 @@
 
 use std::collections::{HashSet, VecDeque};
 
-use cadcraft_doc::{Attrib, EntityKind, HAlign, Handle, Text};
-use cadcraft_geom::{Mat3, Vec2, Vec3};
+use forja_doc::{Attrib, EntityKind, HAlign, Handle, Text};
+use forja_geom::{Mat3, Vec2, Vec3};
 use serde_json::{Value, json};
 
 use super::super::machines::{SelOutcome, SelectPhase, number};
@@ -229,7 +229,7 @@ fn set_rotation(s: &mut Session, h: Handle, angle: f64) -> Result<()> {
             let m = Mat3::rotate_about(i.insert.xy(), angle - i.rotation);
             e.kind.transform(&m);
         } else if let Some(t) = text_of_mut(&mut e.kind) {
-            t.rotation = cadcraft_geom::norm_angle(angle);
+            t.rotation = forja_geom::norm_angle(angle);
         }
     })?;
     Ok(())

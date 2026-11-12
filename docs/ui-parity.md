@@ -2,7 +2,7 @@
 
 > **Last reviewed:** 2026-10-10 · **Last updated:** 2026-10-27 · **Change:** minor (WIPEOUT closure-aware grips; previously: re-audit of the evidence text against main 41d9b5e95: point entry, tracking, Dynamic Input, grips, scripts, views; percentages not re-measured; previously: distinct polyline midpoint grips) · **Target:** Autodesk AutoCAD 2027 for Mac (26.0)
 
-How CADCraft's interaction compares with AutoCAD's: point entry, object snaps, tracking, dynamic
+How Forja's interaction compares with AutoCAD's: point entry, object snaps, tracking, dynamic
 input, grips, selection, the command line, chrome and navigation. A drafter's speed in AutoCAD
 comes from these, so "the command exists" isn't enough: it has to accept the same input, snap to
 the same points and respond to the same keys. Work items: [gaps.md](gaps.md#uiux).
@@ -17,7 +17,7 @@ percentages below are from 2026-10-11 and were not re-measured. Remaining: **≈
 
 ## How this was measured
 
-- CADCraft: read from the source on 2026-10-10 (main at bd2412f): `crates/engine/src/{prompt,
+- Forja: read from the source on 2026-10-10 (main at bd2412f): `crates/engine/src/{prompt,
   snap, select, grips, lib, units}.rs`, `cmd/*`, `crates/ui-egui/src/*`. Not run in this pass.
 - AutoCAD: behaviour observed black-box in the running AutoCAD 2027 for Mac
   (`plan/autocad/01-observed-ui.md`, local only, with reference screenshots that are never
@@ -26,7 +26,7 @@ percentages below are from 2026-10-11 and were not re-measured. Remaining: **≈
   polar 10%, dynamic input 10%, grips 10%, selection 10%, command line 10%, chrome and palettes
   10%, navigation 5%, keyboard and context menus 5%.
 
-| Area | Weight | CADCraft | Weighted |
+| Area | Weight | Forja | Weighted |
 |---|---:|---:|---:|
 | Point entry | 15% | 45% | 6.8 |
 | Object snaps | 15% | 45% | 6.8 |
@@ -42,7 +42,7 @@ percentages below are from 2026-10-11 and were not re-measured. Remaining: **≈
 
 ## Point entry (≈ 45%)
 
-| Input | AutoCAD | CADCraft | Evidence |
+| Input | AutoCAD | Forja | Evidence |
 |---|---|---|---|
 | `x,y[,z]`, `@dx,dy`, `@d<a`, `d<a`, `#x,y`, bare `@` | yes | yes; `#` equals absolute because there is no UCS; Z parsed then discarded | `prompt.rs:147-180` |
 | `*x,y` (WCS override) | yes | yes (`*x,y`, `*@dx,dy`, `@*dx,dy`); the same as the plain forms because there is no UCS | `prompt.rs` |
@@ -59,7 +59,7 @@ percentages below are from 2026-10-11 and were not re-measured. Remaining: **≈
 
 ## Object snaps (≈ 45%)
 
-| Mode | AutoCAD | CADCraft (`snap.rs:135-334`) |
+| Mode | AutoCAD | Forja (`snap.rs:135-334`) |
 |---|---|---|
 | Endpoint | every curve, solid/3D vertices, dimension ends | lines, arcs, polyline segments, open ellipses and splines, ray base, solid/trace corners |
 | Midpoint | every curve incl. ellipse/spline arcs, polyline segments | segments only; **none on circles, ellipses, splines** |
@@ -83,7 +83,7 @@ percentages below are from 2026-10-11 and were not re-measured. Remaining: **≈
 
 ## Tracking, polar, ortho, grid and snap (≈ 70%)
 
-| Feature | AutoCAD | CADCraft |
+| Feature | AutoCAD | Forja |
 |---|---|---|
 | Ortho (F8) | yes, Shift overrides it while held | yes; holding Shift turns it on or off while held (`Session::snap_cursor`, `snap/tracking.rs`) |
 | Polar tracking increment | yes | yes, measured from ANGBASE; dotted path and "Polar: d < a°" tooltip (`snap/tracking.rs`, `canvas.rs` `draw_tracking`) |
@@ -101,7 +101,7 @@ percentages below are from 2026-10-11 and were not re-measured. Remaining: **≈
 AutoCAD's heads-up input (F12) has editable pointer-input fields (x, y), dimensional input
 fields (length and angle) with Tab between them and lock icons, relative-by-default second
 points, dimensional input on grips, a prompt with clickable options and a down-arrow menu.
-CADCraft has pointer input boxes since #60 (`crates/ui-egui/src/dyninput.rs`): value boxes
+Forja has pointer input boxes since #60 (`crates/ui-egui/src/dyninput.rs`): value boxes
 beside the cursor while a command asks for a point; second and later points default to polar
 distance and angle (DYNPIFORMAT = 1 for Cartesian); `,` and `<` lock a value and move to the next
 box; Tab types the separator; Enter sends a relative entry (DYNPICOORDS = 1 for absolute) and
@@ -113,7 +113,7 @@ dimensions are edited).
 
 ## Grips (≈ 40%)
 
-| Feature | AutoCAD | CADCraft |
+| Feature | AutoCAD | Forja |
 |---|---|---|
 | Stretch grips per object type | yes | lines (midpoint moves), arcs (start/mid/end), ellipses (axes), polylines (vertices; segment midpoints move or reshape the bulge), dimensions (text and definition points), MLEADER, viewport, wipeout (one grip per logical corner, including coincident corners; an explicit closing marker follows the first vertex), spline (`grips.rs`) |
 | Text/MText grips | position, width, column grips | move the whole object |
@@ -127,7 +127,7 @@ dimensions are edited).
 
 ## Selection (≈ 40%)
 
-| Feature | AutoCAD | CADCraft |
+| Feature | AutoCAD | Forja |
 |---|---|---|
 | Pick, implied window (left→right) and crossing (right→left) | yes | yes, coloured and dashed rectangles (`lib.rs:576-589`, `canvas.rs:823-836`), filled as SELECTIONAREA, WINDOWAREACOLOR, CROSSINGAREACOLOR and SELECTIONAREAOPACITY say (Visual Effect Settings) |
 | Keywords W, C, WP, CP, F, BOX, AU, SI, M, G (group), CL (class) | yes | yes except CLass: W, C, F, WP, CP (#226); BOX, AUto, SIngle, Multiple, Group, Add, Remove, Undo (#428); ALL, Last, Previous |
@@ -143,7 +143,7 @@ dimensions are edited).
 
 ## Command line (≈ 60%)
 
-| Feature | AutoCAD | CADCraft |
+| Feature | AutoCAD | Forja |
 |---|---|---|
 | AutoComplete (commands, sysvars, mid-string, synonyms) | yes | command list with Tab to accept (`cmdline.rs:30,176,317`); no sysvar or mid-string search confirmed |
 | Aliases | about 250 in `acad.pgp` | 144 aliases across the commands (counted from source) |
@@ -158,7 +158,7 @@ dimensions are edited).
 
 ## Chrome and palettes (≈ 45%)
 
-| Feature | AutoCAD for Mac | CADCraft |
+| Feature | AutoCAD for Mac | Forja |
 |---|---|---|
 | Menu bar | 11 menus, 491 leaf items | same 11 menus; 245/491 items covered at the 2026-10-10 re-measure, not re-measured since (the generated checklist now reads 298/491, engine commands only; 233 by `cargo xtask parity`, which counts engine commands only, plus 12 UI-only items: see [parity-checklist.md](parity-checklist.md)); once a menu is open, pointing at another title opens that menu (#1567) |
 | Tool Bar, File tabs, Start tab, layout tabs | yes | yes |
@@ -178,7 +178,7 @@ dimensions are edited).
 
 ## Navigation (≈ 55%)
 
-| Feature | AutoCAD | CADCraft |
+| Feature | AutoCAD | Forja |
 |---|---|---|
 | ZOOM Extents, All, Window, Previous, In/Out, Center, Scale, Object | yes | yes, 50-entry history (`cmd/view.rs:107-149`) |
 | ZOOM Realtime (drag), Dynamic | yes | yes (`zoom.realtime`, `zoom.dynamic`, `cmd/view.rs`) |

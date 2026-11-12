@@ -1,5 +1,5 @@
 //! What happens when the interface panics. Commands already run under their own guard
-//! (`cadcraft_engine::guard`); this one covers the rest of the frame, so a panic in a panel keeps
+//! (`forja_engine::guard`); this one covers the rest of the frame, so a panic in a panel keeps
 //! the user's work: every drawing with unsaved changes is autosaved at once and the app says so.
 //! A panic that keeps coming back leaves a plain window that only closes, with the recovery copies
 //! kept for the next start. A panic hook writes a report for each, which stays on this machine.
@@ -91,7 +91,7 @@ fn notice(app: &mut CadApp, ctx: &egui::Context) {
     let Some(message) = app.fault.message.clone() else { return };
     let t = Tokens::get();
     let mut dismiss = false;
-    egui::Window::new("Internal error")
+    crate::ndl_window::Window::new("Internal error")
         .id(egui::Id::unique("cc_fault_notice"))
         .collapsible(false)
         .resizable(false)
@@ -118,7 +118,7 @@ fn notice(app: &mut CadApp, ctx: &egui::Context) {
 /// All that's left once the interface keeps panicking.
 fn broken_window(app: &CadApp, ctx: &egui::Context) {
     let t = Tokens::get();
-    egui::Window::new("Forja has to close")
+    crate::ndl_window::Window::new("Forja has to close")
         .id(egui::Id::unique("cc_fault_broken"))
         .collapsible(false)
         .resizable(false)
@@ -212,7 +212,7 @@ mod report {
         let _ = writeln!(text, "Message: {}", info.payload_as_str().unwrap_or("(not text)"));
         let _ = writeln!(text, "\n{}", std::backtrace::Backtrace::force_capture());
         let path = dir.join(format!("crash-{:012x}-{}.txt", now.as_millis(), std::process::id()));
-        cadcraft_engine::atomic_write::write_atomic(&path, text.as_bytes())?;
+        forja_engine::atomic_write::write_atomic(&path, text.as_bytes())?;
         prune(dir);
         Ok(path)
     }

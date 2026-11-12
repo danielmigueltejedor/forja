@@ -5,7 +5,7 @@ use crate::Session;
 use crate::cmd::file::{EntityCodec, set_entity_codec};
 
 pub(super) fn session() -> Session {
-    set_entity_codec(EntityCodec { groups: cadcraft_io::entity_groups, entity: cadcraft_io::entity_from_groups });
+    set_entity_codec(EntityCodec { groups: forja_io::entity_groups, entity: forja_io::entity_from_groups });
     Session::new()
 }
 
@@ -332,7 +332,7 @@ fn command_draws_and_one_routine_is_one_undo_step() {
     // An expression at a command's prompt answers it.
     s.cmdline("CIRCLE 0,0 (* 2 dist)").unwrap();
     let r = s.doc().unwrap().model.iter().find_map(|e| match &e.kind {
-        cadcraft_doc::EntityKind::Circle(c) if c.center.x == 0.0 && c.center.y == 0.0 => Some(c.radius),
+        forja_doc::EntityKind::Circle(c) if c.center.x == 0.0 && c.center.y == 0.0 => Some(c.radius),
         _ => None,
     });
     assert_eq!(r, Some(15.0));
@@ -381,7 +381,7 @@ fn entity_lists_hold_angles_in_radians() {
     // entmod takes radians.
     ok(&mut s, "(setq d (entget (entlast))) (entmod (subst (cons 51 pi) (assoc 51 d) d))");
     let end = s.doc().unwrap().model.iter().find_map(|e| match &e.kind {
-        cadcraft_doc::EntityKind::Arc(a) => Some(a.end),
+        forja_doc::EntityKind::Arc(a) => Some(a.end),
         _ => None,
     });
     assert!(end.is_some_and(|a| (a - std::f64::consts::PI).abs() < 1e-9), "{end:?}");
@@ -389,7 +389,7 @@ fn entity_lists_hold_angles_in_radians() {
     // TEXT rotation (50) and oblique angle (51), through entmake.
     ok(&mut s, "(entmake (list '(0 . \"TEXT\") '(10 0.0 0.0 0.0) '(40 . 2.5) '(1 . \"abc\") (cons 50 (/ pi 6)) '(51 . 0.25)))");
     let text = s.doc().unwrap().model.iter().find_map(|e| match &e.kind {
-        cadcraft_doc::EntityKind::Text(t) => Some((t.rotation, t.oblique)),
+        forja_doc::EntityKind::Text(t) => Some((t.rotation, t.oblique)),
         _ => None,
     });
     assert!(text.is_some_and(|(r, o)| (r - std::f64::consts::FRAC_PI_6).abs() < 1e-9 && (o - 0.25).abs() < 1e-9), "{text:?}");
@@ -408,7 +408,7 @@ fn entity_lists_hold_angles_in_radians() {
         "(entmake (list '(0 . \"MTEXT\") '(10 0.0 0.0 0.0) '(40 . 2.5) '(41 . 10.0) '(1 . \"abc\") (cons 50 (/ pi 3)) '(75 . 2) '(76 . 2) '(79 . 0) '(48 . 10.0) '(49 . 1.0) '(50 . 2.0) '(50 . 30.0) '(50 . 20.0)))",
     );
     let mtext = s.doc().unwrap().model.iter().find_map(|e| match &e.kind {
-        cadcraft_doc::EntityKind::MText(t) => Some((t.rotation, t.columns.as_ref().map(|c| c.heights.clone()))),
+        forja_doc::EntityKind::MText(t) => Some((t.rotation, t.columns.as_ref().map(|c| c.heights.clone()))),
         _ => None,
     });
     assert!(
@@ -496,9 +496,9 @@ fn interactive_routine_waits_for_the_user() {
     s.cmdline("PT").unwrap();
     assert!(s.lisp_running());
     assert_eq!(s.prompt_text(), "Where: ");
-    s.input(crate::Input::Point(cadcraft_geom::Vec2::new(3.0, 4.0))).unwrap();
+    s.input(crate::Input::Point(forja_geom::Vec2::new(3.0, 4.0))).unwrap();
     assert!(!s.lisp_running());
-    assert!(s.doc().unwrap().model.iter().any(|e| matches!(&e.kind, cadcraft_doc::EntityKind::Circle(c) if c.center.x == 3.0 && c.center.y == 4.0)));
+    assert!(s.doc().unwrap().model.iter().any(|e| matches!(&e.kind, forja_doc::EntityKind::Circle(c) if c.center.x == 3.0 && c.center.y == 4.0)));
     // Typed answers and keywords.
     s.cmdline("(progn (initget 1 \"Yes No\") (setq ans (getkword \"\\nSure? [Yes/No]: \")))").unwrap();
     s.cmdline("n").unwrap();
@@ -520,9 +520,9 @@ fn interactive_routine_waits_for_the_user() {
     // `pause` lets the user answer one prompt of a command.
     s.cmdline("(command \"_.CIRCLE\" pause 2)").unwrap();
     assert!(s.lisp_running());
-    s.input(crate::Input::Point(cadcraft_geom::Vec2::new(50.0, 50.0))).unwrap();
+    s.input(crate::Input::Point(forja_geom::Vec2::new(50.0, 50.0))).unwrap();
     assert!(!s.lisp_running());
-    assert!(s.doc().unwrap().model.iter().any(|e| matches!(&e.kind, cadcraft_doc::EntityKind::Circle(c) if c.center.x == 50.0 && c.radius == 2.0)));
+    assert!(s.doc().unwrap().model.iter().any(|e| matches!(&e.kind, forja_doc::EntityKind::Circle(c) if c.center.x == 50.0 && c.radius == 2.0)));
 }
 
 #[test]
@@ -532,11 +532,11 @@ fn getangle_is_relative_to_angbase() {
     s.cmdline("(setvar \"ANGBASE\" (/ pi 2))").unwrap();
     // A picked point at 180° in world terms is 90° from ANGBASE.
     s.cmdline("(setq a (getangle '(0 0)))").unwrap();
-    s.input(crate::Input::Point(cadcraft_geom::Vec2::new(-1.0, 0.0))).unwrap();
+    s.input(crate::Input::Point(forja_geom::Vec2::new(-1.0, 0.0))).unwrap();
     assert_eq!(to_text(&s.lisp_var("A"), true), "1.5708");
     // getorient ignores ANGBASE.
     s.cmdline("(setq o (getorient '(0 0)))").unwrap();
-    s.input(crate::Input::Point(cadcraft_geom::Vec2::new(-1.0, 0.0))).unwrap();
+    s.input(crate::Input::Point(forja_geom::Vec2::new(-1.0, 0.0))).unwrap();
     assert_eq!(to_text(&s.lisp_var("O"), true), "3.14159");
     // A typed angle is already measured from ANGBASE.
     s.cmdline("(setq t2 (getangle))").unwrap();
@@ -602,7 +602,7 @@ fn appload_and_load() {
 /// AutoCAD ran TRIM and EXTEND in Standard mode there.
 #[test]
 fn command_names_objects_at_prompts_picking_one() {
-    use cadcraft_doc::EntityKind;
+    use forja_doc::EntityKind;
     let near = |a: [f64; 2], b: [f64; 2]| (0..2).all(|i| (a[i] - b[i]).abs() <= 1e-9 * a[i].abs().max(1.0));
     // The drawing's points, lines and polyline widths after `forms`, each evaluated on its own.
     let run = |forms: &[&str]| {
@@ -680,14 +680,14 @@ fn command_names_objects_at_prompts_picking_one() {
 
 #[test]
 fn a_named_object_holds_for_its_own_input_in_its_own_space() {
-    use cadcraft_doc::Space;
+    use forja_doc::Space;
     let mut s = session();
     ok(&mut s, "(setq a (progn (entmake '((0 . \"LINE\") (10 0.0 0.0 0.0) (11 10.0 0.0 0.0))) (entlast)))");
     // BREAK takes A at (5,3), off the line; a later pick there finds nothing.
     ok(&mut s, "(command \"_.BREAK\" (list a '(5.0 3.0)))");
     assert!(s.prompt_text().contains("Specify second break point"), "{}", s.prompt_text());
     let model = s.space();
-    assert_eq!(s.pick_object(&model, cadcraft_geom::Vec2::new(5.0, 3.0), 0.5).unwrap(), None);
+    assert_eq!(s.pick_object(&model, forja_geom::Vec2::new(5.0, 3.0), 0.5).unwrap(), None);
     s.cancel();
     // A paper-space copy of A named in model space picks nothing, not A under its start.
     let p = {
@@ -703,7 +703,7 @@ fn a_named_object_holds_for_its_own_input_in_its_own_space() {
 
 #[test]
 fn appload_reads_a_lsp_path_and_reports_its_commands() {
-    let dir = std::env::temp_dir().join(format!("cadcraft-appload-lisp-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("forja-appload-lisp-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).unwrap();
     let path = dir.join("Tools.LSP");
@@ -742,7 +742,7 @@ fn appload_keeps_the_whitespace_of_a_relative_path() {
     }
     // A JSON call's path is read as it is given: a relative path whose folder starts with a
     // space names that folder, not the one its trimmed name would.
-    let dir = TempDir(std::path::PathBuf::from(format!(" cadcraft-appload-space-{}", std::process::id())));
+    let dir = TempDir(std::path::PathBuf::from(format!(" forja-appload-space-{}", std::process::id())));
     let _ = std::fs::remove_dir_all(&dir.0);
     std::fs::create_dir_all(&dir.0).unwrap();
     let path = dir.0.join("tools.lsp");
@@ -848,16 +848,16 @@ fn a_waiting_routine_is_a_prompt_with_a_rubber_band() {
     let current = s.current_prompt().unwrap();
     assert!(current.raw && current.display() == "Other corner: ");
     // getcorner drags a rectangle from its corner.
-    let band = s.preview(cadcraft_geom::Vec2::new(3.0, 2.0));
+    let band = s.preview(forja_geom::Vec2::new(3.0, 2.0));
     assert_eq!(band.len(), 4);
-    s.input(crate::Input::Point(cadcraft_geom::Vec2::new(3.0, 2.0))).unwrap();
+    s.input(crate::Input::Point(forja_geom::Vec2::new(3.0, 2.0))).unwrap();
     assert!(!s.prompting());
     // getpoint with a base point drags a line; without one, nothing.
     s.cmdline("(getpoint '(1 1))").unwrap();
-    assert_eq!(s.preview(cadcraft_geom::Vec2::new(4.0, 5.0)).len(), 1);
+    assert_eq!(s.preview(forja_geom::Vec2::new(4.0, 5.0)).len(), 1);
     s.cancel();
     s.cmdline("(getpoint)").unwrap();
-    assert!(s.preview(cadcraft_geom::Vec2::new(4.0, 5.0)).is_empty());
+    assert!(s.preview(forja_geom::Vec2::new(4.0, 5.0)).is_empty());
     s.cancel();
 }
 
@@ -871,7 +871,7 @@ fn a_leading_newline_ends_the_command_line_instead_of_adding_an_empty_one() {
 
 #[test]
 fn startup_files_load_from_the_support_folder() {
-    let dir = std::env::temp_dir().join(format!("cadcraft-lisp-startup-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("forja-lisp-startup-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).unwrap();
     std::fs::write(dir.join("acad.lsp"), "(defun c:fromacad () (princ \"acad\") (princ))").unwrap();
@@ -913,7 +913,7 @@ fn startup_files_load_from_the_support_folder() {
 
     // A drawing opened from a folder with its own acaddoc.lsp: only the support folder's runs.
     let path = drawings.join("plan.dxf").to_string_lossy().into_owned();
-    s.open_drawing(cadcraft_doc::Drawing::new_metric(), "plan.dxf", Some(path));
+    s.open_drawing(forja_doc::Drawing::new_metric(), "plan.dxf", Some(path));
     s.lisp_tick();
     assert_eq!(v(&s, "DOCVAR"), "1");
     assert!(s.lisp_var("EVIL").is_nil());
@@ -986,13 +986,13 @@ fn a_panic_inside_a_routine_ends_it_with_an_error() {
     let mut s = session();
     let n = |s: &Session| s.doc().unwrap().model.handles().len();
     let before = n(&s);
-    let e = eval(&mut s, "(entmake '((0 . \"LINE\") (10 0 0 0) (11 5 0 0))) (cadcraft-test-panic)").unwrap_err();
+    let e = eval(&mut s, "(entmake '((0 . \"LINE\") (10 0 0 0) (11 5 0 0))) (forja-test-panic)").unwrap_err();
     assert!(e.contains("internal error"), "{e}");
     assert_eq!(n(&s), before, "the drawing is put back");
     assert_eq!(ok(&mut s, "(+ 1 2)"), "3");
 
     // A routine carried on by the per-frame tick.
-    let r = s.lisp_eval("(repeat 500000 (setq i 1)) (cadcraft-test-panic)", false, false, Vec::new()).unwrap();
+    let r = s.lisp_eval("(repeat 500000 (setq i 1)) (forja-test-panic)", false, false, Vec::new()).unwrap();
     assert!(r.is_none(), "the routine gave the interface a frame");
     assert!(s.lisp_busy());
     for _ in 0..100 {
@@ -1034,7 +1034,7 @@ fn a_lisp_value_at_a_prompt_is_not_evaluated_again() {
     s.cmdline("(setq r \"4\")").unwrap();
     s.cmdline("circle 0,0 !r").unwrap();
     let r = s.doc().unwrap().model.iter().find_map(|e| match &e.kind {
-        cadcraft_doc::EntityKind::Circle(c) => Some(c.radius),
+        forja_doc::EntityKind::Circle(c) => Some(c.radius),
         _ => None,
     });
     assert_eq!(r, Some(4.0));

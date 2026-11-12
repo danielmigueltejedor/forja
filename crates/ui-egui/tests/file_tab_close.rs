@@ -2,12 +2,12 @@
 //! closes that drawing. It used to take the tab's hover, so the next frame dropped it and the one
 //! after drew it again: the tab and its X flickered.
 
-use cadcraft_engine::Session;
-use cadcraft_ui_egui::{CadApp, Services};
 use egui::accesskit::Role;
 use egui::vec2;
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
+use forja_engine::Session;
+use forja_ui_egui::{CadApp, Services};
 
 #[test]
 fn an_inactive_tabs_close_button_stays_under_the_pointer_and_closes_it() {

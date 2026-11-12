@@ -1,10 +1,10 @@
 //! CHANGE as AutoCAD 2024 runs it from AutoLISP's `command` (accoreconsole, every object read back
 //! with `entget`).
 
-use cadcraft_engine::Session;
-use cadcraft_engine::cmd::file::{EntityCodec, set_entity_codec};
-use cadcraft_engine::doc::EntityKind;
-use cadcraft_engine::doc::color::Color;
+use forja_engine::Session;
+use forja_engine::cmd::file::{EntityCodec, set_entity_codec};
+use forja_engine::doc::EntityKind;
+use forja_engine::doc::color::Color;
 use serde_json::json;
 
 /// The measured drawing, its objects named in LISP: lines `a` (0,0)–(50,0) and `b` (0,20)–(50,30)
@@ -13,7 +13,7 @@ use serde_json::json;
 /// `code`.
 fn run(code: &str) -> Session {
     // `entmake` and `entget` go through the DXF codec, as in the app.
-    set_entity_codec(EntityCodec { groups: cadcraft_io::entity_groups, entity: cadcraft_io::entity_from_groups });
+    set_entity_codec(EntityCodec { groups: forja_io::entity_groups, entity: forja_io::entity_from_groups });
     let mut s = Session::new();
     s.doc_mut().unwrap().ensure_layer("L1");
     for (v, made) in [
@@ -47,7 +47,7 @@ fn radius(s: &Session, i: usize) -> f64 {
     c.radius
 }
 
-fn text(s: &Session, i: usize) -> cadcraft_engine::doc::Text {
+fn text(s: &Session, i: usize) -> forja_engine::doc::Text {
     match kind(s, i) {
         EntityKind::Text(t) => t,
         EntityKind::AttDef(a) => a.text,

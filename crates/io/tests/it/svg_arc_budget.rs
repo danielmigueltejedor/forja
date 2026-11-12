@@ -1,7 +1,7 @@
 //! Reading an SVG whose paths flatten into a huge number of retained vertices must be rejected by
 //! the document-wide generated-geometry budget, not amplified into gigabytes (CWE-400, row 31).
 
-use cadcraft_io::read;
+use forja_io::read;
 
 /// A path with many elliptical-arc subpaths under a non-uniform group transform; each subpath
 /// flushes to its own retained polyline, so enough of them must exceed the document vertex budget.

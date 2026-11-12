@@ -2,13 +2,13 @@
 <!-- AppStream metadata (software centres, Flathub). Template: package.sh and the Flatpak
      manifest substitute @VERSION@ and @DATE@ from Cargo.toml and the build date. -->
 <component type="desktop-application">
-  <id>ai.storyteller.forja</id>
+  <id>dev.danielmiguelt.Forja</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT OR Apache-2.0</project_license>
   <name>Forja</name>
   <summary>Draft, dimension and plot 2D drawings</summary>
-  <developer id="ai.storyteller">
-    <name>Learning Machines LLC</name>
+  <developer id="dev.danielmiguelt">
+    <name>Nodalia</name>
   </developer>
   <description>
     <p>
@@ -17,8 +17,8 @@
       and DWG drawings, exports SVG and PNG, and can be driven by AI agents over MCP.
     </p>
   </description>
-  <launchable type="desktop-id">ai.storyteller.forja.desktop</launchable>
-  <icon type="stock">ai.storyteller.forja</icon>
+  <launchable type="desktop-id">dev.danielmiguelt.Forja.desktop</launchable>
+  <icon type="stock">dev.danielmiguelt.Forja</icon>
   <!-- Only url types known to appstream 0.15 (Ubuntu 22.04, where CI validates): no vcs-browser. -->
   <url type="homepage">https://getartcraft.com/apps/forja</url>
   <url type="bugtracker">https://github.com/danielmigueltejedor/forja/issues</url>

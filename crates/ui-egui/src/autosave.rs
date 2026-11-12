@@ -1,17 +1,17 @@
 //! Autosave and Drawing Recovery in the app. The engine decides what to write and writes it
-//! ([`cadcraft_engine::autosave`]); this runs it every frame, keeps SAVETIME, SAVEFILEPATH and ISAVEBAK with
+//! ([`forja_engine::autosave`]); this runs it every frame, keeps SAVETIME, SAVEFILEPATH and ISAVEBAK with
 //! the preferences, and shows the Drawing Recovery list after a crash: each autosaved drawing can
 //! be opened (as an unsaved copy) or discarded. On the web there is no autosave yet.
 
-use cadcraft_engine::autosave::{self, Recoverable};
 use egui::{RichText, vec2};
+use forja_engine::autosave::{self, Recoverable};
 use serde_json::{Value, json};
 
 use crate::CadApp;
 use crate::theme::Tokens;
 
 /// The host storage key for [`prefs_json`].
-pub const PREFS_KEY: &str = "cadcraft.autosave";
+pub const PREFS_KEY: &str = "forja.autosave";
 
 /// SAVETIME, SAVEFILEPATH and ISAVEBAK as JSON for the host's storage.
 pub fn prefs_json() -> String {
@@ -105,7 +105,7 @@ impl CadApp {
         #[cfg(not(target_arch = "wasm32"))]
         {
             // A write that fails while the app is idle must still reach the notice.
-            if self.autosave.as_ref().is_some_and(cadcraft_engine::autosave::Autosaver::results_pending) {
+            if self.autosave.as_ref().is_some_and(forja_engine::autosave::Autosaver::results_pending) {
                 _ctx.request_repaint_after(std::time::Duration::from_secs(1));
             }
             self.note_autosave_failure(_ctx);
@@ -253,7 +253,7 @@ pub fn gpu_notice(app: &mut CadApp, ctx: &egui::Context) {
     let Some(n) = &app.gpu_notice else { return };
     let t = Tokens::get();
     let mut dismiss = false;
-    egui::Window::new("Graphics error")
+    crate::ndl_window::Window::new("Graphics error")
         .id(egui::Id::unique("cc_gpu_notice"))
         .collapsible(false)
         .resizable(false)
@@ -295,7 +295,7 @@ pub fn failure_notice(app: &mut CadApp, ctx: &egui::Context) {
     let Some(n) = app.autosave_notice.as_ref().filter(|n| !n.dismissed) else { return };
     let t = Tokens::get();
     let mut dismiss = false;
-    egui::Window::new("Autosave failed")
+    crate::ndl_window::Window::new("Autosave failed")
         .id(egui::Id::unique("cc_autosave_notice"))
         .collapsible(false)
         .resizable(false)

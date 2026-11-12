@@ -1,4 +1,4 @@
-//! What survives DXF open → save → reopen of data CADCraft does not model (#528): unknown
+//! What survives DXF open → save → reopen of data Forja does not model (#528): unknown
 //! entities and objects, other applications' xdata, extension dictionaries, layer states, colour
 //! books, hyperlinks, DICTIONARYVAR objects, XRECORDs and persistent reactors. One test per item.
 //!
@@ -7,9 +7,9 @@
 
 use std::collections::HashMap;
 
-use cadcraft_doc::{Drawing, EntityKind};
-use cadcraft_dxf::{Tag, records, sections};
-use cadcraft_io::{SaveOptions, Version, read_dxf, write_dxf, write_with};
+use forja_doc::{Drawing, EntityKind};
+use forja_dxf::{Tag, records, sections};
+use forja_io::{SaveOptions, Version, read_dxf, write_dxf, write_with};
 
 /// DXF text from lines of `code value` (the value may be empty).
 fn dxf(src: &str) -> String {
@@ -565,7 +565,7 @@ struct Out {
 
 impl Out {
     fn new(text: &str) -> Out {
-        let tags = cadcraft_dxf::parse(text.as_bytes()).expect("parse written DXF");
+        let tags = forja_dxf::parse(text.as_bytes()).expect("parse written DXF");
         let mut recs = Vec::new();
         for s in sections(&tags) {
             for (k, t) in records(&s.tags) {
@@ -732,7 +732,7 @@ fn unknown_objects_in_named_and_nested_dictionaries_are_kept() {
         assert_eq!(s(obj, 1), "nested-object");
         assert_eq!(owner(obj), h(nested));
         assert!(o.of("CLASS").iter().any(|c| s(c, 1) == "ACME_OBJECT"), "ACME_OBJECT class");
-        // CADCraft's own dictionaries are not doubled.
+        // Forja's own dictionaries are not doubled.
         let keys: Vec<String> = entries(root).into_iter().map(|e| e.0).collect();
         for k in ["ACAD_GROUP", "ACAD_IMAGE_DICT"] {
             assert_eq!(keys.iter().filter(|x| *x == k).count(), 1, "{k} in {keys:?}");
@@ -898,7 +898,7 @@ fn class_records_have_instance_counts_from_2004_only() {
     // Binary files the same way: none at R2000, the count at 2018.
     let acme = |version: Version| {
         let bytes = write_with(&d, "x.dxf", &SaveOptions { version: Some(version), binary: true }).expect("save binary");
-        let tags = cadcraft_dxf::parse(&bytes).expect("parse binary");
+        let tags = forja_dxf::parse(&bytes).expect("parse binary");
         let class = sections(&tags)
             .into_iter()
             .filter(|sec| sec.name == "CLASSES")
@@ -927,7 +927,7 @@ fn class_records_have_instance_counts_from_2004_only() {
 #[test]
 fn erased_entities_take_their_extension_data_with_them() {
     let mut d = read_dxf(fixture().as_bytes()).expect("read");
-    let line = cadcraft_doc::Handle::parse_hex("2A").expect("handle");
+    let line = forja_doc::Handle::parse_hex("2A").expect("handle");
     d.remove_entity(line).expect("erase the line");
     let o = Out::new(&write_dxf(&d));
     assert!(o.handle("2A").is_none());
@@ -942,10 +942,10 @@ fn erased_entities_take_their_extension_data_with_them() {
 #[test]
 fn a_new_colour_drops_the_colour_book_name() {
     let mut d = read_dxf(fixture().as_bytes()).expect("read");
-    let line = cadcraft_doc::Handle::parse_hex("2A").expect("handle");
-    d.modify_entity(line, |e| e.common.color = cadcraft_color::Color::Index(3)).expect("recolour");
+    let line = forja_doc::Handle::parse_hex("2A").expect("handle");
+    d.modify_entity(line, |e| e.common.color = forja_color::Color::Index(3)).expect("recolour");
     if let Some(l) = d.layer_mut("WALLS") {
-        l.color = cadcraft_color::Color::Index(5);
+        l.color = forja_color::Color::Index(5);
     }
     let o = Out::new(&write_dxf(&d));
     assert_eq!(s(o.handle("2A").expect("line").1, 430), "");
@@ -990,7 +990,7 @@ fn hostile_raw_data_never_panics() {
 #[cfg(not(target_arch = "wasm32"))]
 #[test]
 fn dwg_keeps_extension_dictionaries_xrecords_and_entity_xdata() {
-    let via_dwg = |d: &Drawing| cadcraft_io::read(&cadcraft_io::write(d, "x.dwg").expect("write DWG"), "x.dwg").expect("read DWG");
+    let via_dwg = |d: &Drawing| forja_io::read(&forja_io::write(d, "x.dwg").expect("write DWG"), "x.dwg").expect("read DWG");
     let d = via_dwg(&via_dwg(&read_dxf(fixture().as_bytes()).expect("read fixture")));
     let o = Out::new(&write_dxf(&d));
     assert_eq!(o.dangling(), Vec::<String>::new());
@@ -1013,9 +1013,9 @@ fn dwg_keeps_extension_dictionaries_xrecords_and_entity_xdata() {
 
 /// A linear dimension whose two extension origins are snapped to `a` and `b`, so the saved file
 /// carries a DIMASSOC naming both objects.
-fn add_associated_dimension(d: &mut Drawing, a: cadcraft_doc::Handle, b: cadcraft_doc::Handle) {
-    use cadcraft_doc::{AssocSnap, Common, DimAssoc, DimKind, Dimension, Space};
-    use cadcraft_geom::Vec3;
+fn add_associated_dimension(d: &mut Drawing, a: forja_doc::Handle, b: forja_doc::Handle) {
+    use forja_doc::{AssocSnap, Common, DimAssoc, DimKind, Dimension, Space};
+    use forja_geom::Vec3;
     let at = |point: &str, handle| DimAssoc { point: point.into(), handle, snap: AssocSnap::Mid };
     let dm = Dimension {
         kind: DimKind::Linear { rotation: 0.0 },
@@ -1051,7 +1051,7 @@ fn dimassoc_handle(o: &Out) -> String {
 #[test]
 fn a_dimension_source_keeps_its_foreign_reactors_next_to_the_dimassoc() {
     let mut d = read_dxf(fixture().as_bytes()).expect("read fixture");
-    add_associated_dimension(&mut d, cadcraft_doc::Handle(0x2A), cadcraft_doc::Handle(0x2A));
+    add_associated_dimension(&mut d, forja_doc::Handle(0x2A), forja_doc::Handle(0x2A));
     let o = Out::new(&write_dxf(&d));
     let line = o.of("LINE").into_iter().find(|t| h(t).eq_ignore_ascii_case("2A")).expect("line 2A");
     assert_eq!(line.iter().filter(|t| t.code == 102 && t.str() == "{ACAD_REACTORS").count(), 1, "one reactor group");
@@ -1064,7 +1064,7 @@ fn a_dimension_source_keeps_its_foreign_reactors_next_to_the_dimassoc() {
 #[test]
 fn an_unknown_dimension_source_carries_the_dimassoc_reactor() {
     let mut d = read_dxf(fixture().as_bytes()).expect("read fixture");
-    add_associated_dimension(&mut d, cadcraft_doc::Handle(0x30), cadcraft_doc::Handle(0x2A));
+    add_associated_dimension(&mut d, forja_doc::Handle(0x30), forja_doc::Handle(0x2A));
     let o = Out::new(&write_dxf(&d));
     let widget = entity_by_text(&o, "ACME_WIDGET", "widget-in-model");
     let reactors = group(widget, "ACAD_REACTORS");
@@ -1112,7 +1112,7 @@ fn one_reactor_group(o: &Out, at: &str, assoc_only: bool) -> Vec<String> {
 #[test]
 fn a_record_with_a_reactor_group_gets_one_group_with_every_handle_once() {
     let mut d = read_dxf(fixture().as_bytes()).expect("read fixture");
-    add_associated_dimension(&mut d, cadcraft_doc::Handle(0x2A), cadcraft_doc::Handle(0x2A));
+    add_associated_dimension(&mut d, forja_doc::Handle(0x2A), forja_doc::Handle(0x2A));
     let text = write_dxf(&d);
     let o = Out::new(&text);
     let reactors = one_reactor_group(&o, "2A", false);
@@ -1144,7 +1144,7 @@ fn a_record_without_a_reactor_group_gets_a_new_one_in_the_preamble() {
     let bare = fixture().replacen("5\n2A\n102\n{ACAD_REACTORS\n330\n42\n102\n}\n", "5\n2A\n", 1);
     assert_ne!(bare, fixture(), "the fixture line lost its reactors");
     let mut d = read_dxf(bare.as_bytes()).expect("read fixture");
-    add_associated_dimension(&mut d, cadcraft_doc::Handle(0x2A), cadcraft_doc::Handle(0x2A));
+    add_associated_dimension(&mut d, forja_doc::Handle(0x2A), forja_doc::Handle(0x2A));
     let text = write_dxf(&d);
     let o = Out::new(&text);
     let (_, line) = o.handle("2A").expect("line");
@@ -1169,8 +1169,8 @@ fn a_record_without_a_reactor_group_gets_a_new_one_in_the_preamble() {
 /// group that sits between its handle and its owner. Pinning test (review on #2589).
 #[test]
 fn a_source_used_by_two_associations_lists_both_dimassocs_once() {
-    use cadcraft_doc::{Common, Line, Space};
-    use cadcraft_geom::Vec3;
+    use forja_doc::{Common, Line, Space};
+    use forja_geom::Vec3;
     let mut d = Drawing::new_metric();
     let line = d.add(&Space::Model, Common::default(), EntityKind::Line(Line { a: Vec3::ZERO, b: Vec3::new(10.0, 0.0, 0.0) })).expect("add line");
     add_associated_dimension(&mut d, line, line);

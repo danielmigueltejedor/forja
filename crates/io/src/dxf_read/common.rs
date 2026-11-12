@@ -110,7 +110,7 @@ pub(super) fn ocs(c: &Common, p: Vec3) -> Vec3 {
 }
 
 pub(super) fn ocs_n(n: Vec3, p: Vec3) -> Vec3 {
-    if (n.z - 1.0).abs() < 1e-12 && n.x.abs() < 1e-12 && n.y.abs() < 1e-12 { p } else { cadcraft_geom::Mat4::ocs(n).apply(p) }
+    if (n.z - 1.0).abs() < 1e-12 && n.x.abs() < 1e-12 && n.y.abs() < 1e-12 { p } else { forja_geom::Mat4::ocs(n).apply(p) }
 }
 
 /// Whether an object with OCS points `pts` (x, y and elevation) lies in a plane tilted off the
@@ -124,7 +124,7 @@ pub(super) fn tilted(n: Vec3, pts: impl IntoIterator<Item = Vec3>) -> bool {
     if !n.is_finite() || n.len() < 1e-12 {
         return false;
     }
-    let m = cadcraft_geom::Mat4::ocs(n);
+    let m = forja_geom::Mat4::ocs(n);
     let flip = if n.z < 0.0 { -1.0 } else { 1.0 };
     let (mut moved, mut reach) = (0.0f64, 1.0f64);
     for p in pts.into_iter().filter(|p| p.is_finite()) {
@@ -150,7 +150,7 @@ pub(super) fn run_points(vertices: &[PolyVertex], elevation: f64, closed: bool) 
         };
         if let Some(w) = next.filter(|_| v.bulge != 0.0) {
             // Each arc sampled from its own size, so a small one next to a long edge counts too.
-            let arc = cadcraft_geom::Polyline { vertices: vec![*v, PolyVertex::new(w.p)], closed: false };
+            let arc = forja_geom::Polyline { vertices: vec![*v, PolyVertex::new(w.p)], closed: false };
             let b = arc.bounds();
             let size = (b.max - b.min).len();
             pts.extend(arc.tessellate(if size.is_finite() && size > 0.0 { size * 0.05 } else { 1e-6 }));
@@ -169,7 +169,7 @@ const MAX_TILTED_VERTICES: usize = 1_000_000;
 /// it; vertices that start straight edges keep their widths. Also gives the mean WCS Z, the
 /// elevation the flattened run takes.
 pub(super) fn plan_of_tilted(n: Vec3, elevation: f64, vertices: &[PolyVertex], closed: bool) -> (Vec<PolyVertex>, f64) {
-    let m = cadcraft_geom::Mat4::ocs(n);
+    let m = forja_geom::Mat4::ocs(n);
     let mut local: Vec<PolyVertex> = Vec::with_capacity(vertices.len());
     for (i, v) in vertices.iter().enumerate() {
         let next = if i + 1 < vertices.len() {
@@ -181,7 +181,7 @@ pub(super) fn plan_of_tilted(n: Vec3, elevation: f64, vertices: &[PolyVertex], c
         };
         match next {
             Some(w) if v.bulge != 0.0 && local.len() < MAX_TILTED_VERTICES => {
-                let arc = cadcraft_geom::Polyline { vertices: vec![*v, PolyVertex::new(w.p)], closed: false };
+                let arc = forja_geom::Polyline { vertices: vec![*v, PolyVertex::new(w.p)], closed: false };
                 // From the edge's own size, so a long edge elsewhere can't flatten a small arc away.
                 let b = arc.bounds();
                 let size = (b.max - b.min).len();

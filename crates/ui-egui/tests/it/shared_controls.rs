@@ -1,10 +1,10 @@
 //! Interaction and optional offscreen evidence for the application's painted controls.
 
-use cadcraft_engine::Session;
-use cadcraft_ui_egui::{CadApp, Services, icons, theme};
 use egui::{Event, Key, Modifiers, PointerButton, Response, pos2, vec2};
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
+use forja_engine::Session;
+use forja_ui_egui::{CadApp, Services, icons, theme};
 
 fn app() -> CadApp {
     let mut app = CadApp::new(Session::default(), Services::default());
@@ -48,7 +48,12 @@ fn drafting_button_preserves_multicolor_selection_and_accessibility() {
     let out = button_frame(&ctx, &mut state, vec![Event::PointerMoved(center), pointer(center, true)]);
     let t = theme::Tokens::get();
     assert!(out.shapes.iter().any(|s| matches!(&s.shape, egui::Shape::Rect(r) if r.fill == t.tab_active)));
-    assert!(out.shapes.iter().any(|s| matches!(&s.shape, egui::Shape::LineSegment { stroke, .. } if stroke.color == t.icon_accent)));
+    let accent_stroke = |s: &egui::Shape| match s {
+        egui::Shape::LineSegment { stroke, .. } => stroke.color == t.icon_accent,
+        egui::Shape::Path(p) => p.stroke.color == egui::epaint::ColorMode::Solid(t.icon_accent),
+        _ => false,
+    };
+    assert!(out.shapes.iter().any(|s| accent_stroke(&s.shape)));
     assert!(out.shapes.iter().any(|s| matches!(&s.shape, egui::Shape::Circle(c) if c.fill == t.icon_point)));
     let update = out.platform_output.accesskit_update.unwrap();
     let node = &update.nodes.iter().find(|(_, n)| n.label() == Some("Draw line")).unwrap().1;
@@ -121,7 +126,7 @@ fn right_palettes_collapse_arrow_hides_menu() {
     let mut h = Harness::builder().with_size(vec2(1600.0, 1000.0)).with_context_setup(|ctx| theme::install_fonts(ctx, "en")).build_ui_state(
         |ui, app: &mut CadApp| {
             app.logic(&ui.ctx().clone());
-            cadcraft_ui_egui::palettes::right_palettes(app, ui);
+            forja_ui_egui::palettes::right_palettes(app, ui);
         },
         app(),
     );
@@ -139,7 +144,7 @@ fn toolsets_collapse_arrow_hides_menu() {
     let mut h = Harness::builder().with_size(vec2(1600.0, 1000.0)).build_ui_state(
         |ui, app: &mut CadApp| {
             app.logic(&ui.ctx().clone());
-            cadcraft_ui_egui::palettes::toolsets(app, ui);
+            forja_ui_egui::palettes::toolsets(app, ui);
         },
         app(),
     );
@@ -167,7 +172,7 @@ fn shared_controls_visuals() {
         for (name, size) in [("normal", vec2(1600.0, 1000.0)), ("narrow", vec2(900.0, 600.0))] {
             h.set_size(size);
             h.run_steps(6);
-            h.render().unwrap().save(directory.join(format!("cadcraft-{name}-dark-{scale}x.png"))).unwrap();
+            h.render().unwrap().save(directory.join(format!("forja-{name}-dark-{scale}x.png"))).unwrap();
         }
         let mut controls = Harness::builder().with_size(vec2(340.0, 150.0)).with_pixels_per_point(scale).wgpu().build_ui_state(
             |ui, rects: &mut Vec<egui::Rect>| {
@@ -188,7 +193,7 @@ fn shared_controls_visuals() {
             Vec::new(),
         );
         controls.run_steps(4);
-        controls.render().unwrap().save(directory.join(format!("cadcraft-controls-dark-{scale}x.png"))).unwrap();
+        controls.render().unwrap().save(directory.join(format!("forja-controls-dark-{scale}x.png"))).unwrap();
         for (name, index, pressed) in [("hover", 0, false), ("selected-hover", 3, false), ("disabled-hover", 6, false), ("pressed", 0, true)] {
             let center = controls.state()[index].center();
             controls.event(Event::PointerMoved(center));
@@ -196,13 +201,13 @@ fn shared_controls_visuals() {
                 controls.event(pointer(center, true));
             }
             controls.run_steps(2);
-            controls.render().unwrap().save(directory.join(format!("cadcraft-controls-{name}-dark-{scale}x.png"))).unwrap();
+            controls.render().unwrap().save(directory.join(format!("forja-controls-{name}-dark-{scale}x.png"))).unwrap();
         }
         controls.event(pointer(controls.state()[0].center(), false));
         controls.event(Event::PointerGone);
         controls.run_steps(2);
         controls.key_press(Key::Tab);
         controls.run_steps(2);
-        controls.render().unwrap().save(directory.join(format!("cadcraft-controls-focus-dark-{scale}x.png"))).unwrap();
+        controls.render().unwrap().save(directory.join(format!("forja-controls-focus-dark-{scale}x.png"))).unwrap();
     }
 }

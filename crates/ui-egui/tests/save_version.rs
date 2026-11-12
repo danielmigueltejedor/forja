@@ -1,14 +1,14 @@
 //! The default save version (#421): File > Default Save Format > Version …, kept in the
 //! preferences, applied by the Save dialog to drawings that have no file yet.
 
-use cadcraft_engine::Session;
-use cadcraft_engine::cmd::file::{IoHooks, SaveAs, set_io, set_write_as};
-use cadcraft_engine::doc::Drawing;
-use cadcraft_ui_egui::{CadApp, Services};
+use forja_engine::Session;
+use forja_engine::cmd::file::{IoHooks, SaveAs, set_io, set_write_as};
+use forja_engine::doc::Drawing;
+use forja_ui_egui::{CadApp, Services};
 use serde_json::{Value, json};
 
 fn picked() -> std::path::PathBuf {
-    std::env::temp_dir().join(format!("cadcraft-ui-save-version-{}.dxf", std::process::id()))
+    std::env::temp_dir().join(format!("forja-ui-save-version-{}.dxf", std::process::id()))
 }
 
 fn with_options(_: &Drawing, _: &str, o: &SaveAs) -> Result<Vec<u8>, String> {
@@ -51,7 +51,7 @@ fn default_save_version_applies_to_new_drawings_and_persists() {
 fn default_save_format_applies_to_opened_drawings() {
     set_io(IoHooks { read: |_, _| Ok(Drawing::new_metric()), write: |_, _| Ok(b"plain".to_vec()), plot: None });
     set_write_as(with_options);
-    let dir = std::env::temp_dir().join(format!("cadcraft-ui-save-format-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("forja-ui-save-format-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let suggested = std::sync::Arc::new(std::sync::Mutex::new(Vec::<String>::new()));
     let (seen, to) = (suggested.clone(), dir.clone());

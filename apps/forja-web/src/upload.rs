@@ -5,18 +5,18 @@
 //!
 //! SHX fonts (text fonts, big fonts, shape files) chosen or dropped with a drawing are the web
 //! build's font folder: they are registered with the font table
-//! ([`cadcraft_fonts::shx::register`]) under their file name, so the styles and linetypes that
+//! ([`forja_fonts::shx::register`]) under their file name, so the styles and linetypes that
 //! name them draw with them, and the drawings are regenerated.
 
 use std::cell::Cell;
 use std::rc::Rc;
 
-use cadcraft_ui_egui::CadApp;
+use forja_ui_egui::CadApp;
 use wasm_bindgen::JsCast as _;
 use web_sys::js_sys;
 
 /// The hidden file input (one at a time; a cancelled pick leaves it until the next one).
-const INPUT_ID: &str = "cadcraft_open_input";
+const INPUT_ID: &str = "forja_open_input";
 /// What the picker offers: the formats OPEN reads, and the SHX fonts drawings name.
 const ACCEPT: &str = ".dxf,.dwg,.shx";
 
@@ -153,7 +153,7 @@ impl Inbox {
         let (fonts, files): (Vec<Upload>, Vec<Upload>) = self.files.take().into_iter().partition(|u| u.as_ref().is_ok_and(|(n, _)| is_shx(n)));
         let mut registered = false;
         for (name, bytes) in fonts.into_iter().flatten() {
-            match cadcraft_fonts::shx::register(&name, &bytes) {
+            match forja_fonts::shx::register(&name, &bytes) {
                 Ok(()) => registered = true,
                 Err(e) => app.open_failed(format!("{name}: {e}")),
             }

@@ -3,14 +3,14 @@
 //! Without a logger every `log::warn!`/`log::error!`/`log::info!` in the workspace (a broken app
 //! icon, the GPU canvas set-up, the control server) vanished. A launch from a desktop menu has no
 //! terminal, so the file is what a bug report can attach: `<settings dir>/logs/forja.log`
-//! (`CADCRAFT_CONFIG_DIR`, or the platform settings directory; empty means none; see `env.rs`).
+//! (`FORJA_CONFIG_DIR`, or the platform settings directory; empty means none; see `env.rs`).
 //! Each start moves the previous log to `forja.1.log` (and that one to `.2`), so the log of a
 //! run that crashed survives the next launch.
 //!
 //! Levels: `info` for Forja's own crates, `warn` for everything else (wgpu and naga are
 //! chatty). `RUST_LOG` replaces that with env_logger-style directives: `debug`,
-//! `warn,cadcraft_io=trace`, `wgpu_core=info`. A directive ending in `*` matches every target
-//! that starts with it (`forja*=debug`). `RUST_LOG=cadcraft_engine=debug` also logs every
+//! `warn,forja_io=trace`, `wgpu_core=info`. A directive ending in `*` matches every target
+//! that starts with it (`forja*=debug`). `RUST_LOG=forja_engine=debug` also logs every
 //! command-line message (`Session::echo`).
 //!
 //! Records logged before the settings directory is known are kept (up to [`MAX_PENDING`]) and
@@ -37,7 +37,7 @@ pub const MAX_FILE_BYTES: u64 = 16 * 1024 * 1024;
 /// Records kept in memory until the log file is attached.
 pub const MAX_PENDING: usize = 512;
 /// The built-in filter when `RUST_LOG` is unset or empty.
-pub const DEFAULT_FILTER: &str = "warn,cadcraft*=info,forja*=info";
+pub const DEFAULT_FILTER: &str = "warn,forja*=info,forja*=info";
 
 /// Per-target level filter parsed from env_logger-style directives.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -302,7 +302,7 @@ mod tests {
 
     fn temp_dir(tag: &str) -> PathBuf {
         static N: AtomicUsize = AtomicUsize::new(0);
-        let d = std::env::temp_dir().join(format!("cadcraft-logging-{tag}-{}-{}", std::process::id(), N.fetch_add(1, Ordering::Relaxed)));
+        let d = std::env::temp_dir().join(format!("forja-logging-{tag}-{}-{}", std::process::id(), N.fetch_add(1, Ordering::Relaxed)));
         let _ = std::fs::remove_dir_all(&d);
         d
     }
@@ -316,12 +316,12 @@ mod tests {
     }
 
     #[test]
-    fn the_default_filter_shows_cadcraft_info_and_other_crates_warnings() {
+    fn the_default_filter_shows_forja_info_and_other_crates_warnings() {
         let f = Filter::parse(DEFAULT_FILTER);
         assert_eq!(f.level_for("forja"), LevelFilter::Info);
         assert_eq!(f.level_for("forja::control_server"), LevelFilter::Info);
-        assert_eq!(f.level_for("cadcraft_ui_egui::gpu"), LevelFilter::Info);
-        assert_eq!(f.level_for("cadcraft_engine"), LevelFilter::Info);
+        assert_eq!(f.level_for("forja_ui_egui::gpu"), LevelFilter::Info);
+        assert_eq!(f.level_for("forja_engine"), LevelFilter::Info);
         assert_eq!(f.level_for("wgpu_core::device"), LevelFilter::Warn);
         assert_eq!(f.level_for("naga"), LevelFilter::Warn);
         assert_eq!(f.max(), LevelFilter::Info);
@@ -329,17 +329,17 @@ mod tests {
 
     #[test]
     fn directives_follow_env_logger_and_the_most_specific_one_wins() {
-        let f = Filter::parse("info,wgpu_core=error,cadcraft_io=trace,cadcraft_io::dxf_ext=off");
+        let f = Filter::parse("info,wgpu_core=error,forja_io=trace,forja_io::dxf_ext=off");
         assert_eq!(f.level_for("eframe"), LevelFilter::Info);
         assert_eq!(f.level_for("wgpu_core::instance"), LevelFilter::Error);
-        assert_eq!(f.level_for("cadcraft_io::svg"), LevelFilter::Trace);
-        assert_eq!(f.level_for("cadcraft_io::dxf_ext"), LevelFilter::Off);
+        assert_eq!(f.level_for("forja_io::svg"), LevelFilter::Trace);
+        assert_eq!(f.level_for("forja_io::dxf_ext"), LevelFilter::Off);
         assert_eq!(f.max(), LevelFilter::Trace);
         // A module name is matched at `::` boundaries, not as a bare prefix.
         assert_eq!(f.level_for("wgpu_core_extra"), LevelFilter::Info);
         // A trailing `*` is a prefix.
-        assert_eq!(Filter::parse("warn,cadcraft_ui*=debug").level_for("cadcraft_ui_egui::gpu"), LevelFilter::Debug);
-        assert_eq!(Filter::parse("warn,cadcraft_ui*=debug").level_for("cadcraft_engine"), LevelFilter::Warn);
+        assert_eq!(Filter::parse("warn,forja_ui*=debug").level_for("forja_ui_egui::gpu"), LevelFilter::Debug);
+        assert_eq!(Filter::parse("warn,forja_ui*=debug").level_for("forja_engine"), LevelFilter::Warn);
         // A bare target name sets that target to the most verbose level, as env_logger does.
         assert_eq!(Filter::parse("naga").level_for("naga::front"), LevelFilter::Trace);
         assert_eq!(Filter::parse("naga").level_for("eframe"), LevelFilter::Error);
@@ -513,13 +513,13 @@ mod tests {
         let path = logger.attach_dir(&dir).expect("attach");
         assert_eq!(path, dir.join(LOG_FILE));
         record(&logger, log::Level::Warn, "wgpu_hal::vulkan", "a real warning");
-        record(&logger, log::Level::Debug, "cadcraft_engine", "a command-line echo");
+        record(&logger, log::Level::Debug, "forja_engine", "a command-line echo");
         let text = read(&path);
         let lines: Vec<&str> = text.lines().collect();
         assert_eq!(lines.len(), 2, "{text}");
         assert!(lines.first().is_some_and(|l| l.contains(" INFO  [") && l.ends_with("forja: Forja starting")), "{text}");
         assert!(lines.get(1).is_some_and(|l| l.ends_with("wgpu_hal::vulkan: a real warning")), "{text}");
-        assert!(logger.enabled(&log::Metadata::builder().level(log::Level::Info).target("cadcraft_ui_egui::gpu").build()));
+        assert!(logger.enabled(&log::Metadata::builder().level(log::Level::Info).target("forja_ui_egui::gpu").build()));
         assert!(!logger.enabled(&log::Metadata::builder().level(log::Level::Info).target("naga").build()));
         // A second launch rotates: the first log becomes `.1`.
         let second = AppLogger::new(Filter::parse(DEFAULT_FILTER), false);

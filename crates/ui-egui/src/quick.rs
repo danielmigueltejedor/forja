@@ -1,11 +1,12 @@
 //! Quick Select (QSELECT dialog → the engine `qselect` command) and the Quick Properties
 //! palette shown near the cursor while objects are selected and QPMODE is on.
 
-use cadcraft_doc::{EntityKind, Handle};
 use egui::{Pos2, RichText, vec2};
+use forja_doc::{EntityKind, Handle};
 use serde_json::{Value, json};
 
 use crate::CadApp;
+use crate::ndl_widgets::NdlUi as _;
 use crate::theme::Tokens;
 
 // ---------------- QSELECT ----------------
@@ -77,7 +78,7 @@ pub fn qselect_dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
     let has_sel = !app.session.selection().is_empty();
     let mut run: Option<Value> = None;
     let mut close = false;
-    egui::Window::new(crate::tl!("Quick Select"))
+    crate::ndl_window::Window::new(crate::tl!("Quick Select"))
         .id(egui::Id::unique("Quick Select"))
         .open(open)
         .collapsible(false)
@@ -86,7 +87,7 @@ pub fn qselect_dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
         .show(ctx, |ui| {
             egui::Grid::new("qs_grid").num_columns(2).spacing(vec2(10.0, 6.0)).show(ui, |ui| {
                 ui.label(crate::tl!("Apply to:"));
-                craft_ui::ComboBox::from_id_salt("qs_apply")
+                crate::ndl_widgets::combo("qs_apply")
                     .width(220.0)
                     .selected_text(crate::i18n::t(if st.apply_selection { "Current selection" } else { "Entire drawing" }))
                     .show_ui(ui, |ui| {
@@ -107,7 +108,7 @@ pub fn qselect_dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
                             .collect()
                     })
                     .unwrap_or_default();
-                craft_ui::ComboBox::from_id_salt("qs_type").width(220.0).selected_text(crate::i18n::t(&st.ty)).show_ui(ui, |ui| {
+                crate::ndl_widgets::combo("qs_type").width(220.0).selected_text(crate::i18n::t(&st.ty)).show_ui(ui, |ui| {
                     ui.selectable_value(&mut st.ty, "Multiple".to_string(), crate::tl!("Multiple"));
                     for (n, c) in &types {
                         ui.selectable_value(&mut st.ty, n.clone(), format!("{} ({c})", crate::i18n::t(n)));
@@ -136,7 +137,7 @@ pub fn qselect_dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
                 ui.end_row();
                 ui.label(crate::tl!("Operator:"));
                 let op_label = OPERATORS.iter().find(|o| o.0 == st.operator).map(|o| o.1).unwrap_or("= Equals");
-                craft_ui::ComboBox::from_id_salt("qs_op").width(220.0).selected_text(crate::i18n::t(op_label)).show_ui(ui, |ui| {
+                crate::ndl_widgets::combo("qs_op").width(220.0).selected_text(crate::i18n::t(op_label)).show_ui(ui, |ui| {
                     for (o, l) in OPERATORS {
                         ui.selectable_value(&mut st.operator, o.to_string(), crate::i18n::t(l));
                     }
@@ -175,9 +176,9 @@ pub fn qselect_dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
             });
             ui.separator();
             ui.label(crate::tl!("How to apply:"));
-            ui.radio_value(&mut st.exclude, false, crate::tl!("Include in new selection set"));
-            ui.radio_value(&mut st.exclude, true, crate::tl!("Exclude from new selection set"));
-            ui.checkbox(&mut st.append, crate::tl!("Append to current selection set"));
+            ui.radio_choice(&mut st.exclude, false, crate::tl!("Include in new selection set"));
+            ui.radio_choice(&mut st.exclude, true, crate::tl!("Exclude from new selection set"));
+            ui.check(&mut st.append, crate::tl!("Append to current selection set"));
             ui.separator();
             ui.horizontal(|ui| {
                 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -235,7 +236,7 @@ fn num_row(ui: &mut egui::Ui, label: &str, id: egui::Id, v: f64, set: &mut Optio
     let label = ui.label(RichText::new(crate::i18n::t(label)).color(Tokens::get().text_dim));
     let s = format!("{v:.4}");
     if let Some(n) = crate::parametric::expr_field(ui, id, &s, Some(label.id))
-        && let Some(f) = cadcraft_engine::units::parse_distance(&n).or_else(|| n.parse::<f64>().ok()).filter(|f| f.is_finite())
+        && let Some(f) = forja_engine::units::parse_distance(&n).or_else(|| n.parse::<f64>().ok()).filter(|f| f.is_finite())
     {
         *set = Some((key.to_string(), json!(f)));
     }
@@ -286,7 +287,7 @@ pub fn quick_properties(app: &mut CadApp, ctx: &egui::Context) {
     } else {
         format!("{} ({})", crate::tl!("All"), ents.len())
     };
-    let same = |f: &dyn Fn(&cadcraft_doc::Entity) -> String| -> String {
+    let same = |f: &dyn Fn(&forja_doc::Entity) -> String| -> String {
         let v0 = ents.first().map(|e| f(e)).unwrap_or_default();
         if ents.iter().all(|e| f(e) == v0) { v0 } else { "*VARIES*".into() }
     };
@@ -301,7 +302,7 @@ pub fn quick_properties(app: &mut CadApp, ctx: &egui::Context) {
     // Rotations show as the drawing measures directions (ANGBASE, ANGDIR).
     let angles = app.session.angle_settings();
     let mut close = false;
-    egui::Window::new(title)
+    crate::ndl_window::Window::new(title)
         .id(egui::Id::unique(("quick_properties", &st.sel)))
         .default_pos(at)
         .collapsible(false)
@@ -311,13 +312,13 @@ pub fn quick_properties(app: &mut CadApp, ctx: &egui::Context) {
         .show(ctx, |ui| {
             egui::Grid::new("qp_grid").num_columns(2).spacing(vec2(10.0, 4.0)).min_col_width(80.0).show(ui, |ui| {
                 ui.label(RichText::new(crate::tl!("Color")).color(Tokens::get().text_dim));
-                let cur = color.unwrap_or(cadcraft_color::Color::ByLayer);
+                let cur = color.unwrap_or(forja_color::Color::ByLayer);
                 if let Some(c) = crate::layers::color_button(ui, egui::Id::unique(("qp_color", &ids)), cur, true, 150.0) {
                     set = Some(("color".into(), json!(c.name())));
                 }
                 ui.end_row();
                 ui.label(RichText::new(crate::tl!("Layer")).color(Tokens::get().text_dim));
-                craft_ui::ComboBox::from_id_salt("qp_layer").width(150.0).selected_text(layer.clone()).show_ui(ui, |ui| {
+                crate::ndl_widgets::combo("qp_layer").width(150.0).selected_text(layer.clone()).show_ui(ui, |ui| {
                     for l in &layers {
                         if ui.selectable_label(*l == layer, l).clicked() {
                             set = Some(("layer".into(), json!(l)));
@@ -326,7 +327,7 @@ pub fn quick_properties(app: &mut CadApp, ctx: &egui::Context) {
                 });
                 ui.end_row();
                 ui.label(RichText::new(crate::tl!("Linetype")).color(Tokens::get().text_dim));
-                craft_ui::ComboBox::from_id_salt("qp_lt").width(150.0).selected_text(linetype.clone()).show_ui(ui, |ui| {
+                crate::ndl_widgets::combo("qp_lt").width(150.0).selected_text(linetype.clone()).show_ui(ui, |ui| {
                     for l in std::iter::once("ByLayer".to_string())
                         .chain(std::iter::once("ByBlock".to_string()))
                         .chain(linetypes.iter().filter(|l| !["ByLayer", "ByBlock"].contains(&l.as_str())).cloned())
@@ -364,7 +365,7 @@ pub fn quick_properties(app: &mut CadApp, ctx: &egui::Context) {
                         num_row(ui, "End angle", id("ea"), a.end.to_degrees(), &mut set, "endAngle");
                     }
                     Some(EntityKind::LwPolyline(p)) => {
-                        let g = cadcraft_geom::Polyline { vertices: p.vertices.clone(), closed: p.closed };
+                        let g = forja_geom::Polyline { vertices: p.vertices.clone(), closed: p.closed };
                         ro_row(ui, "Length", format!("{:.4}", g.len()));
                         if p.closed {
                             ro_row(ui, "Area", format!("{:.4}", g.area().abs()));

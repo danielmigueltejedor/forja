@@ -1,6 +1,6 @@
 [package]
-name = "cadcraft-engine"
-description = "CADCraft engine: sessions, commands, the command line and prompts, snaps, selection, undo"
+name = "forja-engine"
+description = "Forja engine: sessions, commands, the command line and prompts, snaps, selection, undo"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -9,13 +9,13 @@ license.workspace = true
 workspace = true
 
 [dependencies]
-cadcraft-geom = { workspace = true }
-cadcraft-color = { workspace = true }
-cadcraft-doc = { workspace = true }
-cadcraft-dxf = { workspace = true }
-cadcraft-constraints = { workspace = true }
-cadcraft-fonts = { workspace = true }
-cadcraft-render = { workspace = true }
+forja-geom = { workspace = true }
+forja-color = { workspace = true }
+forja-doc = { workspace = true }
+forja-dxf = { workspace = true }
+forja-constraints = { workspace = true }
+forja-fonts = { workspace = true }
+forja-render = { workspace = true }
 craft-docpath = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -29,4 +29,4 @@ libc = "0.2"
 
 [dev-dependencies]
 # Real DXF files for the external reference tests (io is a lower layer).
-cadcraft-io = { workspace = true }
+forja-io = { workspace = true }

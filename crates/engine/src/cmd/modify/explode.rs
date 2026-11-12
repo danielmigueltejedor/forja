@@ -1,4 +1,4 @@
-use cadcraft_geom::{Ellipse as GEllipse, Mat3};
+use forja_geom::{Ellipse as GEllipse, Mat3};
 
 use super::{Entity, EntityKind, Handle, PolyVertex, Polyline, Result, Segment, Session, Value, Vec2, arc, json, line, lwpoly, targets, v3};
 
@@ -9,7 +9,7 @@ fn placed_ellipse(ell: GEllipse, m: &Mat3, z: f64) -> Option<EntityKind> {
     let g = ell.transformed(m);
     let len = g.major.len();
     (len.is_finite() && len > 0.0 && g.ratio.is_finite() && g.ratio > 0.0).then(|| {
-        EntityKind::Ellipse(cadcraft_doc::Ellipse { center: g.center.to3(z), major: g.major.to3(0.0), ratio: g.ratio, start: g.start, end: g.end })
+        EntityKind::Ellipse(forja_doc::Ellipse { center: g.center.to3(z), major: g.major.to3(0.0), ratio: g.ratio, start: g.start, end: g.end })
     })
 }
 
@@ -36,7 +36,7 @@ fn stretched_pieces(be: &Entity, m: &Mat3) -> Option<Vec<Entity>> {
             pl.segments()
                 .into_iter()
                 .map(|s| match s {
-                    Segment::Line(l) => Some(EntityKind::Line(cadcraft_doc::Line { a: m.apply(l.a).to3(z), b: m.apply(l.b).to3(z) })),
+                    Segment::Line(l) => Some(EntityKind::Line(forja_doc::Line { a: m.apply(l.a).to3(z), b: m.apply(l.b).to3(z) })),
                     Segment::Arc { arc: a, .. } => placed_ellipse(circular(a.center, a.radius, a.start, a.end), m, z),
                 })
                 .collect::<Option<Vec<_>>>()?
@@ -51,7 +51,7 @@ fn stretched_pieces(be: &Entity, m: &Mat3) -> Option<Vec<Entity>> {
     Some(kinds.into_iter().map(|kind| Entity { handle: Handle(0), common: common.clone(), kind }).collect())
 }
 
-fn explode_block_ref(d: &cadcraft_doc::Drawing, e: &Entity, ins: &cadcraft_doc::Insert) -> Option<Vec<Entity>> {
+fn explode_block_ref(d: &forja_doc::Drawing, e: &Entity, ins: &forja_doc::Insert) -> Option<Vec<Entity>> {
     if let Some(items) = crate::cmd::array::explode_array(d, e) {
         return Some(items);
     }
@@ -76,7 +76,7 @@ fn explode_block_ref(d: &cadcraft_doc::Drawing, e: &Entity, ins: &cadcraft_doc::
                 if ne.common.layer == "0" {
                     ne.common.layer = e.common.layer.clone();
                 }
-                if ne.common.color == cadcraft_color::Color::ByBlock {
+                if ne.common.color == forja_color::Color::ByBlock {
                     ne.common.color = e.common.color;
                 }
                 ne
@@ -85,8 +85,8 @@ fn explode_block_ref(d: &cadcraft_doc::Drawing, e: &Entity, ins: &cadcraft_doc::
     )
 }
 
-fn explode_mtext(e: &Entity, m: &cadcraft_doc::MText) -> Vec<Entity> {
-    cadcraft_fonts::plain_mtext(&m.contents)
+fn explode_mtext(e: &Entity, m: &forja_doc::MText) -> Vec<Entity> {
+    forja_fonts::plain_mtext(&m.contents)
         .split('\n')
         .enumerate()
         .map(|(i, l)| {
@@ -94,7 +94,7 @@ fn explode_mtext(e: &Entity, m: &cadcraft_doc::MText) -> Vec<Entity> {
             Entity {
                 handle: Handle(0),
                 common: e.common.clone(),
-                kind: EntityKind::Text(cadcraft_doc::Text {
+                kind: EntityKind::Text(forja_doc::Text {
                     insert: v3(at),
                     align_pt: None,
                     height: m.height,
@@ -124,10 +124,10 @@ fn segment_entities(e: &Entity, segs: impl IntoIterator<Item = Segment>) -> Vec<
         .collect()
 }
 
-fn explode_dimension(d: &cadcraft_doc::Drawing, e: &Entity, dm: &cadcraft_doc::Dimension) -> Vec<Entity> {
+fn explode_dimension(d: &forja_doc::Drawing, e: &Entity, dm: &forja_doc::Dimension) -> Vec<Entity> {
     // The dimension as drawn: its overrides, DIMSCALE (0 = the drawing's) and text font.
     let style = d.dim_style(&dm.style).cloned().unwrap_or_default().with_overrides(&dm.overrides);
-    let g = cadcraft_render::dimension_in(d, dm);
+    let g = forja_render::dimension_in(d, dm);
     let line_entity = |l: &Vec<Vec2>| {
         if l.len() == 2 {
             Some(Entity { handle: Handle(0), common: e.common.clone(), kind: line(*l.first()?, *l.get(1)?) })
@@ -144,7 +144,7 @@ fn explode_dimension(d: &cadcraft_doc::Drawing, e: &Entity, dm: &cadcraft_doc::D
             v.push(Entity {
                 handle: Handle(0),
                 common: e.common.clone(),
-                kind: EntityKind::Solid(cadcraft_doc::Solid { corners: [v3(*a), v3(*b), v3(*c), v3(*c)] }),
+                kind: EntityKind::Solid(forja_doc::Solid { corners: [v3(*a), v3(*b), v3(*c), v3(*c)] }),
             });
         }
     }
@@ -154,11 +154,11 @@ fn explode_dimension(d: &cadcraft_doc::Drawing, e: &Entity, dm: &cadcraft_doc::D
         && let [p0, p1, p2, p3] = g.text_fill.as_slice()
     {
         let fill = style.text_fill_color;
-        let color = if fill == cadcraft_doc::color::Color::ByBlock { e.common.color } else { fill };
+        let color = if fill == forja_doc::color::Color::ByBlock { e.common.color } else { fill };
         v.push(Entity {
             handle: Handle(0),
-            common: cadcraft_doc::Common { color, ..e.common.clone() },
-            kind: EntityKind::Solid(cadcraft_doc::Solid { corners: [v3(*p0), v3(*p1), v3(*p3), v3(*p2)] }),
+            common: forja_doc::Common { color, ..e.common.clone() },
+            kind: EntityKind::Solid(forja_doc::Solid { corners: [v3(*p0), v3(*p1), v3(*p3), v3(*p2)] }),
         });
     }
     v.extend(marks(true).filter_map(&line_entity));
@@ -166,7 +166,7 @@ fn explode_dimension(d: &cadcraft_doc::Drawing, e: &Entity, dm: &cadcraft_doc::D
         v.push(Entity {
             handle: Handle(0),
             common: e.common.clone(),
-            kind: EntityKind::MText(cadcraft_doc::MText {
+            kind: EntityKind::MText(forja_doc::MText {
                 insert: v3(g.text_pos),
                 height: g.text_height,
                 width: 0.0,
@@ -183,11 +183,11 @@ fn explode_dimension(d: &cadcraft_doc::Drawing, e: &Entity, dm: &cadcraft_doc::D
     v
 }
 
-pub(crate) fn explode_kind(d: &cadcraft_doc::Drawing, e: &Entity) -> Option<Vec<Entity>> {
+pub(crate) fn explode_kind(d: &forja_doc::Drawing, e: &Entity) -> Option<Vec<Entity>> {
     // An annotative object explodes into plain objects as it draws at the current annotation scale.
-    if cadcraft_doc::is_annotative(e) {
+    if forja_doc::is_annotative(e) {
         let mut se = match d.anno_draw(e) {
-            cadcraft_doc::AnnoDraw::Scaled(f) => cadcraft_doc::anno_scaled(e, f),
+            forja_doc::AnnoDraw::Scaled(f) => forja_doc::anno_scaled(e, f),
             _ => e.clone(),
         };
         se.common.anno_scales.clear();
@@ -205,7 +205,7 @@ pub(crate) fn explode_kind(d: &cadcraft_doc::Drawing, e: &Entity) -> Option<Vec<
             p.points
                 .windows(2)
                 .filter_map(|w| {
-                    let kind = EntityKind::Line(cadcraft_doc::Line { a: *w.first()?, b: *w.get(1)? });
+                    let kind = EntityKind::Line(forja_doc::Line { a: *w.first()?, b: *w.get(1)? });
                     Some(Entity { handle: Handle(0), common: e.common.clone(), kind })
                 })
                 .collect(),
@@ -241,7 +241,7 @@ pub(super) fn explode(s: &mut Session, hs: &[Handle]) -> Result<Vec<Handle>> {
 }
 
 /// A block reference with more than one row or column (MINSERT).
-fn minserted(i: &cadcraft_doc::Insert) -> bool {
+fn minserted(i: &forja_doc::Insert) -> bool {
     i.rows > 1 || i.cols > 1
 }
 
@@ -250,7 +250,7 @@ fn minserted(i: &cadcraft_doc::Insert) -> bool {
 pub(crate) fn explode_with(
     s: &mut Session,
     hs: &[Handle],
-    pieces: impl Fn(&cadcraft_doc::Drawing, &Entity) -> Option<Vec<Entity>>,
+    pieces: impl Fn(&forja_doc::Drawing, &Entity) -> Option<Vec<Entity>>,
 ) -> Result<Vec<Handle>> {
     let space = s.space();
     let mut out = Vec::new();

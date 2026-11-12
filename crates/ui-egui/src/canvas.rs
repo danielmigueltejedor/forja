@@ -1,15 +1,18 @@
 //! The drawing area: grid, entities, selection highlighting, grips, rubber bands, object-snap
 //! markers, crosshair cursor, ViewCube, UCS icon and mouse handling.
 
-use cadcraft_color::Rgb;
-use cadcraft_doc::Handle;
-use cadcraft_engine::Input;
-use cadcraft_engine::snap::{self, SnapHit};
-use cadcraft_geom::{Bounds2, Mat3, Vec2};
-use cadcraft_render::{DisplayList, Kind};
 use egui::{Color32, Pos2, Rect, Sense, Shape, Stroke, pos2, vec2};
+use forja_color::Rgb;
+use forja_doc::Handle;
+use forja_engine::Input;
+use forja_engine::snap::{self, SnapHit};
+use forja_geom::{Bounds2, Mat3, Vec2};
+use forja_render::{DisplayList, Kind};
 
 use crate::CadApp;
+
+/// The most points a lasso samples while it is drawn (one every 2 screen points).
+const LASSO_MAX_SAMPLES: usize = 16_384;
 use crate::theme::Tokens;
 
 mod cursor;
@@ -26,7 +29,7 @@ mod widgets;
 use cursor::{draw_crosshair, draw_snap_marker, draw_tracking, effective_point, override_cursor};
 use cycle::{CycleList, cycle_badge, cycle_click, cycle_list, over_canvas_menu, shift_space_cycle};
 pub(crate) use draw::{Look, draw_highlight, draw_list};
-use draw::{dashed_polygon, dashed_rect, draw_drag_gpu, draw_highlight_gpu, draw_list_gpu, list_mesh_key, selection_area_fill};
+use draw::{dashed_polygon, dashed_rect, draw_drag_gpu, draw_highlight_gpu, draw_list_gpu, list_mesh_key, paint_lasso, selection_area_fill};
 use dyn_boxes::dynamic_input;
 pub(crate) use dyn_boxes::length_units;
 use grid::draw_grid;
@@ -47,7 +50,7 @@ pub struct Xf {
     pub center: Vec2,
     /// Pixels (points) per drawing unit.
     pub scale: f64,
-    /// The view twist (radians counterclockwise, `cadcraft_engine::View::twist`): the drawing
+    /// The view twist (radians counterclockwise, `forja_engine::View::twist`): the drawing
     /// appears turned by it about `center`. 0 for paper space.
     pub twist: f64,
 }
@@ -101,8 +104,8 @@ fn same_content(a: &ListKey, b: &ListKey) -> bool {
 #[derive(Default)]
 pub struct CanvasState {
     pub list: Option<DisplayList>,
-    /// The font set the list was drawn with ([`cadcraft_fonts::ttf::generation`] and
-    /// [`cadcraft_fonts::shx::generation`]): a new font folder redraws the text.
+    /// The font set the list was drawn with ([`forja_fonts::ttf::generation`] and
+    /// [`forja_fonts::shx::generation`]): a new font folder redraws the text.
     font_generation: u64,
     key: ListKey,
     /// The area `list` was built for (hatch patterns exist only inside it); a view leaving it
@@ -169,8 +172,8 @@ pub struct CanvasState {
     /// Dynamic block grips of the selection (cached), the one being dragged, and the list grip
     /// whose choices are open (and whether it opened this frame).
     pub(crate) dyn_grips: crate::dyngrips::Cache,
-    pub(crate) dyn_hot: Option<(Handle, i32, cadcraft_engine::doc::dynblock::GripPart)>,
-    pub(crate) dyn_menu: Option<(Handle, cadcraft_engine::doc::dynblock::DynGrip)>,
+    pub(crate) dyn_hot: Option<(Handle, i32, forja_engine::doc::dynblock::GripPart)>,
+    pub(crate) dyn_menu: Option<(Handle, forja_engine::doc::dynblock::DynGrip)>,
     pub(crate) dyn_menu_fresh: bool,
     /// Zoom to extents once the canvas size is known (after opening a drawing).
     pub zoom_pending: bool,
@@ -179,8 +182,9 @@ pub struct CanvasState {
     hover_at: Option<Pos2>,
     /// Constraint glyphs for the parametric overlay (cached per drawing revision).
     pub param: crate::parametric::Cache,
-    /// A selection window opened by a press-and-drag, to close where the button is let go.
-    drag_window: bool,
+    /// The lasso a press-and-drag is drawing, in world coordinates from where the button went
+    /// down: it selects when the button is let go ([`forja_engine::Session::lasso`]).
+    pub lasso: Option<Vec<Vec2>>,
     /// The right-click that opened the shortcut menu held Shift or Ctrl: it is the object snap
     /// menu ([`crate::context_menu`]).
     pub snap_menu: bool,
@@ -263,7 +267,7 @@ struct PointerInput {
 
 struct Navigation<'a> {
     rect: Rect,
-    tiles: &'a [(Rect, cadcraft_engine::ModelTile)],
+    tiles: &'a [(Rect, forja_engine::ModelTile)],
     response: &'a egui::Response,
     xf: Xf,
     pointer: PointerInput,
@@ -308,7 +312,7 @@ fn handle_scroll_zoom(app: &mut CadApp, ui: &mut egui::Ui, nav: &Navigation<'_>,
         && let Ok(st) = app.session.state_mut()
     {
         let view = st.view();
-        st.set_view_quiet(cadcraft_engine::View {
+        st.set_view_quiet(forja_engine::View {
             center: view.center - nav.xf.screen_delta_to_world(p.scroll),
             height: view.height,
             twist: view.twist,
@@ -347,7 +351,7 @@ fn handle_button_navigation(app: &mut CadApp, nav: &Navigation<'_>, inside: bool
             let delta = at - last;
             if let Ok(st) = app.session.state_mut() {
                 let view = st.view();
-                st.set_view_quiet(cadcraft_engine::View {
+                st.set_view_quiet(forja_engine::View {
                     center: view.center - nav.xf.screen_delta_to_world(delta),
                     height: view.height,
                     twist: view.twist,
@@ -369,13 +373,13 @@ struct CanvasPaint<'a> {
     painter: &'a egui::Painter,
     tokens: Tokens,
     full: Rect,
-    tiles: &'a [(Rect, cadcraft_engine::ModelTile)],
+    tiles: &'a [(Rect, forja_engine::ModelTile)],
     rect: Rect,
     xf: Xf,
     xf_paper: Xf,
-    view: cadcraft_engine::View,
-    active_vp: Option<cadcraft_doc::Viewport>,
-    active_clip: Option<cadcraft_render::clip::PolyClip>,
+    view: forja_engine::View,
+    active_vp: Option<forja_doc::Viewport>,
+    active_clip: Option<forja_render::clip::PolyClip>,
     inside: bool,
     on_menu: bool,
     hover_pos: Option<Pos2>,
@@ -512,7 +516,7 @@ fn paint_pointer_overlay(
     paper_rect: Option<Rect>,
     surround: Color32,
     selecting: bool,
-    sheet: Option<cadcraft_render::Sheet>,
+    sheet: Option<forja_render::Sheet>,
 ) {
     let app = &mut *frame.app;
     let ui = &mut *frame.ui;
@@ -587,8 +591,8 @@ struct DoubleClickContext<'a> {
     xf: Xf,
     xf_paper: Xf,
     scale: f64,
-    active_viewport: &'a Option<cadcraft_doc::Viewport>,
-    active_clip: &'a Option<cadcraft_render::clip::PolyClip>,
+    active_viewport: &'a Option<forja_doc::Viewport>,
+    active_clip: &'a Option<forja_render::clip::PolyClip>,
 }
 
 fn handle_double_click(app: &mut CadApp, ctx: DoubleClickContext<'_>) -> Option<bool> {
@@ -596,21 +600,21 @@ fn handle_double_click(app: &mut CadApp, ctx: DoubleClickContext<'_>) -> Option<
     if inside
         && double
         && !app.session.prompting()
-        && matches!(app.session.layout_space(), cadcraft_doc::Space::Paper(_))
+        && matches!(app.session.layout_space(), forja_doc::Space::Paper(_))
         && let Some(hp) = hover
     {
         let pp = xf_paper.to_world(hp);
-        let in_rect = |v: &cadcraft_doc::Viewport| (pp.x - v.center.x).abs() <= v.width / 2.0 && (pp.y - v.center.y).abs() <= v.height / 2.0;
+        let in_rect = |v: &forja_doc::Viewport| (pp.x - v.center.x).abs() <= v.width / 2.0 && (pp.y - v.center.y).abs() <= v.height / 2.0;
         let in_active = active_viewport.as_ref().is_some_and(|v| active_clip.as_ref().map_or(in_rect(v), |c| c.contains(pp)));
         if !in_active {
             app.canvas.hot_grips.clear();
             app.session.pending_window = None;
-            app.canvas.drag_window = false;
+            app.canvas.lasso = None;
             if app.run("mspace", serde_json::json!({"at": [pp.x, pp.y]})).is_err() && active_viewport.is_some() {
                 let _ = app.run("pspace", serde_json::json!({}));
             }
             app.session.pending_window = None;
-            app.canvas.drag_window = false;
+            app.canvas.lasso = None;
             app.canvas.list = None;
             return None;
         }
@@ -701,8 +705,8 @@ fn update_hover(app: &mut CadApp, ui: &egui::Ui, inside: bool, hover_pos: Option
             && let (Some(w), Ok(st)) = (raw_world, app.session.state())
         {
             let filter = app.session.settings.previewfilter;
-            app.canvas.hover = cadcraft_engine::select::pick(&st.doc, &st.edit_space(), w, app.session.settings.pickbox.max(1.0) * 1.5 / scale)
-                .filter(|h| st.doc.entity(*h).is_none_or(|e| !cadcraft_engine::select::preview_filtered(&st.doc, e, filter)));
+            app.canvas.hover = forja_engine::select::pick(&st.doc, &st.edit_space(), w, app.session.settings.pickbox.max(1.0) * 1.5 / scale)
+                .filter(|h| st.doc.entity(*h).is_none_or(|e| !forja_engine::select::preview_filtered(&st.doc, e, filter)));
             app.canvas.hover_at = hover_pos;
         }
     } else {
@@ -739,7 +743,7 @@ struct PromptClickContext<'a> {
 fn collect_prompt_clicks(app: &mut CadApp, ui: &egui::Ui, context: PromptClickContext<'_>) -> bool {
     // egui drops a click whose button comes up a few pixels from where it went down (a drag to it),
     // and eframe hands a slow frame's clicks over together, which egui reports as one.
-    let point_prompt = app.session.current_prompt().is_some_and(|p| cadcraft_engine::pointmod::accepts(&p))
+    let point_prompt = app.session.current_prompt().is_some_and(|p| forja_engine::pointmod::accepts(&p))
         && app.session.pending_window.is_none()
         && !app.session.realtime_zoom_active();
     let pressed_primary = context.primary_clicked || (point_prompt && context.response.drag_stopped_by(egui::PointerButton::Primary));
@@ -830,7 +834,7 @@ pub fn show(app: &mut CadApp, ui: &mut egui::Ui) {
         Err(_) => (xf, None),
     };
     // A clipped active viewport's outline (picks and its heavy border follow it).
-    let active_clip = app.session.state().ok().and_then(|st| st.active_viewport().and_then(|(h, v)| cadcraft_render::viewport_clip(&st.doc, h, &v)));
+    let active_clip = app.session.state().ok().and_then(|st| st.active_viewport().and_then(|(h, v)| forja_render::viewport_clip(&st.doc, h, &v)));
     let Some(hatch_dialog) = handle_double_click(
         app,
         DoubleClickContext {
@@ -868,7 +872,7 @@ pub fn show(app: &mut CadApp, ui: &mut egui::Ui) {
     let idle_dbl = dbl_primary && app.session.running.is_none();
     if idle_dbl {
         app.session.pending_window = None;
-        app.canvas.drag_window = false;
+        app.canvas.lasso = None;
     }
     let pressed_primary = pressed_primary && !picked && !hatch_dialog && !idle_dbl;
     let key: CycleKey = (
@@ -919,34 +923,39 @@ pub fn show(app: &mut CadApp, ui: &mut egui::Ui) {
             app.session.echo(e.to_string());
         }
     }
-    // Press-and-drag selection window (PICKDRAG = 2; click-click still works): a drag
-    // that starts while objects are being selected opens a window where the button went down,
-    // and letting go closes it. Drags on grips and drags while drawing are left alone.
+    // Press-and-drag draws a lasso (AutoCAD's press-and-drag selection, PICKDRAG = 2): a freehand
+    // outline from where the button went down, selecting when it is let go. The rectangular
+    // window stays with click, move, click. Drags on grips and drags while drawing are left alone.
     if !app.session.settings.pickdrag {
-        app.canvas.drag_window = false;
+        app.canvas.lasso = None;
     }
-    if app.session.settings.pickdrag
-        && resp.drag_started_by(egui::PointerButton::Primary)
+    if resp.drag_started_by(egui::PointerButton::Primary)
         && !middle_down
         && app.canvas.cycle.is_none()
-        && app.session.pending_window.is_none()
+        && app.session.drag_selects()
         && let Some(origin) = ui.input(|i| i.pointer.press_origin())
         && rect.contains(origin)
         && grip_at(app, &xf, Some(origin)).is_none()
         && crate::dyngrips::at(app, &xf, Some(origin)).is_none()
     {
-        app.canvas.drag_window = app.session.begin_window(xf.to_world(origin));
+        app.canvas.lasso = Some(vec![xf.to_world(origin)]);
     }
-    if app.canvas.drag_window && resp.drag_stopped_by(egui::PointerButton::Primary) {
-        app.canvas.drag_window = false;
-        if app.session.pending_window.is_some()
-            && let Some(end) = ui.input(|i| i.pointer.interact_pos())
-        {
-            let end = xf.to_world(end);
-            let done = if app.session.prompting() { app.session.input(Input::Point(end)) } else { app.session.idle_click(end, mods.shift) };
-            if let Err(e) = done {
-                app.session.echo(e.to_string());
-            }
+    if let Some(pts) = app.canvas.lasso.as_mut()
+        && resp.dragged_by(egui::PointerButton::Primary)
+        && let Some(p) = ui.input(|i| i.pointer.interact_pos())
+        && pts.len() < LASSO_MAX_SAMPLES
+        && pts.last().is_none_or(|l| (xf.to_screen(*l) - p).length() >= 2.0)
+    {
+        pts.push(xf.to_world(p));
+    }
+    if resp.drag_stopped_by(egui::PointerButton::Primary)
+        && let Some(mut pts) = app.canvas.lasso.take()
+    {
+        if let Some(end) = ui.input(|i| i.pointer.interact_pos()) {
+            pts.push(xf.to_world(end));
+        }
+        if let Err(e) = app.session.lasso(&pts, mods.shift) {
+            app.session.echo(e.to_string());
         }
     }
     // Right-click acts as Enter while a command runs (the classic CAD default; held, it opens the
@@ -1134,6 +1143,13 @@ fn paint_canvas(frame: CanvasPaint<'_>) {
             let list = rebuilt_preview(&st.doc, ents.iter(), scale);
             draw_list(painter, &xf, &list, bg, false);
         }
+    }
+    // The lasso a press-and-drag is drawing.
+    if let Some(pts) = app.canvas.lasso.as_ref() {
+        let crossing = app.session.lasso_is_crossing(pts);
+        let screen: Vec<Pos2> = pts.iter().map(|p| xf.to_screen(*p)).collect();
+        let st = Stroke::new(1.0, if crossing { t.crossing_stroke } else { t.window_stroke });
+        paint_lasso(painter, &screen, crossing, selection_area_fill(&app.session.settings, crossing), st);
     }
     // Pending selection window.
     if let (Some(pw), Some(c)) = (app.session.pending_window, raw_world) {

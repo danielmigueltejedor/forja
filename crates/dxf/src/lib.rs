@@ -23,7 +23,7 @@ pub enum DxfError {
     Eof,
     /// More group codes than [`MAX_TAGS`]: `tags` is the count found (or the count read when the
     /// limit was reached), `limit` the maximum.
-    #[error("drawing too large: {tags} DXF group codes, more than the {limit} Forja reads (set CADCRAFT_MAX_DXF_TAGS to read more)")]
+    #[error("drawing too large: {tags} DXF group codes, more than the {limit} Forja reads (set FORJA_MAX_DXF_TAGS to read more)")]
     TooLarge { tags: usize, limit: usize },
     /// The memory for `tags` group codes couldn't be had: an error, not the process ending.
     #[error("not enough memory to read this drawing's {tags} DXF group codes")]
@@ -182,12 +182,12 @@ const UTF8_BOM: &[u8] = b"\xEF\xBB\xBF";
 /// Most group codes read from one file by default. A `Tag` takes 40 bytes plus its text, so this
 /// bounds the tag list to about 4 GB plus text. 50 million rejected large DWGs that converted fine
 /// (a 172 MB drawing has 56 million, issue #1948). The file-size limits bound memory too: 512 MB
-/// for a DXF opened directly, 1 GB for a DWG's DXF rendition. Set `CADCRAFT_MAX_DXF_TAGS` to
+/// for a DXF opened directly, 1 GB for a DWG's DXF rendition. Set `FORJA_MAX_DXF_TAGS` to
 /// raise or lower it.
 pub const MAX_TAGS: usize = 100_000_000;
 
 /// Environment variable overriding [`MAX_TAGS`] (a positive integer).
-pub const MAX_TAGS_ENV: &str = "CADCRAFT_MAX_DXF_TAGS";
+pub const MAX_TAGS_ENV: &str = "FORJA_MAX_DXF_TAGS";
 
 /// The group-code limit in effect: [`MAX_TAGS_ENV`] when set to a positive integer, else
 /// [`MAX_TAGS`].
@@ -514,7 +514,7 @@ pub fn write_ascii_as(tags: &[Tag], utf8: bool) -> String {
 /// Write tags as pre-R2007 ASCII DXF with text in the code page `code_page` names (a
 /// `$DWGCODEPAGE` value such as `ANSI_1252`), as the DXF Reference describes for those versions:
 /// a character the code page has is written as its bytes, any other as a `\U+XXXX` escape. A
-/// code page CADCraft doesn't know, `ASCII`, and `UTF8`/`UNICODE` (not a pre-2007 code page)
+/// code page Forja doesn't know, `ASCII`, and `UTF8`/`UNICODE` (not a pre-2007 code page)
 /// give [`write_ascii`]'s pure ASCII output. So does a file whose code page bytes happen to be
 /// valid UTF-8 (`СІ` in ANSI_1251 is D1 B2, U+0472), since readers, ours included, take an ASCII
 /// DXF that is valid UTF-8 as UTF-8.
@@ -683,7 +683,7 @@ pub fn is_binary(bytes: &[u8]) -> bool {
 /// a code page the result is ASCII, so it is valid in any code page. In every form a backslash
 /// that would start a `\U+` or `\M+` sequence is written as `\U+005C`, so the reader gives back
 /// the literal text (#2050). So is a double-byte character whose trail byte is 0x5C (`\`) in that
-/// place, such as Shift-JIS `表` or Big5 `許`: CADCraft decodes the code page before it looks for
+/// place, such as Shift-JIS `表` or Big5 `許`: Forja decodes the code page before it looks for
 /// escapes, but a reader that looks first would take that byte and the `U+` after it for one.
 fn push_string(s: &str, strings: Strings, out: &mut Vec<u8>) {
     let chars: Vec<char> = s.chars().collect();

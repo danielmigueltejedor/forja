@@ -1,8 +1,8 @@
 //! PEDIT Multiple: edit several polylines (and lines and arcs turned into polylines) at once, as
 //! AutoCAD does after `M` at "Select polyline". Join joins the selected objects with each other.
 
-use cadcraft_doc::{Drawing, EntityKind, Handle};
-use cadcraft_geom::PolyVertex;
+use forja_doc::{Drawing, EntityKind, Handle};
+use forja_geom::PolyVertex;
 use serde_json::json;
 
 use super::super::curves;

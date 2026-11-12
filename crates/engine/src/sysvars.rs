@@ -157,8 +157,8 @@ pub fn get(s: &Session, name: &str) -> Option<Value> {
         // Text, as AutoCAD reads it back; the header keeps the index (and CECOLOR_RGB) for DXF.
         "CECOLOR" => json!(crate::cmd::current_color_value(s.doc().ok()?)),
         // Process-wide font substitution (profile settings, not saved in the drawing).
-        "FONTALT" => json!(cadcraft_fonts::ttf::font_alt()),
-        "FONTFALLBACK" => json!(cadcraft_fonts::ttf::fallback_fonts()),
+        "FONTALT" => json!(forja_fonts::ttf::font_alt()),
+        "FONTFALLBACK" => json!(forja_fonts::ttf::fallback_fonts()),
         // Autosave (profile settings too).
         "SAVETIME" => json!(crate::autosave::savetime()),
         "SAVEFILEPATH" => json!(crate::autosave::savefilepath()),
@@ -201,7 +201,7 @@ pub fn get(s: &Session, name: &str) -> Option<Value> {
                 Some(h) => serde_json::to_value(h).ok()?,
                 // A dimension variable the header doesn't carry reads from the current style.
                 None => {
-                    let field = cadcraft_doc::DIMVARS.iter().find(|(v, _)| *v == n)?.1;
+                    let field = forja_doc::DIMVARS.iter().find(|(v, _)| *v == n)?.1;
                     let st = d.dim_style(&d.header.str("DIMSTYLE", "Standard"))?;
                     serde_json::to_value(st).ok()?.get(field)?.clone()
                 }
@@ -240,8 +240,8 @@ fn small(v: &Value, max: u8) -> Option<u8> {
 fn as_f64(v: &Value) -> Option<f64> {
     v.as_f64().or_else(|| v.as_str().and_then(crate::units::parse_distance)).filter(|f| f.is_finite())
 }
-fn as_pt(v: &Value) -> Option<cadcraft_geom::Vec2> {
-    crate::cmd::point_value(v).or_else(|| as_f64(v).map(|f| cadcraft_geom::Vec2::new(f, f)))
+fn as_pt(v: &Value) -> Option<forja_geom::Vec2> {
+    crate::cmd::point_value(v).or_else(|| as_f64(v).map(|f| forja_geom::Vec2::new(f, f)))
 }
 
 /// Variables `get` reports from session or drawing state that `set` can't change.
@@ -327,7 +327,7 @@ pub fn set(s: &mut Session, name: &str, v: &Value) -> Result<()> {
             let unit = as_pt(v)
                 .filter(|p| p.is_finite() && if n == "GRIDUNIT" { p.x >= 0.0 && p.y >= 0.0 } else { p.x > 0.0 && p.y > 0.0 })
                 .ok_or_else(bad)?;
-            s.doc_mut()?.header.set(&n, cadcraft_doc::HVal::Point(unit.to3(0.0)));
+            s.doc_mut()?.header.set(&n, forja_doc::HVal::Point(unit.to3(0.0)));
         }
         "GRIDMAJOR" => st.gridmajor = as_f64(v).ok_or_else(bad)?.clamp(1.0, 100.0) as u32,
         "DYNDIGRIP" => st.dyndigrip = as_i(v).filter(|i| (0..=31).contains(i)).and_then(|i| u32::try_from(i).ok()).ok_or_else(bad)?,
@@ -377,8 +377,8 @@ pub fn set(s: &mut Session, name: &str, v: &Value) -> Result<()> {
         "MAXARRAY" => st.maxarray = as_f64(v).ok_or_else(bad)?.clamp(100.0, 10_000_000.0) as u64,
         "ZOOMFACTOR" => st.zoomfactor = as_i(v).filter(|z| (3..=100).contains(z)).ok_or_else(bad)? as u32,
         "MEASUREINIT" => st.measureinit = small(v, 1).ok_or_else(bad)? == 1,
-        "FONTALT" => cadcraft_fonts::ttf::set_font_alt(v.as_str().ok_or_else(bad)?),
-        "FONTFALLBACK" => cadcraft_fonts::ttf::set_fallback_fonts(v.as_str().ok_or_else(bad)?),
+        "FONTALT" => forja_fonts::ttf::set_font_alt(v.as_str().ok_or_else(bad)?),
+        "FONTFALLBACK" => forja_fonts::ttf::set_fallback_fonts(v.as_str().ok_or_else(bad)?),
         "SAVETIME" => crate::autosave::set_savetime(
             as_f64(v).filter(|m| *m >= 0.0 && *m <= f64::from(crate::autosave::MAX_SAVETIME)).ok_or_else(bad)?.round() as u32,
         ),
@@ -391,7 +391,7 @@ pub fn set(s: &mut Session, name: &str, v: &Value) -> Result<()> {
                 _ => as_f64(v).map(f64::to_radians),
             };
             let a = a.filter(|a| a.is_finite()).ok_or_else(bad)?;
-            s.doc_mut()?.header.set_f64("ANGBASE", cadcraft_geom::norm_angle(a));
+            s.doc_mut()?.header.set_f64("ANGBASE", forja_geom::norm_angle(a));
         }
         // Whole numbers inside the range UNITS clamps to.
         "LUNITS" | "LUPREC" | "AUNITS" | "AUPREC" => {
@@ -409,7 +409,7 @@ pub fn set(s: &mut Session, name: &str, v: &Value) -> Result<()> {
             }
             let d = s.doc_mut()?;
             // A dimension variable takes only the values its style field takes, as in DIMSTYLE and DIMOVERRIDE.
-            if let Some((_, field)) = cadcraft_doc::DIMVARS.iter().find(|(var, _)| *var == n) {
+            if let Some((_, field)) = forja_doc::DIMVARS.iter().find(|(var, _)| *var == n) {
                 let mut st = d.dim_style(&d.header.str("DIMSTYLE", "Standard")).cloned().unwrap_or_default();
                 if !st.apply_fields(&serde_json::Map::from_iter([((*field).to_string(), v.clone())])).is_empty() {
                     return Err(bad());
@@ -423,47 +423,47 @@ pub fn set(s: &mut Session, name: &str, v: &Value) -> Result<()> {
                 }
             }
             let val = match v {
-                Value::Number(x) if x.is_i64() => cadcraft_doc::HVal::Int(x.as_i64().unwrap_or(0)),
-                Value::Number(x) => cadcraft_doc::HVal::Real(x.as_f64().filter(|f| f.is_finite()).ok_or_else(bad)?),
+                Value::Number(x) if x.is_i64() => forja_doc::HVal::Int(x.as_i64().unwrap_or(0)),
+                Value::Number(x) => forja_doc::HVal::Real(x.as_f64().filter(|f| f.is_finite()).ok_or_else(bad)?),
                 Value::String(t) => match t.trim().parse::<i64>() {
-                    Ok(i) => cadcraft_doc::HVal::Int(i),
+                    Ok(i) => forja_doc::HVal::Int(i),
                     Err(_) => match t.trim().parse::<f64>() {
-                        Ok(f) if f.is_finite() => cadcraft_doc::HVal::Real(f),
-                        _ => cadcraft_doc::HVal::Str(t.clone()),
+                        Ok(f) if f.is_finite() => forja_doc::HVal::Real(f),
+                        _ => forja_doc::HVal::Str(t.clone()),
                     },
                 },
-                Value::Bool(b) => cadcraft_doc::HVal::Int(i64::from(*b)),
-                Value::Array(_) | Value::Object(_) => cadcraft_doc::HVal::Point(as_pt(v).ok_or_else(bad)?.to3(0.0)),
+                Value::Bool(b) => forja_doc::HVal::Int(i64::from(*b)),
+                Value::Array(_) | Value::Object(_) => forja_doc::HVal::Point(as_pt(v).ok_or_else(bad)?.to3(0.0)),
                 _ => return Err(bad()),
             };
             // Keep the header type stable for known numeric vars.
             match d.header.get(&n) {
-                Some(cadcraft_doc::HVal::Real(_)) => {
+                Some(forja_doc::HVal::Real(_)) => {
                     d.header.set_f64(&n, val.as_f64().filter(|f| f.is_finite()).ok_or_else(bad)?);
                     return Ok(());
                 }
-                Some(cadcraft_doc::HVal::Int(_)) => {
+                Some(forja_doc::HVal::Int(_)) => {
                     let i = match val {
-                        cadcraft_doc::HVal::Int(i) => i,
-                        cadcraft_doc::HVal::Real(f) if f.fract() == 0.0 && f.abs() < 1e15 => f as i64,
+                        forja_doc::HVal::Int(i) => i,
+                        forja_doc::HVal::Real(f) if f.fract() == 0.0 && f.abs() < 1e15 => f as i64,
                         _ => return Err(bad()),
                     };
                     d.header.set_i64(&n, i);
                     return Ok(());
                 }
                 // A text variable (CLAYER...) keeps what was typed, so a layer named `10` stays a string.
-                Some(cadcraft_doc::HVal::Str(_)) => {
+                Some(forja_doc::HVal::Str(_)) => {
                     let text = match v {
                         Value::String(t) => t.clone(),
                         Value::Number(x) => x.to_string(),
                         _ => return Err(bad()),
                     };
-                    d.header.set(&n, cadcraft_doc::HVal::Str(text));
+                    d.header.set(&n, forja_doc::HVal::Str(text));
                     return Ok(());
                 }
                 // A point variable takes `x,y` typed at the command line too.
-                Some(cadcraft_doc::HVal::Point(_)) => {
-                    d.header.set(&n, cadcraft_doc::HVal::Point(as_pt(v).ok_or_else(bad)?.to3(0.0)));
+                Some(forja_doc::HVal::Point(_)) => {
+                    d.header.set(&n, forja_doc::HVal::Point(as_pt(v).ok_or_else(bad)?.to3(0.0)));
                     return Ok(());
                 }
                 _ => {}
@@ -480,7 +480,7 @@ pub fn list(s: &Session) -> Value {
         for (k, v) in &d.header.vars {
             if matches!(k.as_str(), "ANGBASE" | "SNAPUNIT" | "GRIDUNIT" | "CECOLOR") {
                 m.insert(k.clone(), get(s, k).unwrap_or(Value::Null));
-            } else if !k.starts_with("CADCRAFT_") {
+            } else if !k.starts_with("FORJA_") {
                 m.insert(k.clone(), serde_json::to_value(v).unwrap_or(Value::Null));
             }
         }

@@ -2,8 +2,8 @@
 //! -ATTEDIT: the attributes picked by block name, tag and value specifications, edited one at a
 //! time or by replacing a string in all of them. Attribute tags match in any case, as in AutoCAD.
 
-use cadcraft_doc::color::Color;
-use cadcraft_doc::{AttribProps, Common, EntityKind, HAlign, Handle, Text, VAlign};
+use forja_doc::color::Color;
+use forja_doc::{AttribProps, Common, EntityKind, HAlign, Handle, Text, VAlign};
 use serde_json::{Map, Value, json};
 
 use crate::cmd::curves::KW;

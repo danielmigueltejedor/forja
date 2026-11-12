@@ -4,8 +4,8 @@
 //! doubles each: upper left, upper right, lower right, lower left), which is how the DXF's
 //! groups 10 and 11 come back. That layout is read from the acadrust dependency's decoder.
 
-use cadcraft_doc::EntityKind;
-use cadcraft_io::{SaveOptions, Version, read, read_dxf, write_with};
+use forja_doc::EntityKind;
+use forja_io::{SaveOptions, Version, read, read_dxf, write_with};
 
 const UL: (f64, f64) = (30.14, -18.99);
 const LR: (f64, f64) = (35.27, -22.39);
@@ -38,7 +38,7 @@ fn dxf() -> String {
     )
 }
 
-fn ole(d: &cadcraft_doc::Drawing) -> Option<cadcraft_doc::Unknown> {
+fn ole(d: &forja_doc::Drawing) -> Option<forja_doc::Unknown> {
     d.model.iter().find_map(|e| match &e.kind {
         EntityKind::Unknown(u) if u.dxf_type == "OLE2FRAME" => Some(u.clone()),
         _ => None,
@@ -67,7 +67,7 @@ fn a_dwg_keeps_an_ole_frame_with_its_data_and_position() {
 fn a_moved_ole_frame_keeps_its_position_in_a_dwg() {
     let mut d = read_dxf(dxf().as_bytes()).unwrap();
     for h in d.model.handles() {
-        d.model.modify(h, |e| e.kind.transform(&cadcraft_geom::Mat3::translate(cadcraft_geom::Vec2::new(100.0, -50.0))));
+        d.model.modify(h, |e| e.kind.transform(&forja_geom::Mat3::translate(forja_geom::Vec2::new(100.0, -50.0))));
     }
     let dwg = write_with(&d, "x.dwg", &SaveOptions { version: Some(Version::R2018), binary: false }).unwrap();
     let u = ole(&read(&dwg, "x.dwg").unwrap()).unwrap();
@@ -82,7 +82,7 @@ fn a_moved_ole_frame_keeps_its_position_in_a_dwg() {
 fn a_moved_ole_frame_keeps_its_data_header_in_a_dxf() {
     let mut d = read_dxf(dxf().as_bytes()).unwrap();
     for h in d.model.handles() {
-        d.model.modify(h, |e| e.kind.transform(&cadcraft_geom::Mat3::translate(cadcraft_geom::Vec2::new(100.0, -50.0))));
+        d.model.modify(h, |e| e.kind.transform(&forja_geom::Mat3::translate(forja_geom::Vec2::new(100.0, -50.0))));
     }
     let bytes = write_with(&d, "x.dxf", &SaveOptions { version: None, binary: false }).unwrap();
     let u = ole(&read_dxf(&bytes).unwrap()).unwrap();

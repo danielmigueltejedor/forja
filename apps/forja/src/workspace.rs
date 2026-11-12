@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 
-use cadcraft_ui_egui::UiState;
+use forja_ui_egui::UiState;
 use serde_json::{Value, json};
 
 const MAX_BYTES: u64 = 64 * 1024;
@@ -24,7 +24,7 @@ pub struct Workspace {
 }
 
 fn snapshot(ui: &UiState) -> Result<Value, String> {
-    cadcraft_ui_egui::docking::validate(&ui.docking)?;
+    forja_ui_egui::docking::validate(&ui.docking)?;
     if !matches!(ui.toolset_tab.as_str(), "Drafting" | "Modeling") {
         return Err("toolsetTab must be Drafting or Modeling".into());
     }
@@ -36,7 +36,7 @@ fn snapshot(ui: &UiState) -> Result<Value, String> {
     }
     Ok(json!({
         "docking": ui.docking,
-        "dockingVersion": cadcraft_ui_egui::docking::LAYOUT_VERSION,
+        "dockingVersion": forja_ui_egui::docking::LAYOUT_VERSION,
         "showToolsets": ui.show_toolsets,
         "showPalettes": ui.show_palettes,
         "showToolbar": ui.show_toolbar,
@@ -80,11 +80,11 @@ fn read(path: &Path) -> Result<Option<UiState>, String> {
         Some(fields) => (fields.remove("docking"), fields.remove("dockingVersion")),
         None => (None, None),
     };
-    let current = version.and_then(|version| version.as_u64()).is_some_and(|version| version >= u64::from(cadcraft_ui_egui::docking::LAYOUT_VERSION));
+    let current = version.and_then(|version| version.as_u64()).is_some_and(|version| version >= u64::from(forja_ui_egui::docking::LAYOUT_VERSION));
     let mut ui: UiState = serde_json::from_value(fields).map_err(|error| format!("{}: invalid workspace: {error}", path.display()))?;
     if let Some(docking) = docking.filter(|_| current)
-        && let Ok(docking) = serde_json::from_value::<cadcraft_ui_egui::docking::Workspace>(docking)
-        && cadcraft_ui_egui::docking::validate(&docking).is_ok()
+        && let Ok(docking) = serde_json::from_value::<forja_ui_egui::docking::Workspace>(docking)
+        && forja_ui_egui::docking::validate(&docking).is_ok()
     {
         ui.docking = docking;
     }
@@ -187,7 +187,7 @@ mod tests {
 
     fn temp_dir() -> PathBuf {
         let sequence = TEMP_SEQUENCE.fetch_add(1, Ordering::Relaxed);
-        let path = std::env::temp_dir().join(format!("cadcraft-workspace-test-{}-{sequence}", std::process::id()));
+        let path = std::env::temp_dir().join(format!("forja-workspace-test-{}-{sequence}", std::process::id()));
         fs::create_dir_all(&path).unwrap();
         path
     }
@@ -196,7 +196,7 @@ mod tests {
     fn profile_override_isolated_or_explicitly_disabled() {
         let vars = |config: Option<&'static str>| {
             move |key: &str| match key {
-                "CADCRAFT_CONFIG_DIR" => config.map(OsString::from),
+                "FORJA_CONFIG_DIR" => config.map(OsString::from),
                 "HOME" | "APPDATA" | "XDG_CONFIG_HOME" => Some(OsString::from("/unrelated-user-profile")),
                 _ => None,
             }
@@ -244,12 +244,12 @@ mod tests {
 
     #[test]
     fn dock_columns_floating_and_hidden_panels_survive_native_workspace_file_reload() {
-        use cadcraft_ui_egui::docking::{LAYOUT_VERSION, Panel, permissions, reveal_panel};
+        use forja_ui_egui::docking::{LAYOUT_VERSION, Panel, permissions, reveal_panel};
         let directory = temp_dir();
         let path = directory.join("workspace.json");
         let (mut store, _, _) = Workspace::at(Some(path.clone()));
         let mut ui = UiState::default();
-        let mut app = cadcraft_ui_egui::CadApp::new(cadcraft_engine::Session::default(), Default::default());
+        let mut app = forja_ui_egui::CadApp::new(forja_engine::Session::default(), Default::default());
         app.run("ui.dock", json!({"operation":"move", "panel":"layers", "target":"properties", "zone":"left"})).unwrap();
         app.run("ui.dock", json!({"operation":"float", "panel":"properties", "rect":[120,90,340,410]})).unwrap();
         ui.docking = app.ui.docking;
@@ -272,7 +272,7 @@ mod tests {
 
     #[test]
     fn split_frame_layout_file_loads_as_the_dock_default_with_its_other_settings() {
-        use cadcraft_ui_egui::docking::default_workspace;
+        use forja_ui_egui::docking::default_workspace;
         // Written as Forja 0.7 writes it: craft-ui's v1 layout with no docking version, a
         // floating window as one `{panels, active, rect}` group, Tool Sets closed.
         let file = r#"{"version":1,"workspace":{
@@ -330,7 +330,7 @@ mod tests {
             json!({"layout":{"root":null,"floating":[]},"hidden":[["futurePanel",{}]]}),
         ] {
             let workspace = json!({"showToolbar":false,"showPalettes":false,"toolsetTab":"Modeling", "collapsedGroups":["Draw"], "historyLines":7,"docking":docking,
-                "dockingVersion":cadcraft_ui_egui::docking::LAYOUT_VERSION});
+                "dockingVersion":forja_ui_egui::docking::LAYOUT_VERSION});
             assert!(serde_json::from_value::<UiState>(workspace.clone()).is_err(), "runtime state must stay strict");
             fs::write(&path, serde_json::to_vec(&json!({"version":1,"workspace":workspace})).unwrap()).unwrap();
             let (_, restored, error) = Workspace::at(Some(path.clone()));

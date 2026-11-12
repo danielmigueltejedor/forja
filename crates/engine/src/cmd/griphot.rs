@@ -8,8 +8,8 @@
 
 use std::sync::Arc;
 
-use cadcraft_doc::{Drawing, EntityKind, Handle};
-use cadcraft_geom::{Mat3, Vec2};
+use forja_doc::{Drawing, EntityKind, Handle};
+use forja_geom::{Mat3, Vec2};
 
 use super::gripcmds::stretch_grips;
 use super::helpers::line;

@@ -1,14 +1,14 @@
 //! A save to a folder that doesn't exist writes the file anyway and says what it created, so a
 //! mistyped path costs a stray folder, not the drawing (#2215).
 
-use cadcraft_engine::Session;
-use cadcraft_engine::cmd::file::{IoHooks, set_io};
-use cadcraft_engine::doc::Drawing;
+use forja_engine::Session;
+use forja_engine::cmd::file::{IoHooks, set_io};
+use forja_engine::doc::Drawing;
 use serde_json::json;
 use std::path::PathBuf;
 
 fn scratch(name: &str) -> PathBuf {
-    let dir = std::env::temp_dir().join(format!("cadcraft-new-folder-{}-{name}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("forja-new-folder-{}-{name}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(&dir).unwrap();
     dir

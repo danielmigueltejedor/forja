@@ -6,9 +6,9 @@
 //! DIMPOST, DIMTOL/DIMLIM with DIMTZIN and DIMTOLJ, DIMALT with DIMALTU/DIMALTZ/DIMALTRND,
 //! DIMAZIN, DIMARCSYM) with its background (DIMTFILL).
 
-use cadcraft_doc::{DimKind, DimStyle, Dimension};
-use cadcraft_fonts::{MTextParams, TextFont};
-use cadcraft_geom::Vec2;
+use forja_doc::{DimKind, DimStyle, Dimension};
+use forja_fonts::{MTextParams, TextFont};
+use forja_geom::Vec2;
 
 use crate::units::{NumFormat, format_decimal, format_linear};
 
@@ -50,7 +50,7 @@ pub struct DimGeometry {
     /// Text glyph outlines (TrueType), grouped per glyph.
     pub text_glyphs: Vec<Vec<Vec<Vec2>>>,
     /// The font glyphs of `text_glyphs` (outline indices into it).
-    pub text_runs: Vec<cadcraft_fonts::TextGlyph>,
+    pub text_runs: Vec<forja_fonts::TextGlyph>,
     pub text_pos: Vec2,
     /// The measured value (DXF group 42): a length, or the angle in radians.
     pub measurement: f64,
@@ -208,7 +208,7 @@ fn ext_line(origin: Vec2, foot: Vec2, st: &DimStyle, k: f64) -> Option<Vec<Vec2>
 
 /// An angle reduced to the readable range (text never upside down).
 fn readable(a: f64) -> f64 {
-    let mut a = cadcraft_geom::norm_angle(a);
+    let mut a = forja_geom::norm_angle(a);
     if a > std::f64::consts::FRAC_PI_2 + 1e-9 && a <= 3.0 * std::f64::consts::FRAC_PI_2 + 1e-9 {
         a -= std::f64::consts::PI;
     }
@@ -269,7 +269,7 @@ impl<'a> DimConfig<'a> {
         if text.is_empty() {
             return (0.0, 0.0);
         }
-        let layout = cadcraft_fonts::layout_mtext_with(text, &self.text_params(Vec2::ZERO, 0.0));
+        let layout = forja_fonts::layout_mtext_with(text, &self.text_params(Vec2::ZERO, 0.0));
         (layout.bounds.width(), layout.bounds.height())
     }
 
@@ -361,12 +361,12 @@ pub fn dimension_geometry_with(d: &Dimension, st: &DimStyle, dimscale: f64, font
         let (hw, hh) = (w / 2.0 + gap, h / 2.0 + gap);
         g.text_fill = [(-hw, -hh), (hw, -hh), (hw, hh), (-hw, hh)].into_iter().map(|(px, py)| text_mid + x * px + y * py).collect();
     }
-    g.value = decode_value(&cadcraft_fonts::plain_mtext(&g.mtext));
+    g.value = decode_value(&forja_fonts::plain_mtext(&g.mtext));
     if !g.mtext.is_empty() {
-        let l = cadcraft_fonts::layout_mtext_with(&g.mtext, &params(text_mid, text_angle));
+        let l = forja_fonts::layout_mtext_with(&g.mtext, &params(text_mid, text_angle));
         for p in l.pieces {
             let base = g.text_glyphs.len();
-            g.text_runs.extend(p.shaped.text.into_iter().map(|t| cadcraft_fonts::TextGlyph { outline: t.outline + base, ..t }));
+            g.text_runs.extend(p.shaped.text.into_iter().map(|t| forja_fonts::TextGlyph { outline: t.outline + base, ..t }));
             g.text.extend(p.shaped.strokes);
             g.text_glyphs.extend(p.shaped.glyphs);
         }
@@ -380,7 +380,7 @@ mod linear;
 mod variants;
 /// `%%` codes in the plain value become their characters (`%%c` → ⌀, `%%p` → ±, `%%d` → °).
 fn decode_value(s: &str) -> String {
-    cadcraft_fonts::decode_controls(s).into_iter().map(|(c, _, _)| c).collect()
+    forja_fonts::decode_controls(s).into_iter().map(|(c, _, _)| c).collect()
 }
 
 #[cfg(test)]

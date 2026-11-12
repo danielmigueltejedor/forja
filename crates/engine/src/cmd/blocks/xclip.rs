@@ -1,14 +1,14 @@
 //! XCLIP and XCLIPFRAME: clip block and xref references to a boundary.
 //!
-//! A boundary belongs to one reference ([`cadcraft_doc::Insert::clip`]), in the block's own
+//! A boundary belongs to one reference ([`forja_doc::Insert::clip`]), in the block's own
 //! coordinates, so it moves, rotates and scales with the reference and other references of the
 //! block stay whole. It is a rectangle, a polygon or the outline of a closed polyline, can hide
 //! what is inside instead of what is outside (Invert clip), and can be turned off, deleted or
 //! turned into a polyline. Clip depth (front and back clipping planes) has no meaning in a 2D
 //! drawing and is ignored. XCLIPFRAME says whether the boundary is drawn and plotted.
 
-use cadcraft_doc::{ClipBoundary, EntityKind, Handle, MAX_CLIP_VERTICES};
-use cadcraft_geom::{PolyVertex, Vec2};
+use forja_doc::{ClipBoundary, EntityKind, Handle, MAX_CLIP_VERTICES};
+use forja_geom::{PolyVertex, Vec2};
 use serde_json::{Value, json};
 
 use super::super::machines::{SelOutcome, SelectPhase};
@@ -68,7 +68,7 @@ fn world_boundary(s: &Session, p: &Value) -> Result<(Vec<Vec2>, bool)> {
         if !closed {
             return Err(bad("xclip", "select a closed polyline"));
         }
-        let pts = cadcraft_render::clip::boundary_polygon(&e.kind).ok_or_else(|| bad("xclip", "the polyline does not enclose an area"))?;
+        let pts = forja_render::clip::boundary_polygon(&e.kind).ok_or_else(|| bad("xclip", "the polyline does not enclose an area"))?;
         return Ok((pts, false));
     }
     let pts = p.get("points").and_then(Value::as_array).ok_or_else(|| bad("xclip", "a boundary is required: `rectangle`, `points` or `polyline`"))?;
@@ -91,7 +91,7 @@ fn run(s: &mut Session, p: &Value) -> Result<Value> {
         "new" | "n" => {
             let (world, rect) = world_boundary(s, p)?;
             let outline = if rect { world.first().zip(world.get(1)).map(|(a, b)| rectangle(*a, *b)).unwrap_or_default() } else { world.clone() };
-            if cadcraft_render::clip::PolyClip::new(&outline).is_none() {
+            if forja_render::clip::PolyClip::new(&outline).is_none() {
                 return Err(bad("xclip", "the clipping boundary encloses no area"));
             }
             let invert = bool_or(p, "invert", false);
@@ -145,7 +145,7 @@ fn run(s: &mut Session, p: &Value) -> Result<Value> {
             for h in &hs {
                 let Some(world) = world_outline(s, *h) else { continue };
                 let vertices = world.into_iter().map(|p| PolyVertex { p, bulge: 0.0, start_width: 0.0, end_width: 0.0 }).collect();
-                let pl = cadcraft_doc::LwPolyline { vertices, closed: true, const_width: 0.0, elevation: 0.0, plinegen: false };
+                let pl = forja_doc::LwPolyline { vertices, closed: true, const_width: 0.0, elevation: 0.0, plinegen: false };
                 made.push(s.add_entity(EntityKind::LwPolyline(pl))?.hex());
             }
             if made.is_empty() {

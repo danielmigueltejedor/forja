@@ -4,9 +4,9 @@
 
 use std::sync::Mutex;
 
-use cadcraft_engine::Session;
-use cadcraft_engine::cmd::file::{IoHooks, set_io};
-use cadcraft_engine::doc::Drawing;
+use forja_engine::Session;
+use forja_engine::cmd::file::{IoHooks, set_io};
+use forja_engine::doc::Drawing;
 use serde_json::json;
 
 #[path = "support/temp_dir.rs"]
@@ -155,7 +155,7 @@ fn layout_saveas_writes_the_layout_and_the_named_objects_it_uses() {
     // Layers the viewport freezes or recolors stay, and so do those settings.
     assert!(t.layer("WALLS").is_some() && t.layer("NOTES").is_some());
     let sheet_vp = t.layout("Sheet").unwrap().entities.iter().find_map(|e| match &e.kind {
-        cadcraft_engine::doc::EntityKind::Viewport(v) if v.id != 1 => Some(v.clone()),
+        forja_engine::doc::EntityKind::Viewport(v) if v.id != 1 => Some(v.clone()),
         _ => None,
     });
     let sheet_vp = sheet_vp.unwrap();

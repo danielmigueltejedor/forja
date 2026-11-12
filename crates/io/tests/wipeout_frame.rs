@@ -12,7 +12,7 @@ fn dxf(frame: Option<i32>) -> String {
 
 #[test]
 fn wipeoutvariables_sets_the_frame_flag() {
-    let frame = |f| cadcraft_io::read_dxf(dxf(f).as_bytes()).unwrap().header.i64("WIPEOUTFRAME", 1);
+    let frame = |f| forja_io::read_dxf(dxf(f).as_bytes()).unwrap().header.i64("WIPEOUTFRAME", 1);
     assert_eq!(frame(Some(0)), 0, "frames hidden");
     assert_eq!(frame(Some(1)), 1);
     assert_eq!(frame(Some(2)), 2);

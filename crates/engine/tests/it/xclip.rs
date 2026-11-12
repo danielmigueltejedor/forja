@@ -1,9 +1,9 @@
 //! XCLIP and XCLIPFRAME: clipping block and xref references (gap F2).
 
-use cadcraft_engine::doc::{ClipBoundary, Common, EntityKind, Handle, Insert, Space};
-use cadcraft_engine::geom::{Vec2, Vec3};
-use cadcraft_engine::render::{self, Options};
-use cadcraft_engine::{Input, Session};
+use forja_engine::doc::{ClipBoundary, Common, EntityKind, Handle, Insert, Space};
+use forja_engine::geom::{Vec2, Vec3};
+use forja_engine::render::{self, Options};
+use forja_engine::{Input, Session};
 use serde_json::{Value, json};
 
 fn h(v: &Value) -> String {
@@ -64,7 +64,7 @@ fn rectangular_clip_cuts_only_that_reference() {
     assert!((lo - 25.0).abs() < 1e-9 && (hi - 75.0).abs() < 1e-9, "{lo} {hi}");
     // Its extents are the clipped part (ZOOM Extents).
     let d = s.doc().unwrap();
-    let b = cadcraft_engine::doc::entity_bounds(d, d.entity(Handle::parse_hex(&r1).unwrap()).unwrap(), 0);
+    let b = forja_engine::doc::entity_bounds(d, d.entity(Handle::parse_hex(&r1).unwrap()).unwrap(), 0);
     assert!((b.min.x - 25.0).abs() < 1e-9 && (b.max.x - 75.0).abs() < 1e-9 && b.max.y <= 10.0 + 1e-9, "{b:?}");
     // Query reports it in drawing coordinates.
     let q = s.execute("xclip", &json!({ "handle": r1, "option": "query" })).unwrap();
@@ -97,7 +97,7 @@ fn off_on_a_selection_with_an_unclipped_reference_changes_nothing() {
 #[test]
 fn a_clipped_reference_plots_its_contents_on_their_own_layers() {
     let mut s = Session::new();
-    s.doc_mut().unwrap().layers.push(cadcraft_engine::doc::Layer { name: "Walls".into(), ..Default::default() });
+    s.doc_mut().unwrap().layers.push(forja_engine::doc::Layer { name: "Walls".into(), ..Default::default() });
     let a = h(&s.execute("line", &json!({ "points": [[0, 0], [100, 0]] })).unwrap());
     let b = h(&s.execute("line", &json!({ "points": [[50, -50], [50, 50]] })).unwrap());
     s.doc_mut().unwrap().modify_entity(Handle::parse_hex(&a).unwrap(), |e| e.common.layer = "Walls".into()).unwrap();
@@ -119,7 +119,7 @@ fn extents_are_the_boundary_box_as_in_the_reference_app() {
     let (mut s, r1, _) = setup();
     let bounds = |s: &Session| {
         let d = s.doc().unwrap();
-        cadcraft_engine::doc::entity_bounds(d, d.entity(Handle::parse_hex(&r1).unwrap()).unwrap(), 0)
+        forja_engine::doc::entity_bounds(d, d.entity(Handle::parse_hex(&r1).unwrap()).unwrap(), 0)
     };
     // A boundary reaching past the block (0..100 x -50..50): its own box, not the overlap.
     s.execute("xclip", &json!({ "handle": r1, "rectangle": [[50, -20], [150, 30]] })).unwrap();

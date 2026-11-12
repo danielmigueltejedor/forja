@@ -1,9 +1,9 @@
 //! WBLOCK writes the source's units, only the blocks the written objects use, and handles that
 //! never repeat.
 
-use cadcraft_engine::Session;
-use cadcraft_engine::cmd::file::{IoHooks, set_io};
-use cadcraft_engine::doc::Drawing;
+use forja_engine::Session;
+use forja_engine::cmd::file::{IoHooks, set_io};
+use forja_engine::doc::Drawing;
 use serde_json::json;
 
 /// Writes "insunits;block names;handles;distinct handles" so the test can read what would be saved.
@@ -21,7 +21,7 @@ fn write(d: &Drawing, _path: &str) -> Result<Vec<u8>, String> {
 }
 
 fn written(s: &mut Session, p: serde_json::Value) -> String {
-    let path = std::env::temp_dir().join(format!("cadcraft-wblock-units-{}.dxf", std::process::id()));
+    let path = std::env::temp_dir().join(format!("forja-wblock-units-{}.dxf", std::process::id()));
     let mut p = p;
     p["path"] = json!(path.to_string_lossy());
     s.execute("wblock", &p).unwrap();

@@ -1,8 +1,8 @@
 //! MTEXT columns and paragraph formatting from the command line, scripts and the JSON form
 //! (#532).
 
-use cadcraft_doc::{EntityKind, MLeader, MText, MTextColumnType, MTextColumns};
-use cadcraft_engine::Session;
+use forja_doc::{EntityKind, MLeader, MText, MTextColumnType, MTextColumns};
+use forja_engine::Session;
 use serde_json::json;
 
 fn last_mtext(s: &Session) -> MText {
@@ -70,13 +70,13 @@ fn columns_shape_the_drawn_text_and_its_extents() {
     .unwrap();
     let t = last_mtext(&s);
     let d = s.doc().unwrap();
-    let l = cadcraft_engine::render::layout_mtext_entity(d, &t);
+    let l = forja_engine::render::layout_mtext_entity(d, &t);
     // Three columns of 10 with two gutters of 2; text in every column, none below the columns.
     assert!((l.bounds.width() - 34.0).abs() < 1e-9, "{:?}", l.bounds);
     let xs: Vec<f64> = l.strokes.iter().flatten().map(|p| p.x).collect();
     assert!(xs.iter().any(|x| *x > 24.0), "text reaches the third column");
     let e = d.model.iter().last().unwrap();
-    let b = cadcraft_doc::entity_bounds(d, e, 0);
+    let b = forja_doc::entity_bounds(d, e, 0);
     assert!((b.width() - 34.0).abs() < 1e-9 && (b.height() - 6.0).abs() < 1e-9, "{b:?}");
 }
 
@@ -134,7 +134,7 @@ fn json_paragraph_indents_stay_in_drawing_units_at_larger_text_heights() {
     s.execute("mtext", &json!({"at": [0, 0], "text": "LABEL", "height": 3})).unwrap();
     let plain = last_mtext(&s);
     let min_x = |t: &MText| {
-        cadcraft_engine::render::layout_mtext_entity(s.doc().unwrap(), t).strokes.iter().flatten().map(|p| p.x).fold(f64::INFINITY, f64::min)
+        forja_engine::render::layout_mtext_entity(s.doc().unwrap(), t).strokes.iter().flatten().map(|p| p.x).fold(f64::INFINITY, f64::min)
     };
     assert!((min_x(&indented) - min_x(&plain) - 2.0).abs() < 1e-9);
 }

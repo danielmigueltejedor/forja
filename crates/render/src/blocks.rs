@@ -40,8 +40,8 @@ pub(crate) fn sub_ctx<'a>(ctx: &Ctx<'a>, e: &Entity, m: Mat3) -> Ctx<'a> {
     }
 }
 
-pub(crate) fn insert(b: &mut Builder, ctx: &Ctx, e: &Entity, ins: &cadcraft_doc::Insert, rgb: Ink) {
-    if ctx.depth >= cadcraft_doc::MAX_BLOCK_DEPTH {
+pub(crate) fn insert(b: &mut Builder, ctx: &Ctx, e: &Entity, ins: &forja_doc::Insert, rgb: Ink) {
+    if ctx.depth >= forja_doc::MAX_BLOCK_DEPTH {
         return;
     }
     if let Some(blk) = ctx.d.block(&ins.block) {
@@ -97,7 +97,7 @@ pub(crate) fn insert(b: &mut Builder, ctx: &Ctx, e: &Entity, ins: &cadcraft_doc:
 /// The XCLIP region of reference `ins` drawn through `xf` (block to drawing coordinates), and
 /// whether it is inverted. `None` when the reference isn't clipped (no boundary, clipping off, a
 /// degenerate outline).
-fn xclip_region(ins: &cadcraft_doc::Insert, xf: &Mat3) -> Option<(clip::PolyClip, bool)> {
+fn xclip_region(ins: &forja_doc::Insert, xf: &Mat3) -> Option<(clip::PolyClip, bool)> {
     let c = ins.clip.as_ref().filter(|c| c.active())?;
     let world: Vec<Vec2> = c.polygon().into_iter().map(|p| xf.apply(p)).collect();
     Some((clip::PolyClip::new(&world)?, c.inverted))
@@ -120,7 +120,7 @@ fn xclip_frame(b: &mut Builder, ctx: &Ctx, region: &clip::PolyClip, rgb: Ink) {
 }
 
 /// The attributes of block reference `e` (`ins`).
-fn attributes(b: &mut Builder, ctx: &Ctx, e: &Entity, ins: &cadcraft_doc::Insert, rgb: Ink) {
+fn attributes(b: &mut Builder, ctx: &Ctx, e: &Entity, ins: &forja_doc::Insert, rgb: Ink) {
     if b.opts.text {
         // ATTMODE (ATTDISP): 0 shows no attributes, 1 the visible ones, 2 all of them.
         let attmode = ctx.d.header.i64("ATTMODE", 1);
@@ -172,12 +172,12 @@ fn attributes(b: &mut Builder, ctx: &Ctx, e: &Entity, ins: &cadcraft_doc::Insert
 }
 
 /// Properties that follow the block reference's (an attribute without a definition).
-fn by_block() -> cadcraft_doc::Common {
-    cadcraft_doc::Common {
+fn by_block() -> forja_doc::Common {
+    forja_doc::Common {
         color: Color::ByBlock,
         linetype: "ByBlock".into(),
         lineweight: Lineweight::ByBlock,
-        transparency: cadcraft_doc::Transparency::ByBlock,
-        ..cadcraft_doc::Common::default()
+        transparency: forja_doc::Transparency::ByBlock,
+        ..forja_doc::Common::default()
     }
 }

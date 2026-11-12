@@ -6,8 +6,8 @@ pub(in crate::cmd) mod purge;
 
 use std::sync::Arc;
 
-use cadcraft_doc::{Attrib, Block, Entity, EntityKind, HAlign, Handle, Insert, Text, VAlign};
-use cadcraft_geom::{Vec2, Vec3};
+use forja_doc::{Attrib, Block, Entity, EntityKind, HAlign, Handle, Insert, Text, VAlign};
+use forja_geom::{Vec2, Vec3};
 use serde_json::{Value, json};
 
 use super::helpers::v3;
@@ -115,7 +115,7 @@ fn referenced_block(e: &Entity) -> Option<String> {
 
 /// Whether any of `ents` refers to block `name`, directly or through nested block references,
 /// dimension blocks and multileader block content.
-pub(crate) fn references_block(d: &cadcraft_doc::Drawing, ents: &[Entity], name: &str) -> bool {
+pub(crate) fn references_block(d: &forja_doc::Drawing, ents: &[Entity], name: &str) -> bool {
     let mut todo: Vec<String> = ents.iter().filter_map(referenced_block).collect();
     let mut seen = std::collections::HashSet::new();
     while let Some(b) = todo.pop() {
@@ -340,7 +340,7 @@ fn run_block(s: &mut Session, p: &Value) -> Result<Value> {
             Arc::make_mut(b).annotative = true;
         }
         if let Some(h) = r {
-            d.modify_entity(h, |e| cadcraft_doc::set_annotative(e, true, &cur))?;
+            d.modify_entity(h, |e| forja_doc::set_annotative(e, true, &cur))?;
         }
     }
     Ok(json!({ "block": name, "insert": r.map(|h| h.hex()) }))
@@ -438,7 +438,7 @@ fn run_attdef(s: &mut Session, p: &Value) -> Result<Value> {
 
 fn run_base(s: &mut Session, p: &Value) -> Result<Value> {
     let at = point_req("base", p, "at")?;
-    s.doc_mut()?.header.set("INSBASE", cadcraft_doc::HVal::Point(v3(at)));
+    s.doc_mut()?.header.set("INSBASE", forja_doc::HVal::Point(v3(at)));
     ok()
 }
 
@@ -446,9 +446,9 @@ fn run_list(s: &mut Session, _p: &Value) -> Result<Value> {
     let d = s.doc()?;
     // One object index for the whole listing: rebuilding it per block multiplies the block count
     // by the drawing's kept object count (CWE-407).
-    let objects = cadcraft_doc::dynblock::ObjectIndex::new(d);
+    let objects = forja_doc::dynblock::ObjectIndex::new(d);
     let block = |b: &Block| {
-        let dynamic = cadcraft_doc::dynblock::is_dynamic_block_in(d, &objects, &b.name);
+        let dynamic = forja_doc::dynblock::is_dynamic_block_in(d, &objects, &b.name);
         json!({"name": b.name, "entities": b.entities.len(), "base": [b.base.x, b.base.y], "description": b.description, "dynamic": dynamic})
     };
     Ok(json!({ "blocks": d.blocks.values().filter(|b| !b.anonymous).map(|b| block(b)).collect::<Vec<_>>() }))
@@ -462,7 +462,7 @@ fn run_dynamic(s: &mut Session, p: &Value) -> Result<Value> {
     if d.block(name).is_none() && !name.trim().eq_ignore_ascii_case("*Model_Space") {
         return Err(bad("blocks.dynamic", format!("no block `{name}`")));
     }
-    serde_json::to_value(cadcraft_doc::dynblock::dynamic_block(d, name)).map_err(|e| bad("blocks.dynamic", e.to_string()))
+    serde_json::to_value(forja_doc::dynblock::dynamic_block(d, name)).map_err(|e| bad("blocks.dynamic", e.to_string()))
 }
 
 /// The dynamic block a block reference shows, the values it was given and its custom properties
@@ -475,7 +475,7 @@ fn run_reference(s: &mut Session, p: &Value) -> Result<Value> {
         Some(_) => return Err(bad("blocks.reference", "`handle` is not a block reference")),
         None => return Err(bad("blocks.reference", format!("no object {}", h.hex()))),
     }
-    let (Some(r), Some((_, properties))) = (cadcraft_doc::dynblock::reference(d, h), cadcraft_doc::dynblock::custom_properties(d, h)) else {
+    let (Some(r), Some((_, properties))) = (forja_doc::dynblock::reference(d, h), forja_doc::dynblock::custom_properties(d, h)) else {
         return Ok(Value::Null);
     };
     Ok(json!({ "definition": r.definition, "values": r.values, "properties": properties }))
@@ -498,8 +498,8 @@ fn run_reference_set(s: &mut Session, p: &Value) -> Result<Value> {
         return Err(bad(cmd, "the reference is on a locked layer"));
     }
     let mut d = s.doc()?.clone();
-    cadcraft_doc::dynblock::set_property(&mut d, h, name, &value).map_err(|e| bad(cmd, e))?;
-    let properties = cadcraft_doc::dynblock::custom_properties(&d, h).map(|(_, p)| p).unwrap_or_default();
+    forja_doc::dynblock::set_property(&mut d, h, name, &value).map_err(|e| bad(cmd, e))?;
+    let properties = forja_doc::dynblock::custom_properties(&d, h).map(|(_, p)| p).unwrap_or_default();
     *s.doc_mut()? = d;
     Ok(json!({ "properties": properties }))
 }

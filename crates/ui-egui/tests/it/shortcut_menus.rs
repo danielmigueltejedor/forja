@@ -1,9 +1,9 @@
 //! Right-click menus outside the drawing area (#512): the command line, drawing tabs, layout
 //! tabs, and the Layers and Properties palettes.
 
-use cadcraft_engine::Session;
-use cadcraft_ui_egui::menus::Entry;
-use cadcraft_ui_egui::{CadApp, Services, shortcut_menus as sm};
+use forja_engine::Session;
+use forja_ui_egui::menus::Entry;
+use forja_ui_egui::{CadApp, Services, shortcut_menus as sm};
 use serde_json::json;
 
 /// (label, id, enabled) of the items, with submenu items prefixed by "Sub/".
@@ -108,7 +108,7 @@ fn layout_tab_menu() {
     let n = layout_names(&app).len();
     choose(&mut app, &model, "New Layout");
     assert_eq!(layout_names(&app).len(), n + 1);
-    assert!(matches!(app.session.state().unwrap().space, cadcraft_doc::Space::Paper(_)), "the new layout is current");
+    assert!(matches!(app.session.state().unwrap().space, forja_doc::Space::Paper(_)), "the new layout is current");
 
     // Page Setup acts on the right-clicked tab.
     let g = sm::layout_tab_entries(&app, "Sheet A");
@@ -150,7 +150,7 @@ fn every_id_is_a_command() {
         let command = id.strip_prefix("run:").and_then(|r| r.split_once(':')).map_or(id.as_str(), |(c, _)| c);
         let special = ["drawing:", "layout:", "cmdline:"].iter().any(|p| id.starts_with(p));
         assert!(
-            special || cadcraft_engine::find_command(command).is_some() || cadcraft_ui_egui::menus::is_ui_command(command),
+            special || forja_engine::find_command(command).is_some() || forja_ui_egui::menus::is_ui_command(command),
             "{label}: {id} isn't a command"
         );
     }

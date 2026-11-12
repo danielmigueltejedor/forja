@@ -613,169 +613,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc652a48c352aef3ea3aed32080501cf3ef6ed5da78602a020c991775b0aff04"
 
 [[package]]
-name = "cadcraft-color"
-version = "0.1.0"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "cadcraft-constraints"
-version = "0.1.0"
-dependencies = [
- "cadcraft-doc",
- "cadcraft-geom",
- "serde",
- "thiserror 2.0.21",
-]
-
-[[package]]
-name = "cadcraft-doc"
-version = "0.1.0"
-dependencies = [
- "cadcraft-color",
- "cadcraft-geom",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
-]
-
-[[package]]
-name = "cadcraft-dwg"
-version = "0.1.0"
-dependencies = [
- "acadrust",
- "log",
-]
-
-[[package]]
-name = "cadcraft-dxf"
-version = "0.1.0"
-dependencies = [
- "encoding_rs",
- "log",
- "thiserror 2.0.21",
-]
-
-[[package]]
-name = "cadcraft-engine"
-version = "0.1.0"
-dependencies = [
- "cadcraft-color",
- "cadcraft-constraints",
- "cadcraft-doc",
- "cadcraft-dxf",
- "cadcraft-fonts",
- "cadcraft-geom",
- "cadcraft-io",
- "cadcraft-render",
- "craft-docpath",
- "libc",
- "log",
- "rstar",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
-]
-
-[[package]]
-name = "cadcraft-fonts"
-version = "0.1.0"
-dependencies = [
- "cadcraft-dxf",
- "cadcraft-geom",
- "encoding_rs",
- "harfrust 0.14.0",
- "icu_segmenter",
- "skrifa 0.48.0",
- "unicode-bidi",
-]
-
-[[package]]
-name = "cadcraft-geom"
-version = "0.1.0"
-dependencies = [
- "serde",
-]
-
-[[package]]
-name = "cadcraft-io"
-version = "0.1.0"
-dependencies = [
- "acadrust",
- "cadcraft-color",
- "cadcraft-doc",
- "cadcraft-dwg",
- "cadcraft-dxf",
- "cadcraft-fonts",
- "cadcraft-geom",
- "cadcraft-render",
- "craft-pdf",
- "image",
- "miniz_oxide 0.9.1",
- "quick-xml 0.42.0",
- "serde",
- "serde_json",
- "thiserror 2.0.21",
- "tiny-skia 0.12.0",
-]
-
-[[package]]
-name = "cadcraft-mcp"
-version = "0.1.0"
-dependencies = [
- "cadcraft-engine",
- "cadcraft-io",
- "cadcraft-render",
- "clap",
- "getrandom 0.4.3",
- "log",
- "serde_json",
- "tiny-skia 0.12.0",
-]
-
-[[package]]
-name = "cadcraft-render"
-version = "0.1.0"
-dependencies = [
- "cadcraft-color",
- "cadcraft-doc",
- "cadcraft-fonts",
- "cadcraft-geom",
- "lyon_tessellation",
- "rayon",
- "serde_json",
- "tiny-skia 0.12.0",
-]
-
-[[package]]
-name = "cadcraft-ui-egui"
-version = "0.1.0"
-dependencies = [
- "cadcraft-color",
- "cadcraft-doc",
- "cadcraft-engine",
- "cadcraft-fonts",
- "cadcraft-geom",
- "cadcraft-render",
- "chrono",
- "craft-ui",
- "craft-update",
- "craft-window",
- "egui",
- "egui-wgpu",
- "egui_extras",
- "egui_kittest",
- "image",
- "log",
- "naga",
- "serde",
- "serde_json",
- "toml",
- "web-time",
-]
-
-[[package]]
 name = "calloop"
 version = "0.13.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1837,10 +1674,6 @@ checksum = "aa9a19cbb55df58761df49b23516a86d432839add4af60fc256da840f66ed35b"
 name = "forja"
 version = "0.1.0"
 dependencies = [
- "cadcraft-engine",
- "cadcraft-io",
- "cadcraft-mcp",
- "cadcraft-ui-egui",
  "chrono",
  "clap",
  "craft-ui",
@@ -1848,6 +1681,10 @@ dependencies = [
  "craft-window",
  "eframe",
  "egui",
+ "forja-engine",
+ "forja-io",
+ "forja-mcp",
+ "forja-ui-egui",
  "hidapi",
  "log",
  "muda",
@@ -1867,30 +1704,194 @@ dependencies = [
 name = "forja-cli"
 version = "0.1.0"
 dependencies = [
- "cadcraft-engine",
- "cadcraft-io",
- "cadcraft-mcp",
- "cadcraft-render",
  "clap",
  "clap_complete",
  "clap_mangen",
+ "forja-engine",
+ "forja-io",
+ "forja-mcp",
+ "forja-render",
  "same-file",
  "serde_json",
  "thiserror 2.0.21",
 ]
 
 [[package]]
+name = "forja-color"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "forja-constraints"
+version = "0.1.0"
+dependencies = [
+ "forja-doc",
+ "forja-geom",
+ "serde",
+ "thiserror 2.0.21",
+]
+
+[[package]]
+name = "forja-doc"
+version = "0.1.0"
+dependencies = [
+ "forja-color",
+ "forja-geom",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+]
+
+[[package]]
+name = "forja-dwg"
+version = "0.1.0"
+dependencies = [
+ "acadrust",
+ "log",
+]
+
+[[package]]
+name = "forja-dxf"
+version = "0.1.0"
+dependencies = [
+ "encoding_rs",
+ "log",
+ "thiserror 2.0.21",
+]
+
+[[package]]
+name = "forja-engine"
+version = "0.1.0"
+dependencies = [
+ "craft-docpath",
+ "forja-color",
+ "forja-constraints",
+ "forja-doc",
+ "forja-dxf",
+ "forja-fonts",
+ "forja-geom",
+ "forja-io",
+ "forja-render",
+ "libc",
+ "log",
+ "rstar",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+]
+
+[[package]]
+name = "forja-fonts"
+version = "0.1.0"
+dependencies = [
+ "encoding_rs",
+ "forja-dxf",
+ "forja-geom",
+ "harfrust 0.14.0",
+ "icu_segmenter",
+ "skrifa 0.48.0",
+ "unicode-bidi",
+]
+
+[[package]]
+name = "forja-geom"
+version = "0.1.0"
+dependencies = [
+ "serde",
+]
+
+[[package]]
+name = "forja-io"
+version = "0.1.0"
+dependencies = [
+ "acadrust",
+ "craft-pdf",
+ "forja-color",
+ "forja-doc",
+ "forja-dwg",
+ "forja-dxf",
+ "forja-fonts",
+ "forja-geom",
+ "forja-render",
+ "image",
+ "miniz_oxide 0.9.1",
+ "quick-xml 0.42.0",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.21",
+ "tiny-skia 0.12.0",
+]
+
+[[package]]
+name = "forja-mcp"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "forja-engine",
+ "forja-io",
+ "forja-render",
+ "getrandom 0.4.3",
+ "log",
+ "serde_json",
+ "tiny-skia 0.12.0",
+]
+
+[[package]]
+name = "forja-render"
+version = "0.1.0"
+dependencies = [
+ "forja-color",
+ "forja-doc",
+ "forja-fonts",
+ "forja-geom",
+ "lyon_tessellation",
+ "rayon",
+ "serde_json",
+ "tiny-skia 0.12.0",
+]
+
+[[package]]
+name = "forja-ui-egui"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "craft-ui",
+ "craft-update",
+ "craft-window",
+ "egui",
+ "egui-wgpu",
+ "egui_extras",
+ "egui_kittest",
+ "forja-color",
+ "forja-doc",
+ "forja-engine",
+ "forja-fonts",
+ "forja-geom",
+ "forja-render",
+ "image",
+ "log",
+ "naga",
+ "nodalia-theme",
+ "serde",
+ "serde_json",
+ "toml",
+ "web-time",
+]
+
+[[package]]
 name = "forja-web"
 version = "0.1.0"
 dependencies = [
- "cadcraft-engine",
- "cadcraft-fonts",
- "cadcraft-io",
- "cadcraft-ui-egui",
  "craft-web-api",
  "craft-web-host",
  "eframe",
  "egui",
+ "forja-engine",
+ "forja-fonts",
+ "forja-io",
+ "forja-ui-egui",
  "js-sys",
  "log",
  "serde_json",
@@ -3083,6 +3084,14 @@ dependencies = [
  "cfg-if",
  "cfg_aliases",
  "libc",
+]
+
+[[package]]
+name = "nodalia-theme"
+version = "0.1.0-alpha.1"
+source = "git+https://github.com/danielmigueltejedor/nodalia-design?rev=7deb6fc122325027321751239c43d19da7b263c3#7deb6fc122325027321751239c43d19da7b263c3"
+dependencies = [
+ "egui",
 ]
 
 [[package]]

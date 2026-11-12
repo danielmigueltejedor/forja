@@ -7,15 +7,15 @@ use super::{
     cases::{self, Case},
     compare,
 };
-use cadcraft_color::Color;
-use cadcraft_doc::{
+use forja_color::Color;
+use forja_doc::{
     Common, Drawing, EntityKind, Group, HVal, Layer, LayerState, Layout, Line, Linetype, NamedView, Space, TextStyle, Ucs, Viewport, VportConfig,
     VportTile,
 };
-use cadcraft_geom::{Vec2, Vec3};
+use forja_geom::{Vec2, Vec3};
 
 pub(super) fn foreign_records() -> Case {
-    use cadcraft_doc::{Handle, RawTag, foreign::ForeignObject};
+    use forja_doc::{Handle, RawTag, foreign::ForeignObject};
     let mut drawing = cases::drawing();
     let foreign = std::sync::Arc::make_mut(&mut drawing.foreign);
     foreign.dictionary.push(("SYNTHETIC_PAYLOAD".into(), Handle(0xA000)));
@@ -50,12 +50,12 @@ pub(super) fn assert_foreign_records(a: &Drawing, b: &Drawing, context: &str) {
     let source = a.foreign.objects.iter().find(|o| o.handle == *handle).unwrap();
     let back = b.foreign.objects.iter().find(|o| o.handle == *target).expect("dictionary target must resolve");
     assert_eq!(back.kind, source.kind, "{context}.object.kind");
-    let owner = back.tags.iter().find(|t| t.code == 330).and_then(|t| cadcraft_doc::Handle::parse_hex(&t.value)).expect("XRECORD owner");
+    let owner = back.tags.iter().find(|t| t.code == 330).and_then(|t| forja_doc::Handle::parse_hex(&t.value)).expect("XRECORD owner");
     assert_eq!(b.foreign.targets.get(&owner), Some(&("NOD".into(), String::new())), "{context}.object.owner");
     // Foreign's documented contract reallocates object handles and remaps references.
     // Identity here is the NOD key and its resolved target, not the numeric allocation.
     // Preserve every payload tag (including its order) after the subclass marker.
-    fn payload(tags: &[cadcraft_doc::RawTag]) -> &[cadcraft_doc::RawTag] {
+    fn payload(tags: &[forja_doc::RawTag]) -> &[forja_doc::RawTag] {
         let start =
             tags.iter().position(|t| t.code == 100 && t.value == "AcDbXrecord").unwrap_or_else(|| panic!("missing XRECORD subclass: {tags:?}"));
         &tags[start + 1..]
@@ -257,7 +257,7 @@ pub(super) fn assert_layouts(a: &Drawing, b: &Drawing, context: &str) {
         let back = b.layouts.iter().find(|l| l.name == layout.name).expect("layout must survive");
         assert_eq!(back.tab_order, layout.tab_order, "{context}.{}.tab_order", layout.name);
         // The groups 44, 45 and 73 the file stored are provenance, not a setting.
-        let setting = |p: &cadcraft_doc::PageSetup| cadcraft_doc::PageSetup { file_paper: None, ..p.clone() };
+        let setting = |p: &forja_doc::PageSetup| forja_doc::PageSetup { file_paper: None, ..p.clone() };
         assert_eq!(setting(&back.page), setting(&layout.page), "{context}.{}.page", layout.name);
         assert_eq!(back.view, layout.view, "{context}.{}.view", layout.name);
         compare::entities(a, b, &layout.entities, &back.entities, &format!("{context}.layout[{}]", layout.name));

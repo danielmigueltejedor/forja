@@ -26,7 +26,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex, MutexGuard, OnceLock, PoisonError, RwLock};
 
-use cadcraft_geom::Vec2;
+use forja_geom::Vec2;
 use skrifa::instance::{LocationRef, Size};
 use skrifa::outline::{DrawSettings, OutlinePen};
 use skrifa::raw::FileRef;
@@ -520,11 +520,11 @@ fn shx_dirs(_dirs: &[PathBuf]) -> Vec<PathBuf> {
     Vec::new()
 }
 
-/// A font file CADCraft can use, for font lists.
+/// A font file Forja can use, for font lists.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct FontFile {
     /// The name a text style stores: the file name (`arial.ttf`), or the name of a font built
-    /// into CADCraft.
+    /// into Forja.
     pub name: String,
     /// The family name inside the file, read for fonts in the user's folders.
     pub family: Option<String>,
@@ -532,7 +532,7 @@ pub struct FontFile {
     pub user: bool,
 }
 
-/// The fonts CADCraft can use: those in the user's folders first (with their family names),
+/// The fonts Forja can use: those in the user's folders first (with their family names),
 /// then the installed and built-in ones, by name.
 pub fn installed() -> Vec<FontFile> {
     /// Fonts whose family name is read for the list.
@@ -564,11 +564,11 @@ pub fn installed() -> Vec<FontFile> {
         .collect()
 }
 
-/// Whether a text style font is drawn as named: a font CADCraft found, or its own stroke font.
+/// Whether a text style font is drawn as named: a font Forja found, or its own stroke font.
 /// Other names (an SHX file, a missing TTF) are drawn with a substitute ([`crate::TextFont::resolve`]).
 pub fn available(name: &str) -> bool {
     let k = key(name);
-    // The built-in stroke font is CADCraft's own stand-in for the basic stroke fonts.
+    // The built-in stroke font is Forja's own stand-in for the basic stroke fonts.
     let stand_in = matches!(k.trim_end_matches(".shx"), "txt" | "simplex" | "romans");
     k.is_empty() || stand_in || k == crate::BUILTIN_FONT.to_ascii_lowercase() || crate::shx::find(name).is_some() || find(name).is_some()
 }
@@ -1276,7 +1276,7 @@ mod family_tests {
         let many: Vec<String> = (0..40).map(|i| format!("/fonts/{i}")).collect();
         assert_eq!(clean_dirs(&["  /a ", "", "/a", "/b", long.as_str(), "bad\u{0}dir"]), vec!["/a".to_string(), "/b".to_string()]);
         assert_eq!(clean_dirs(&many).len(), MAX_FONT_DIRS);
-        assert!(!available("gost_cadcraft.shx"));
+        assert!(!available("gost_forja.shx"));
         assert!(available("txt.shx") && available("SIMPLEX.SHX"), "the built-in stroke font stands in for these");
         assert!(available(""));
         assert!(available(crate::BUILTIN_FONT));
@@ -1328,7 +1328,7 @@ mod family_tests {
     #[cfg(unix)]
     #[test]
     fn linked_font_folders_are_followed_once() {
-        let root = std::env::temp_dir().join(format!("cadcraft-fontlinks-{}", std::process::id()));
+        let root = std::env::temp_dir().join(format!("forja-fontlinks-{}", std::process::id()));
         let real = root.join("real");
         let _ = std::fs::create_dir_all(&real);
         let Ok(()) = std::fs::write(real.join("LinkedFace.ttf"), b"x") else { return };

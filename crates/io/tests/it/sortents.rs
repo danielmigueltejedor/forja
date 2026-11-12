@@ -1,7 +1,7 @@
 //! Draw order from DXF files (#439): a SORTENTSTABLE reorders its space by sort handle, and the
-//! order CADCraft writes (the order of the entity records) reads back unchanged.
+//! order Forja writes (the order of the entity records) reads back unchanged.
 
-use cadcraft_doc::*;
+use forja_doc::*;
 
 fn line(h: &str, y: f64) -> String {
     format!("0\nLINE\n5\n{h}\n330\n1F\n8\n0\n10\n0\n20\n{y}\n30\n0\n11\n10\n21\n{y}\n31\n0\n")
@@ -27,10 +27,10 @@ fn order(d: &Drawing) -> Vec<String> {
 fn sortentstable_sets_the_draw_order() {
     // A1 is drawn by sort handle A4 (over A2 and A3); A3 by 10 (under everything).
     let table = "0\nSORTENTSTABLE\n5\nB0\n330\nB1\n100\nAcDbSortentsTable\n330\n1F\n331\nA1\n5\nA4\n331\nA3\n5\n10\n";
-    let d = cadcraft_io::read_dxf(dxf(table).as_bytes()).unwrap();
+    let d = forja_io::read_dxf(dxf(table).as_bytes()).unwrap();
     assert_eq!(order(&d), ["A3", "A2", "A1"]);
     // Written back in draw order, without a table, the order survives.
-    let back = cadcraft_io::read_dxf(cadcraft_io::write_dxf(&d).as_bytes()).unwrap();
+    let back = forja_io::read_dxf(forja_io::write_dxf(&d).as_bytes()).unwrap();
     assert_eq!(order(&back), ["A3", "A2", "A1"]);
 }
 
@@ -42,7 +42,7 @@ fn broken_sortentstables_are_ignored() {
         "0\nSORTENTSTABLE\n100\nAcDbSortentsTable\n330\n1F\n331\nzz\n5\nA4\n331\nA2\n5\n\n5\nA9\n",
         "0\nSORTENTSTABLE\n100\nAcDbSortentsTable\n",
     ] {
-        let d = cadcraft_io::read_dxf(dxf(table).as_bytes()).unwrap();
+        let d = forja_io::read_dxf(dxf(table).as_bytes()).unwrap();
         assert_eq!(order(&d), ["A1", "A2", "A3"], "{table:?}");
     }
 }
@@ -91,25 +91,25 @@ fn block_kinds(d: &Drawing) -> Vec<&'static str> {
 
 #[test]
 fn a_block_entity_left_out_of_the_table_sorts_by_its_own_handle() {
-    let d = cadcraft_io::read_dxf(block_dxf().as_bytes()).unwrap();
+    let d = forja_io::read_dxf(block_dxf().as_bytes()).unwrap();
     assert_eq!(block_kinds(&d), ["wipeout", "circle", "hline", "vline"]);
 }
 
 #[test]
 fn the_block_draw_order_survives_dxf_and_dwg() {
-    let d = cadcraft_io::read_dxf(block_dxf().as_bytes()).unwrap();
-    let dxf = cadcraft_io::read_dxf(cadcraft_io::write_dxf(&d).as_bytes()).unwrap();
+    let d = forja_io::read_dxf(block_dxf().as_bytes()).unwrap();
+    let dxf = forja_io::read_dxf(forja_io::write_dxf(&d).as_bytes()).unwrap();
     assert_eq!(block_kinds(&dxf), ["wipeout", "circle", "hline", "vline"], "DXF");
-    let dwg = cadcraft_io::read(&cadcraft_io::write(&d, "t.dwg").unwrap(), "t.dwg").unwrap();
+    let dwg = forja_io::read(&forja_io::write(&d, "t.dwg").unwrap(), "t.dwg").unwrap();
     assert_eq!(block_kinds(&dwg), ["wipeout", "circle", "hline", "vline"], "DWG");
 }
 
-/// The table itself (not CADCraft's reordered records) goes through the DWG bridge (#2410).
+/// The table itself (not Forja's reordered records) goes through the DWG bridge (#2410).
 #[test]
 fn a_partial_block_table_survives_the_dwg_bridge() {
-    let dwg = cadcraft_dwg::dxf_to_dwg(block_dxf().as_bytes()).unwrap();
-    let dxf = cadcraft_dwg::dwg_to_dxf(&dwg).unwrap();
-    let d = cadcraft_io::read_dxf(&dxf).unwrap();
+    let dwg = forja_dwg::dxf_to_dwg(block_dxf().as_bytes()).unwrap();
+    let dxf = forja_dwg::dwg_to_dxf(&dwg).unwrap();
+    let d = forja_io::read_dxf(&dxf).unwrap();
     assert_eq!(block_kinds(&d), ["wipeout", "circle", "hline", "vline"]);
 }
 
@@ -119,9 +119,9 @@ fn a_zero_sort_handle_draws_last() {
     // The horizontal line is keyed 0 (last); the vertical line 25E; the wipeout 25B; the circle its own 25C.
     let dxf = block_dxf_with("331\n25B\n5\n0\n331\n25D\n5\n25E\n331\n25E\n5\n25B\n");
     let want = ["wipeout", "circle", "vline", "hline"];
-    assert_eq!(block_kinds(&cadcraft_io::read_dxf(dxf.as_bytes()).unwrap()), want, "DXF");
-    let dwg = cadcraft_dwg::dxf_to_dwg(dxf.as_bytes()).unwrap();
-    let back = cadcraft_io::read_dxf(&cadcraft_dwg::dwg_to_dxf(&dwg).unwrap()).unwrap();
+    assert_eq!(block_kinds(&forja_io::read_dxf(dxf.as_bytes()).unwrap()), want, "DXF");
+    let dwg = forja_dwg::dxf_to_dwg(dxf.as_bytes()).unwrap();
+    let back = forja_io::read_dxf(&forja_dwg::dwg_to_dxf(&dwg).unwrap()).unwrap();
     assert_eq!(block_kinds(&back), want, "DWG");
 }
 
@@ -134,8 +134,8 @@ fn two_unlisted_block_entities_each_sort_by_their_own_handle() {
     // Unlisted: the circle 25C and the wipeout 25E.
     let dxf = block_dxf_with("331\n25B\n5\n25B\n331\n25D\n5\n25D\n");
     let want = ["hline", "circle", "vline", "wipeout"];
-    assert_eq!(block_kinds(&cadcraft_io::read_dxf(dxf.as_bytes()).unwrap()), want, "DXF");
-    let dwg = cadcraft_dwg::dxf_to_dwg(dxf.as_bytes()).unwrap();
-    let back = cadcraft_io::read_dxf(&cadcraft_dwg::dwg_to_dxf(&dwg).unwrap()).unwrap();
+    assert_eq!(block_kinds(&forja_io::read_dxf(dxf.as_bytes()).unwrap()), want, "DXF");
+    let dwg = forja_dwg::dxf_to_dwg(dxf.as_bytes()).unwrap();
+    let back = forja_io::read_dxf(&forja_dwg::dwg_to_dxf(&dwg).unwrap()).unwrap();
     assert_eq!(block_kinds(&back), want, "DWG");
 }

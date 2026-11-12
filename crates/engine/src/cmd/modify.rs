@@ -1,8 +1,8 @@
 //! Modify commands: ERASE, MOVE, COPY, ROTATE, SCALE, MIRROR, OFFSET, TRIM, EXTEND, FILLET,
 //! CHAMFER, EXPLODE, STRETCH, BREAK, JOIN (arrays: `array`; draw order: `draworder`).
 
-use cadcraft_doc::{Entity, EntityKind, Handle, Prim};
-use cadcraft_geom::{
+use forja_doc::{Entity, EntityKind, Handle, Prim};
+use forja_geom::{
     Arc, Circle, Line, Mat3, PolyVertex, Polyline, Segment, TAU, Vec2, angle_in_sweep, ccw_sweep, intersect_ext, line_line_infinite, norm_angle,
 };
 use serde_json::{Value, json};

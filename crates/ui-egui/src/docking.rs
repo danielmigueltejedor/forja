@@ -72,7 +72,7 @@ fn split(axis: SplitAxis, size: SplitSize, first: Node<Panel>, second: Node<Pane
     Node::Split { axis, size, first: Box::new(first), second: Box::new(second) }
 }
 
-/// The saved panel arrangement: craft-ui's workspace over CADCraft's panels.
+/// The saved panel arrangement: craft-ui's workspace over Forja's panels.
 pub type Workspace = craft_ui::docking::Workspace<Panel>;
 
 /// The panel layout's shape version, saved beside it. Layouts saved without it, or with an
@@ -324,12 +324,17 @@ pub fn show(app: &mut crate::CadApp, ui: &mut egui::Ui) {
     app.ui.docking = workspace.clone();
     let mut style = DockStyle::from_ui(ui);
     style.min_pane = 96.0;
-    style.background = t.panel;
-    style.tab_background = t.chrome;
-    style.active_background = t.tab_active;
+    // Nodalia islands: each group is a panel-coloured surface on the window frame, 8 pt apart and
+    // with rounded corners, painted under the dock ([`islands`]); no outlines. The dock's own
+    // fills stay clear, so the bar above each column is no rectangle of its own and tabs are
+    // text with an accent underline ([`underline_active_tabs`]), as in every Nodalia app.
+    style.background = egui::Color32::TRANSPARENT;
+    style.tab_background = egui::Color32::TRANSPARENT;
+    style.active_background = egui::Color32::TRANSPARENT;
     style.text = t.text;
     style.inactive_text = t.text_dim;
-    style.border = egui::Stroke::new(1.0, t.border);
+    style.border = egui::Stroke::NONE;
+    style.gap = nodalia_theme::component::WINDOW_GAP;
     style.accent = t.accent;
     style.font = crate::theme::body();
     // AutoCAD's palettes dock only in the left and right dock columns: a window edge without a
@@ -339,11 +344,16 @@ pub fn show(app: &mut crate::CadApp, ui: &mut egui::Ui) {
     style.new_dock_zones = true;
     style.drop_edges = Sides::NONE;
     style.title_bar_docks = false;
-    let mut area = DockArea::new(egui::Id::unique("cadcraft-docking")).input_blocked(native_input_blocked(app, ui.ctx()));
+    let mut area = DockArea::new(egui::Id::unique("forja-docking")).input_blocked(native_input_blocked(app, ui.ctx()));
     if let Some(panel) = app.raise_panel.take() {
         area = area.raise_panel(panel);
     }
-    let mut output = area.show_content(ui, &workspace.layout, &style, &mut Panels { app });
+    let mut bodies = Vec::new();
+    let under = ui.painter().add(egui::Shape::Noop);
+    let mut output = area.show_content(ui, &workspace.layout, &style, &mut Panels { app, bodies: &mut bodies });
+    ui.painter().set(under, islands(ui, &bodies, style.tab_height, style.column_bar_height, t.panel));
+    round_canvas(ui, &bodies, t.chrome);
+    underline_active_tabs(ui, &bodies, t.accent);
     // Keys typed in a floating panel's own OS window run the main window's shortcuts and
     // command line; files dropped on one open like files dropped on the main window.
     app.forward_native_input(ui.ctx(), std::mem::take(&mut output.forwarded_events), output.forwarded_modifiers);
@@ -362,7 +372,7 @@ pub fn show(app: &mut crate::CadApp, ui: &mut egui::Ui) {
     let _ = sync(&mut workspace, app);
     let stale = workspace != rendered;
     if stale {
-        craft_ui::docking::cancel_drag::<Panel>(ui.ctx(), egui::Id::unique("cadcraft-docking"));
+        craft_ui::docking::cancel_drag::<Panel>(ui.ctx(), egui::Id::unique("forja-docking"));
     }
     publish_visibility(app, &workspace);
     app.ui.docking = workspace;
@@ -388,10 +398,109 @@ pub fn native_input_blocked(app: &crate::CadApp, ctx: &egui::Context) -> bool {
 /// The panels' contents, names, size limits and icons for the dock area.
 pub struct Panels<'a> {
     pub app: &'a mut crate::CadApp,
+    /// Where each panel body was drawn this frame, and on which layer, for [`round_islands`].
+    pub bodies: &'a mut Vec<(Panel, egui::LayerId, egui::Rect)>,
+}
+
+/// The docked islands: one rounded panel-coloured surface per group, its body plus, except for
+/// the drawing, the tab strip above it. The top group of a dock column also takes the column bar
+/// above its strip (the bar that moves and collapses the column), so the side islands start
+/// level with the drawing instead of a bar's height below it. Painted under the dock, whose own
+/// fills are clear. Floating windows (other layers) keep their own frames.
+fn islands(ui: &egui::Ui, bodies: &[(Panel, egui::LayerId, egui::Rect)], tab_height: f32, column_bar: f32, fill: egui::Color32) -> egui::Shape {
+    let radius = nodalia_theme::component::PANEL_RADIUS;
+    let groups: Vec<(Panel, egui::Rect)> = bodies
+        .iter()
+        .filter(|(panel, layer, _)| *layer == ui.layer_id() && *panel != Panel::Canvas)
+        .map(|(panel, _, body)| (*panel, egui::Rect::from_min_max(egui::pos2(body.min.x, body.min.y - tab_height), body.max)))
+        .collect();
+    let shapes = groups
+        .iter()
+        .map(|(panel, island)| {
+            let mut island = *island;
+            if column_top(&groups, *panel, island, column_bar) {
+                island.min.y -= column_bar;
+            }
+            let r = radius.min(island.width() / 2.0).min(island.height() / 2.0).max(0.0);
+            egui::Shape::rect_filled(island, r, fill)
+        })
+        .collect();
+    egui::Shape::Vec(shapes)
+}
+
+/// Whether `island` is the top group of its dock column: no other docked group sits above it in
+/// the same column (within a column bar and a gap of its top).
+fn column_top(groups: &[(Panel, egui::Rect)], panel: Panel, island: egui::Rect, column_bar: f32) -> bool {
+    let reach = column_bar + nodalia_theme::component::WINDOW_GAP + 1.0;
+    !groups.iter().any(|(other, r)| {
+        *other != panel
+            && r.max.y <= island.min.y + 0.5
+            && r.max.y >= island.min.y - reach
+            && r.min.x < island.max.x - 1.0
+            && r.max.x > island.min.x + 1.0
+    })
+}
+
+/// Rounds the drawing's corners by painting the window frame's colour over them: the drawing
+/// fills its own square body.
+fn round_canvas(ui: &egui::Ui, bodies: &[(Panel, egui::LayerId, egui::Rect)], frame: egui::Color32) {
+    let radius = nodalia_theme::component::PANEL_RADIUS;
+    let painter = ui.painter();
+    for (panel, layer, island) in bodies {
+        if *layer != ui.layer_id() || *panel != Panel::Canvas {
+            continue;
+        }
+        let r = radius.min(island.width() / 2.0).min(island.height() / 2.0);
+        if r < 1.0 {
+            continue;
+        }
+        for (corner, sx, sy) in
+            [(island.left_top(), 1.0, 1.0), (island.right_top(), -1.0, 1.0), (island.left_bottom(), 1.0, -1.0), (island.right_bottom(), -1.0, -1.0)]
+        {
+            painter.add(corner_mask(corner, sx, sy, r, frame));
+        }
+    }
+}
+
+/// The accent underline under each group's active tab: the panel whose body was drawn. The tab's
+/// place is the dock's response for it this frame.
+fn underline_active_tabs(ui: &egui::Ui, bodies: &[(Panel, egui::LayerId, egui::Rect)], accent: egui::Color32) {
+    let area = egui::Id::unique("forja-docking");
+    for (panel, layer, _) in bodies {
+        if *layer != ui.layer_id() || *panel == Panel::Canvas {
+            continue;
+        }
+        let Some(tab) = ui.ctx().read_response(area.with(("tab", *panel))) else { continue };
+        let line = egui::Rect::from_min_max(
+            egui::pos2(tab.rect.left() + 8.0, tab.rect.bottom() - 3.0),
+            egui::pos2(tab.rect.right() - 8.0, tab.rect.bottom() - 1.0),
+        );
+        if line.width() > 0.0 {
+            ui.painter().rect_filled(line, 1.0, accent);
+        }
+    }
+}
+
+/// The part of the `r` square at `corner` outside its quarter circle, as a fan from the corner.
+/// `sx`, `sy` point from the corner into the island.
+fn corner_mask(corner: egui::Pos2, sx: f32, sy: f32, r: f32, color: egui::Color32) -> egui::Shape {
+    const STEPS: u32 = 10;
+    let centre = corner + egui::vec2(sx * r, sy * r);
+    let mut mesh = egui::Mesh::default();
+    mesh.colored_vertex(corner, color);
+    for i in 0..=STEPS {
+        let a = std::f32::consts::FRAC_PI_2 * i as f32 / STEPS as f32;
+        mesh.colored_vertex(centre - egui::vec2(sx * r * a.cos(), sy * r * a.sin()), color);
+    }
+    for i in 1..=STEPS {
+        mesh.add_triangle(0, i, i + 1);
+    }
+    egui::Shape::mesh(mesh)
 }
 
 impl DockContent<Panel> for Panels<'_> {
     fn body(&mut self, ui: &mut egui::Ui, panel: &Panel) {
+        self.bodies.push((*panel, ui.layer_id(), ui.max_rect()));
         let app = &mut *self.app;
         match panel {
             Panel::Canvas => {
@@ -444,4 +553,25 @@ fn panel_limits(panel: &Panel) -> PanelLimits {
         Panel::Layers | Panel::Properties | Panel::ExternalRefs => (egui::vec2(220.0, 100.0), 720.0),
     };
     PanelLimits { min, max: egui::vec2(max_width, 1_000_000.0) }
+}
+
+#[cfg(test)]
+mod island_tests {
+    use super::{Panel, column_top};
+    use egui::{Rect, pos2};
+
+    /// Layers above Properties in the right-hand column, Tool Sets alone on the left: the top
+    /// group of each column takes the column bar (so it starts level with the drawing), the one
+    /// below it does not.
+    #[test]
+    fn only_the_top_group_of_a_column_takes_its_bar() {
+        let bar = 14.0;
+        let layers = Rect::from_min_max(pos2(900.0, 114.0), pos2(1200.0, 400.0));
+        let properties = Rect::from_min_max(pos2(900.0, 408.0), pos2(1200.0, 900.0));
+        let tool_sets = Rect::from_min_max(pos2(0.0, 114.0), pos2(300.0, 900.0));
+        let groups = [(Panel::Layers, layers), (Panel::Properties, properties), (Panel::ToolSets, tool_sets)];
+        assert!(column_top(&groups, Panel::Layers, layers, bar));
+        assert!(column_top(&groups, Panel::ToolSets, tool_sets, bar));
+        assert!(!column_top(&groups, Panel::Properties, properties, bar));
+    }
 }

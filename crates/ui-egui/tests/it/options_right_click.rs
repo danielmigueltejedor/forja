@@ -3,11 +3,11 @@
 //! (Edit mode) and while a command runs (Command mode), through the OPTIONS JSON form, the
 //! drawing area and the dialog.
 
-use cadcraft_engine::Session;
-use cadcraft_ui_egui::options::{CommandClick, IdleClick};
-use cadcraft_ui_egui::{CadApp, Services, menus};
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
+use forja_engine::Session;
+use forja_ui_egui::options::{CommandClick, IdleClick};
+use forja_ui_egui::{CadApp, Services, menus};
 use serde_json::json;
 
 fn app() -> CadApp {
@@ -147,8 +147,8 @@ fn command_mode_and_click_duration_decide_enter_or_the_menu() {
     assert!(a.session.prompting(), "CIRCLE still runs");
 }
 
-/// With `CADCRAFT_OPTIONS_SHOTS` set to a folder, the dialog is rendered there for a look.
-const SHOTS: &str = "CADCRAFT_OPTIONS_SHOTS";
+/// With `FORJA_OPTIONS_SHOTS` set to a folder, the dialog is rendered there for a look.
+const SHOTS: &str = "FORJA_OPTIONS_SHOTS";
 
 fn harness(app: CadApp) -> Harness<'static, CadApp> {
     let builder = Harness::builder().with_size(egui::vec2(1400.0, 900.0));

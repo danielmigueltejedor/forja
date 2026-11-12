@@ -97,7 +97,7 @@ pub fn encode_kept_noted(dxf: &[u8], version: &str, kept: Option<&str>) -> Resul
     if u8::try_from(version.len()).is_err() {
         return Err(super::unsupported(version));
     }
-    // A kept version too long to send is no version CADCraft knows: it changes nothing.
+    // A kept version too long to send is no version Forja knows: it changes nothing.
     let kept = kept.filter(|k| u8::try_from(k.len()).is_ok());
     let mut header = request(ENCODE, Limits::DEFAULT, version);
     push_str(&mut header, kept.unwrap_or(""));

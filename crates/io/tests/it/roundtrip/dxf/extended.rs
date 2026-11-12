@@ -4,7 +4,7 @@
 
 use super::super::cases::{Case, blocks, complex, geometry, properties};
 use super::super::collections;
-use cadcraft_io::Version;
+use forja_io::Version;
 
 fn check(cases: Vec<Case>) {
     assert!(!cases.is_empty());
@@ -284,7 +284,7 @@ fn dimensions() {
     check(complex::dimensions());
 }
 
-fn collection(case: Case, verify: fn(&cadcraft_doc::Drawing, &cadcraft_doc::Drawing, &str)) {
+fn collection(case: Case, verify: fn(&forja_doc::Drawing, &forja_doc::Drawing, &str)) {
     for version in Version::ALL {
         super::check_version_with(&case.name, &case.drawing, &case.drawing, version, verify);
     }

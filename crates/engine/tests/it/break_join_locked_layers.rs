@@ -1,7 +1,7 @@
 //! BREAK, BREAKATPOINT and JOIN leave objects on locked layers alone (#727).
 
-use cadcraft_engine::geom::Vec2;
-use cadcraft_engine::{Input, Session};
+use forja_engine::geom::Vec2;
+use forja_engine::{Input, Session};
 use serde_json::{Value, json};
 
 fn h(r: &Value) -> String {
@@ -47,7 +47,7 @@ fn break_and_breakatpoint_refuse_a_locked_line() {
     assert_eq!(r["handles"].as_array().unwrap().len(), 2);
     // The line keeps its handle as the piece from its start.
     assert_eq!(r["handles"][0].as_str(), Some(a.as_str()));
-    assert!(s.doc().unwrap().entity(cadcraft_engine::doc::Handle::parse_hex(&control).unwrap()).is_some());
+    assert!(s.doc().unwrap().entity(forja_engine::doc::Handle::parse_hex(&control).unwrap()).is_some());
     let broken = snapshot(&s);
     s.execute("undo", &json!({})).unwrap();
     assert_eq!(snapshot(&s), unlocked);
@@ -105,7 +105,7 @@ fn join_keeps_a_locked_original_in_a_mixed_layer_pair() {
         let before = snapshot(&s);
         assert!(s.execute("join", &json!({"handles": [a, b]})).is_err());
         assert_eq!(snapshot(&s), before, "locked_first = {locked_first}");
-        assert!(s.doc().unwrap().entity(cadcraft_engine::doc::Handle::parse_hex(locked).unwrap()).is_some());
+        assert!(s.doc().unwrap().entity(forja_engine::doc::Handle::parse_hex(locked).unwrap()).is_some());
     }
 }
 

@@ -1,7 +1,7 @@
 //! Interactive commands: prompts, inputs and the command-line coordinate grammar.
 
-use cadcraft_doc::{EntityKind, Handle};
-use cadcraft_geom::{Mat3, Vec2};
+use forja_doc::{EntityKind, Handle};
+use forja_geom::{Mat3, Vec2};
 use serde::Serialize;
 
 use crate::{Result, Session};
@@ -277,7 +277,7 @@ pub trait Interactive: Send {
     /// Preview objects drawn with their own properties (colour, layer, linetype) rather than
     /// the current layer's, as [`Interactive::preview`]'s are: a block reference re-evaluated
     /// under the cursor, drawn as it will look. Drawn under the rubber band.
-    fn preview_objects(&self, _s: &Session, _cursor: Vec2) -> Vec<cadcraft_doc::Entity> {
+    fn preview_objects(&self, _s: &Session, _cursor: Vec2) -> Vec<forja_doc::Entity> {
         Vec::new()
     }
     /// The preview as existing objects under one transform, when it is that (MOVE, COPY,
@@ -289,7 +289,7 @@ pub trait Interactive: Send {
     /// The multiline text being typed (MTEXT, once its box is known, with empty contents) or edited
     /// (TEXTEDIT on an MTEXT or a multileader's text, with its contents): where the UI places its
     /// in-place editor and with which height, width, justification and starting text.
-    fn editing_mtext(&self) -> Option<cadcraft_doc::MText> {
+    fn editing_mtext(&self) -> Option<forja_doc::MText> {
         None
     }
     /// What the drawing area shows in place of the drawing while the command runs (DVIEW draws
@@ -307,7 +307,7 @@ pub struct DisplayOnly {
     pub handles: Vec<Handle>,
     /// Geometry that is not in the drawing (DVIEW's sample house, or an insert of the drawing's
     /// DVIEWBLOCK block), with its own properties.
-    pub extra: Vec<cadcraft_doc::Entity>,
+    pub extra: Vec<forja_doc::Entity>,
 }
 
 /// See [`Interactive::drag`].

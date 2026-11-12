@@ -5,9 +5,9 @@
 //!
 //! The fonts are tiny synthetic TrueType files built here (no font files in the repository).
 
-use cadcraft_doc::{Common, Drawing, EntityKind, Space, Text, TextStyle, Viewport};
-use cadcraft_geom::{Vec2, Vec3};
-use cadcraft_io::plot;
+use forja_doc::{Common, Drawing, EntityKind, Space, Text, TextStyle, Viewport};
+use forja_geom::{Vec2, Vec3};
+use forja_io::plot;
 use serde_json::json;
 
 #[path = "support/pdf_read.rs"]
@@ -157,10 +157,10 @@ fn test_font(fs_type: u16, metrics: usize, alias: bool) -> Vec<u8> {
 fn fonts() {
     static ONCE: std::sync::Once = std::sync::Once::new();
     ONCE.call_once(|| {
-        cadcraft_fonts::ttf::register("cadcraft-pdf-test.ttf", test_font(0, 3, false));
-        cadcraft_fonts::ttf::register("cadcraft-pdf-restricted.ttf", test_font(0x0002, 3, false));
-        cadcraft_fonts::ttf::register("cadcraft-pdf-short-hmtx.ttf", test_font(0, 1, false));
-        cadcraft_fonts::ttf::register("cadcraft-pdf-alias.ttf", test_font(0, 3, true));
+        forja_fonts::ttf::register("forja-pdf-test.ttf", test_font(0, 3, false));
+        forja_fonts::ttf::register("forja-pdf-restricted.ttf", test_font(0x0002, 3, false));
+        forja_fonts::ttf::register("forja-pdf-short-hmtx.ttf", test_font(0, 1, false));
+        forja_fonts::ttf::register("forja-pdf-alias.ttf", test_font(0, 3, true));
     });
 }
 
@@ -189,9 +189,9 @@ fn text(d: &mut Drawing, space: &Space, style: &str, at: (f64, f64), value: &str
 fn drawing() -> Drawing {
     fonts();
     let mut d = Drawing::new_metric();
-    style(&mut d, "Real", "cadcraft-pdf-test.ttf");
-    style(&mut d, "Locked", "cadcraft-pdf-restricted.ttf");
-    style(&mut d, "Short", "cadcraft-pdf-short-hmtx.ttf");
+    style(&mut d, "Real", "forja-pdf-test.ttf");
+    style(&mut d, "Locked", "forja-pdf-restricted.ttf");
+    style(&mut d, "Short", "forja-pdf-short-hmtx.ttf");
     d
 }
 
@@ -229,18 +229,18 @@ fn font_files(doc: &Doc) -> usize {
 
 #[test]
 fn font_paths_use_the_same_installed_face_and_preserve_the_drawing_style() {
-    for path in [r"C:\Windows\Fonts\CADCRAFT-PDF-TEST.TTF", "/old machine/fonts/cadcraft-pdf-test.ttf", r"..\Fonts\cadcraft-pdf-test.ttf"] {
+    for path in [r"C:\Windows\Fonts\FORJA-PDF-TEST.TTF", "/old machine/fonts/forja-pdf-test.ttf", r"..\Fonts\forja-pdf-test.ttf"] {
         let mut d = drawing();
         style(&mut d, "Portable", path);
         text(&mut d, &Space::Model, "Portable", (10.0, 20.0), "AB", (0.3, 0.8, 0.2));
-        assert_eq!(cadcraft_fonts::ttf::find(path), cadcraft_fonts::ttf::find("cadcraft-pdf-test.ttf"));
+        assert_eq!(forja_fonts::ttf::find(path), forja_fonts::ttf::find("forja-pdf-test.ttf"));
 
         let first = pdf(&d, &Space::Model, json!({}));
         assert_eq!(font_files(&first), 1);
         assert_eq!(codes(&first).len(), 2);
 
-        let saved = cadcraft_io::write_dxf(&d);
-        let back = cadcraft_io::read_dxf(saved.as_bytes()).expect("portable font round-trip");
+        let saved = forja_io::write_dxf(&d);
+        let back = forja_io::read_dxf(saved.as_bytes()).expect("portable font round-trip");
         assert_eq!(back.text_styles.iter().find(|s| s.name == "Portable").unwrap().font, path);
         let reopened = pdf(&back, &Space::Model, json!({}));
         assert_eq!(codes(&reopened), codes(&first));
@@ -250,7 +250,7 @@ fn font_paths_use_the_same_installed_face_and_preserve_the_drawing_style() {
 #[test]
 fn shared_glyphs_keep_original_unicode_with_actual_text() {
     let mut d = drawing();
-    style(&mut d, "Alias", "cadcraft-pdf-alias.ttf");
+    style(&mut d, "Alias", "forja-pdf-alias.ttf");
     text(&mut d, &Space::Model, "Alias", (10.0, 20.0), "ABBA", (0.0, 1.0, 0.0));
     let doc = pdf(&d, &Space::Model, json!({}));
     let glyph_codes = codes(&doc);
@@ -305,8 +305,8 @@ fn the_subset_is_a_valid_truetype_font() {
     text(&mut d, &Space::Model, "Real", (0.0, 0.0), "A", (0.0, 1.0, 0.0));
     let doc = pdf(&d, &Space::Model, json!({}));
     let file = doc.pages[0].fonts[0].font_file.clone().expect("an embedded font file");
-    let face = cadcraft_fonts::ttf::Face::new(std::sync::Arc::new(file.clone()), 0).expect("the subset parses");
-    assert_eq!(cadcraft_fonts::subset::embedding(&face), cadcraft_fonts::subset::Embedding::Allowed);
+    let face = forja_fonts::ttf::Face::new(std::sync::Arc::new(file.clone()), 0).expect("the subset parses");
+    assert_eq!(forja_fonts::subset::embedding(&face), forja_fonts::subset::Embedding::Allowed);
     // Glyph A kept, B (unused) left out: the subset is smaller than the font.
     assert!(file.len() < test_font(0, 3, false).len());
 }

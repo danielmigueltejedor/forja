@@ -7,7 +7,7 @@
 
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
-use cadcraft_doc::Drawing;
+use forja_doc::Drawing;
 
 /// Add the entries of `theirs` whose names `ours` lacks (compared without letter case; a name that
 /// exists keeps `ours`' definition). Returns how many were added.
@@ -63,7 +63,7 @@ pub(crate) fn block_renames(d: &Drawing, src: &Drawing, defining: Option<&str>) 
 mod tests {
     use std::sync::Arc;
 
-    use cadcraft_doc::{Block, Layer};
+    use forja_doc::{Block, Layer};
 
     use super::*;
 

@@ -228,7 +228,7 @@ pub(super) fn text_pairs(dxf: &[u8]) -> Option<impl Iterator<Item = Option<(i32,
 }
 
 /// The CLASS records of an ASCII DXF, in CLASSES order and numbered by place from 500 (DXF
-/// Reference, CLASSES; a proxy's group 91 is that number). `None` for a binary DXF (CADCraft's own
+/// Reference, CLASSES; a proxy's group 91 is that number). `None` for a binary DXF (Forja's own
 /// bridge DXF is ASCII), and for one with a record that can't be written back as it is: no names,
 /// flags or instance count out of range, more classes than the numbers allow. Then
 /// `proxy_classes` matches the classes by name instead.

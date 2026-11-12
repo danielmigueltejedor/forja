@@ -1,4 +1,4 @@
-//! The CADCraft engine.
+//! The Forja engine.
 //!
 //! Every user-visible action is a command with a stable id (AutoCAD's command names in lower
 //! case: `line`, `circle`, `zoom`, `layer`…, plus dotted ids for UI operations). Commands run two
@@ -39,17 +39,17 @@ pub mod units;
 
 use std::sync::Arc;
 
-use cadcraft_doc::{Common, Drawing, Entity, EntityKind, Handle, Space};
-use cadcraft_geom::{Bounds2, Vec2};
+use forja_doc::{Common, Drawing, Entity, EntityKind, Handle, Space};
+use forja_geom::{Bounds2, Vec2};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
-pub use cadcraft_doc as doc;
-pub use cadcraft_fonts as fonts;
-pub use cadcraft_geom as geom;
-pub use cadcraft_render as render;
 pub use cmd::hatch::{HatchPicks, PatternChoice, PickMode, pattern_choices};
 pub use cmd::{CommandInfo, CommandSpec, command_specs, find_command};
+pub use forja_doc as doc;
+pub use forja_fonts as fonts;
+pub use forja_geom as geom;
+pub use forja_render as render;
 pub use prompt::{Accept, DisplayOnly, Drag, Input, Interactive, Picker, Prompt, Step};
 
 mod doc_state;
@@ -68,10 +68,10 @@ pub use settings::Settings;
 pub use view::{ModelTile, ModelTiles, View};
 
 /// `<version> (<commit>)`, what `--version` prints after the program name in the app and the CLI.
-/// The commit comes from `CADCRAFT_BUILD_SHA` at build time, `dev` without it.
+/// The commit comes from `FORJA_BUILD_SHA` at build time, `dev` without it.
 pub fn build_version() -> &'static str {
     static VERSION: std::sync::LazyLock<String> =
-        std::sync::LazyLock::new(|| format!("{} ({})", env!("CARGO_PKG_VERSION"), option_env!("CADCRAFT_BUILD_SHA").unwrap_or("dev")));
+        std::sync::LazyLock::new(|| format!("{} ({})", env!("CARGO_PKG_VERSION"), option_env!("FORJA_BUILD_SHA").unwrap_or("dev")));
     &VERSION
 }
 
@@ -142,7 +142,7 @@ pub struct Session {
     /// Where `clipboard` came from and the layers, styles and blocks its objects need.
     pub clipboard_source: Option<cmd::clipboard::ClipSource>,
     /// The window last picked with PLOTWINDOW (the Plot dialog's "Window <").
-    pub plot_window: Option<cadcraft_geom::Bounds2>,
+    pub plot_window: Option<forja_geom::Bounds2>,
     /// AutoLISP: each drawing's symbols and the routine running ([`lisp`]).
     lisp: lisp::LispState,
     /// How the last LISP run ended (its value or error message).
@@ -266,9 +266,9 @@ impl Session {
         let h = &d.header;
         Common {
             layer: h.str("CLAYER", "0"),
-            color: cadcraft_color::Color::from_aci(h.i64("CECOLOR", 256) as i16),
+            color: forja_color::Color::from_aci(h.i64("CECOLOR", 256) as i16),
             linetype: h.str("CELTYPE", "ByLayer"),
-            lineweight: cadcraft_doc::Lineweight::from_dxf(h.i64("CELWEIGHT", -1) as i16),
+            lineweight: forja_doc::Lineweight::from_dxf(h.i64("CELWEIGHT", -1) as i16),
             ltscale: h.f64("CELTSCALE", 1.0),
             plot_style: h.str("CPLOTSTYLE", "ByLayer"),
             ..Common::default()
@@ -282,7 +282,7 @@ impl Session {
         let true_color = self.doc()?.header.get("CECOLOR_RGB").and_then(|v| v.as_i64());
         let mut common = common;
         if let Some(rgb) = true_color {
-            common.color = cadcraft_color::Color::True(cadcraft_color::Rgb::from_u32(rgb as u32));
+            common.color = forja_color::Color::True(forja_color::Rgb::from_u32(rgb as u32));
         }
         // Text, dimensions, multileaders, hatches and block references of annotative styles are
         // annotative, supporting the current annotation scale.

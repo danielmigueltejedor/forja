@@ -221,7 +221,7 @@ fn find_text_reads_texts_and_render_shows_one_area() {
     let r = call(&mut s, 9, "tools/call", json!({"name": "render", "arguments": {"window": [[0, 0], [10, 5]]}}));
     let c = &r["result"]["content"][0];
     assert_eq!(c["type"], "image", "{r}");
-    let png = cadcraft_engine::cmd::file::base64_decode(c["data"].as_str().unwrap()).unwrap();
+    let png = forja_engine::cmd::file::base64_decode(c["data"].as_str().unwrap()).unwrap();
     let (w, h) = (u32::from_be_bytes(png[16..20].try_into().unwrap()), u32::from_be_bytes(png[20..24].try_into().unwrap()));
     assert_eq!((w, h), (1600, 800));
 }
@@ -264,7 +264,7 @@ fn a_lazy_bridge_starts_without_the_app_and_says_how_to_open_it() {
 fn render_pixels(s: &mut Server, args: Value) -> tiny_skia::Pixmap {
     let img = tool(s, "render", args);
     assert_eq!(img["type"], "image", "{img}");
-    let png = cadcraft_engine::cmd::file::base64_decode(img["data"].as_str().unwrap()).unwrap();
+    let png = forja_engine::cmd::file::base64_decode(img["data"].as_str().unwrap()).unwrap();
     tiny_skia::Pixmap::decode_png(&png).unwrap()
 }
 

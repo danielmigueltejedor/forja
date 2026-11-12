@@ -1,7 +1,7 @@
 //! Hit testing and window/crossing selection.
 
-use cadcraft_doc::{Drawing, Entity, EntityKind, Handle, Prim, Space, entity_bounds};
-use cadcraft_geom::{Bounds2, Line, Vec2, point_in_polygon};
+use forja_doc::{Drawing, Entity, EntityKind, Handle, Prim, Space, entity_bounds};
+use forja_geom::{Bounds2, Line, Vec2, point_in_polygon};
 
 use crate::spatial::{self, SpatialIndex};
 use crate::{Accept, Prompt};
@@ -26,10 +26,10 @@ pub fn hit_polylines(d: &Drawing, e: &Entity, tol: f64) -> Vec<Vec<Vec2>> {
             let c = b.corners();
             let mut v = vec![vec![c[0], c[1], c[2], c[3], c[0]]];
             if matches!(e.kind, EntityKind::Dimension(_) | EntityKind::Insert(_) | EntityKind::MLeader(_)) {
-                let list = cadcraft_render::build_entities(
+                let list = forja_render::build_entities(
                     d,
                     std::iter::once(e),
-                    &cadcraft_render::Options { tolerance: tol, text: false, linetypes: false, ..Default::default() },
+                    &forja_render::Options { tolerance: tol, text: false, linetypes: false, ..Default::default() },
                 );
                 v = list.prims.iter().map(|p| list.points(p).to_vec()).collect();
                 v.push(vec![c[0], c[1], c[2], c[3], c[0]]);
@@ -39,7 +39,7 @@ pub fn hit_polylines(d: &Drawing, e: &Entity, tol: f64) -> Vec<Vec<Vec2>> {
         // An OLE object's frame is drawn, so it is picked on its outline (the corners the extents and
         // the renderer use); a frame with no width or height is drawn as a line, so it is picked as
         // one. It stays out of prims(), which TRIM, object snap and the dimension commands read.
-        EntityKind::Unknown(u) if u.is_ole_frame() => match cadcraft_doc::ole_frame(&u.tags) {
+        EntityKind::Unknown(u) if u.is_ole_frame() => match forja_doc::ole_frame(&u.tags) {
             Some(q) => vec![q.to_vec()],
             None => Vec::new(),
         },
@@ -72,10 +72,10 @@ pub fn hit_polylines(d: &Drawing, e: &Entity, tol: f64) -> Vec<Vec<Vec2>> {
                 && h.gradient.is_none()
                 && !h.pattern.eq_ignore_ascii_case("SOLID")
             {
-                let list = cadcraft_render::build_entities(
+                let list = forja_render::build_entities(
                     d,
                     std::iter::once(e),
-                    &cadcraft_render::Options { tolerance: tol, text: false, fill: false, ..Default::default() },
+                    &forja_render::Options { tolerance: tol, text: false, fill: false, ..Default::default() },
                 );
                 out.extend(list.prims.iter().map(|p| list.points(p).to_vec()));
             }
@@ -104,7 +104,7 @@ pub fn entity_distance(d: &Drawing, e: &Entity, p: Vec2, tol: f64) -> f64 {
     // its bounding rectangle.
     if let EntityKind::Hatch(h) = &e.kind
         && h.solid
-        && cadcraft_render::hatch_fill_loops(h, tol).iter().filter(|l| point_in_polygon(l, p)).count() % 2 == 1
+        && forja_render::hatch_fill_loops(h, tol).iter().filter(|l| point_in_polygon(l, p)).count() % 2 == 1
     {
         best = 0.0;
     }
@@ -128,18 +128,18 @@ fn in_text(d: &Drawing, e: &Entity, p: Vec2) -> bool {
             Some(blk) => {
                 let p = p - dm.insertion_point.xy();
                 blk.entities.iter().any(|be| match &be.kind {
-                    EntityKind::MText(t) => in_box(cadcraft_render::layout_mtext_entity(d, t).strokes.into_iter().flatten(), t.rotation, p),
+                    EntityKind::MText(t) => in_box(forja_render::layout_mtext_entity(d, t).strokes.into_iter().flatten(), t.rotation, p),
                     EntityKind::Text(_) => entity_bounds(d, be, 0).contains(p),
                     _ => false,
                 })
             }
             None => {
-                let g = cadcraft_render::dimension_in(d, dm);
+                let g = forja_render::dimension_in(d, dm);
                 in_box(g.text.iter().flatten().chain(g.text_glyphs.iter().flatten().flatten()).copied(), g.text_angle, p)
             }
         },
         EntityKind::MLeader(m) => {
-            m.text.as_ref().is_some_and(|t| in_box(cadcraft_render::layout_mtext_entity(d, t).strokes.into_iter().flatten(), t.rotation, p))
+            m.text.as_ref().is_some_and(|t| in_box(forja_render::layout_mtext_entity(d, t).strokes.into_iter().flatten(), t.rotation, p))
         }
         _ => false,
     }
@@ -248,7 +248,7 @@ fn seg_hits_box(a: Vec2, b: Vec2, bx: &Bounds2) -> bool {
         return true;
     }
     let c = bx.corners();
-    (0..4).any(|i| cadcraft_geom::line_line(&Line::new(a, b), &Line::new(c[i], c[(i + 1) % 4])).is_some())
+    (0..4).any(|i| forja_geom::line_line(&Line::new(a, b), &Line::new(c[i], c[(i + 1) % 4])).is_some())
 }
 
 /// Window selection (entirely inside) or crossing selection (inside or touching).
@@ -297,7 +297,7 @@ pub(crate) fn in_window(d: &Drawing, e: &Entity, known: Option<Bounds2>, bx: &Bo
     // space around triangular solids).
     if matches!(e.kind, EntityKind::Solid(_) | EntityKind::Trace(_)) && eb.contains_box(bx) {
         return e.kind.prims().iter().any(|prim| match prim {
-            Prim::Fill(poly) => bx.corners().iter().all(|p| cadcraft_geom::point_in_polygon(poly, *p)),
+            Prim::Fill(poly) => bx.corners().iter().all(|p| forja_geom::point_in_polygon(poly, *p)),
             _ => false,
         });
     }
@@ -326,7 +326,7 @@ pub(crate) fn select_fence_with(d: &Drawing, space: &Space, ix: &Option<std::syn
             let (Some(a), Some(b)) = (f.first(), f.get(1)) else { return false };
             let fl = Line::new(*a, *b);
             polys.iter().any(|pl| {
-                pl.windows(2).any(|w| w.first().zip(w.get(1)).is_some_and(|(p, q)| cadcraft_geom::line_line(&fl, &Line::new(*p, *q)).is_some()))
+                pl.windows(2).any(|w| w.first().zip(w.get(1)).is_some_and(|(p, q)| forja_geom::line_line(&fl, &Line::new(*p, *q)).is_some()))
             })
         });
         if hit {
@@ -358,9 +358,8 @@ pub fn select_polygon(d: &Drawing, space: &Space, poly: &[Vec2], crossing: bool)
         }
         let polys = hit_polylines(d, e, tol);
         let crosses = polys.iter().any(|pl| {
-            pl.windows(2).any(|w| {
-                w.first().zip(w.get(1)).is_some_and(|(p, q)| edges.iter().any(|f| cadcraft_geom::line_line(f, &Line::new(*p, *q)).is_some()))
-            })
+            pl.windows(2)
+                .any(|w| w.first().zip(w.get(1)).is_some_and(|(p, q)| edges.iter().any(|f| forja_geom::line_line(f, &Line::new(*p, *q)).is_some())))
         });
         let mut pts = polys.iter().flatten();
         let hit = if crossing {
@@ -471,8 +470,8 @@ impl SelectMode {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cadcraft_doc::{Common, RayLine};
-    use cadcraft_geom::Vec3;
+    use forja_doc::{Common, RayLine};
+    use forja_geom::Vec3;
 
     fn fence_hits(kind: EntityKind, fence: [(f64, f64); 2]) -> usize {
         let mut d = Drawing::new_metric();
@@ -500,9 +499,9 @@ mod tests {
     fn a_pick_takes_the_object_drawn_last() {
         let mut d = Drawing::new_metric();
         let circle = d
-            .add(&Space::Model, Common::default(), EntityKind::Circle(cadcraft_doc::Circle { center: Vec3::new(50.0, 50.0, 0.0), radius: 10.0 }))
+            .add(&Space::Model, Common::default(), EntityKind::Circle(forja_doc::Circle { center: Vec3::new(50.0, 50.0, 0.0), radius: 10.0 }))
             .unwrap();
-        let line = EntityKind::Line(cadcraft_doc::Line { a: Vec3::new(40.5, 45.0, 0.0), b: Vec3::new(40.5, 55.0, 0.0) });
+        let line = EntityKind::Line(forja_doc::Line { a: Vec3::new(40.5, 45.0, 0.0), b: Vec3::new(40.5, 55.0, 0.0) });
         let line = d.add(&Space::Model, Common::default(), line).unwrap();
         // 0.05 from the circle and 0.45 from the line, both inside an aperture of 1.
         let p = Vec2::new(40.05, 50.0);
@@ -518,8 +517,8 @@ mod tests {
     /// the middle of the frame, or on a frame without both corners, does not.
     #[test]
     fn clicking_an_ole_frame_edge_selects_it() {
-        let tag = |code: i32, value: &str| cadcraft_doc::RawTag { code, value: value.into() };
-        let frame = |tags: Vec<cadcraft_doc::RawTag>| EntityKind::Unknown(cadcraft_doc::Unknown { dxf_type: "OLE2FRAME".into(), tags });
+        let tag = |code: i32, value: &str| forja_doc::RawTag { code, value: value.into() };
+        let frame = |tags: Vec<forja_doc::RawTag>| EntityKind::Unknown(forja_doc::Unknown { dxf_type: "OLE2FRAME".into(), tags });
         let mut d = Drawing::new_metric();
         let h = d.add(&Space::Model, Common::default(), frame(vec![tag(10, "30"), tag(20, "-19"), tag(11, "35"), tag(21, "-22")])).unwrap();
         d.add(&Space::Model, Common::default(), frame(vec![tag(10, "80"), tag(20, "80")])).unwrap();
@@ -534,14 +533,13 @@ mod tests {
     /// A block holding a diagonal dashed line, inserted at `scale`.
     fn dashed_block(length: f64, scale: f64) -> (Drawing, Handle) {
         let mut d = Drawing::new_imperial();
-        d.linetypes.extend(cadcraft_doc::library::standard_linetypes().into_iter().filter(|l| l.name == "DASHED"));
-        let mut line =
-            Entity::new(Handle(1), EntityKind::Line(cadcraft_doc::Line { a: Vec3::new(0.0, 0.0, 0.0), b: Vec3::new(length, length, 0.0) }));
+        d.linetypes.extend(forja_doc::library::standard_linetypes().into_iter().filter(|l| l.name == "DASHED"));
+        let mut line = Entity::new(Handle(1), EntityKind::Line(forja_doc::Line { a: Vec3::new(0.0, 0.0, 0.0), b: Vec3::new(length, length, 0.0) }));
         line.common.linetype = "DASHED".into();
-        let mut blk = cadcraft_doc::Block::new("B");
+        let mut blk = forja_doc::Block::new("B");
         blk.entities.push(line);
         d.blocks.insert("B".into(), std::sync::Arc::new(blk));
-        let insert = cadcraft_doc::Insert {
+        let insert = forja_doc::Insert {
             block: "B".into(),
             insert: Vec3::new(0.0, 0.0, 0.0),
             scale: Vec3::new(scale, scale, 1.0),
@@ -563,7 +561,7 @@ mod tests {
     fn hit_testing_a_block_does_not_lay_out_its_dashes() {
         let (d, h) = dashed_block(20_000.0, 0.001);
         let e = d.entity(h).unwrap();
-        let drawn = cadcraft_render::build_entities(&d, std::iter::once(e.as_ref()), &cadcraft_render::Options { text: false, ..Default::default() });
+        let drawn = forja_render::build_entities(&d, std::iter::once(e.as_ref()), &forja_render::Options { text: false, ..Default::default() });
         assert!(drawn.prims.len() > 10_000, "the pattern draws {} dashes", drawn.prims.len());
         // The line, and the block's bounding rectangle.
         assert_eq!(hit_polylines(&d, e, 0.01).len(), 2);
@@ -574,7 +572,7 @@ mod tests {
     fn a_dashed_line_in_a_block_is_picked_in_a_gap() {
         let (d, h) = dashed_block(100.0, 1.0);
         let e = d.entity(h).unwrap();
-        let drawn = cadcraft_render::build_entities(&d, std::iter::once(e.as_ref()), &cadcraft_render::Options { text: false, ..Default::default() });
+        let drawn = forja_render::build_entities(&d, std::iter::once(e.as_ref()), &forja_render::Options { text: false, ..Default::default() });
         let (a, b) = (drawn.prims.first().unwrap(), drawn.prims.get(1).unwrap());
         let (end, start) = (*drawn.points(a).last().unwrap(), *drawn.points(b).first().unwrap());
         assert!(end.dist(start) > 0.01, "a gap between the first two dashes");
@@ -592,7 +590,7 @@ mod solid_interior_tests {
         let b = Vec2::new(10.0, 0.0).to3(0.0);
         let c = Vec2::new(0.0, 10.0).to3(0.0);
         let d = if triangular { c } else { Vec2::new(10.0, 10.0).to3(0.0) };
-        let solid = cadcraft_doc::Solid { corners: [a, b, c, d] };
+        let solid = forja_doc::Solid { corners: [a, b, c, d] };
         Entity::new(Handle(256), if kind { EntityKind::Solid(solid) } else { EntityKind::Trace(solid) })
     }
 
@@ -637,8 +635,8 @@ mod solid_interior_tests {
 #[cfg(test)]
 mod hatch_pattern_pick_tests {
     use super::*;
-    use cadcraft_doc::{Common, Hatch, HatchLoop};
-    use cadcraft_geom::PolyVertex;
+    use forja_doc::{Common, Hatch, HatchLoop};
+    use forja_geom::PolyVertex;
 
     fn square(lo: f64, hi: f64, outer: bool) -> HatchLoop {
         let vertices = [(lo, lo), (hi, lo), (hi, hi), (lo, hi)].iter().map(|&(x, y)| PolyVertex::new(Vec2::new(x, y))).collect();

@@ -3,8 +3,8 @@
 
 use std::collections::HashSet;
 
-use cadcraft_engine::Input;
 use egui::{Key, Pos2, Rect, Sense, Stroke, pos2, vec2};
+use forja_engine::Input;
 
 use crate::CadApp;
 use crate::theme::Tokens;
@@ -13,7 +13,7 @@ use crate::theme::Tokens;
 pub struct CmdLine {
     pub buffer: String,
     /// The selection as of the last frame, to notice when it changes.
-    seen_selection: Vec<cadcraft_doc::Handle>,
+    seen_selection: Vec<forja_doc::Handle>,
     /// Something was typed at the command line since the selection was made.
     typed_since_selection: bool,
     pub history: Vec<String>,
@@ -56,7 +56,7 @@ pub fn dyn_frame(app: &CadApp) -> Option<crate::dyninput::Frame> {
     if !st.dynmode || app.session.pending_window.is_some() {
         return None;
     }
-    let p = app.session.current_prompt().filter(cadcraft_engine::pointmod::accepts)?;
+    let p = app.session.current_prompt().filter(forja_engine::pointmod::accepts)?;
     Some(crate::dyninput::Frame { base: p.base, cartesian: st.dynpi_cartesian, absolute: st.dynpi_absolute })
 }
 
@@ -129,8 +129,8 @@ fn suggestions(prefix: &str) -> Vec<Suggestion> {
     let mut seen_ids: HashSet<&'static str> = HashSet::new();
 
     // 1. Exact match: alias resolution or exact command name match.
-    let resolved = cadcraft_engine::cmd::resolve_alias(&p);
-    if let Some(spec) = cadcraft_engine::cmd::find_command(&resolved)
+    let resolved = forja_engine::cmd::resolve_alias(&p);
+    if let Some(spec) = forja_engine::cmd::find_command(&resolved)
         && !spec.id.contains('.')
     {
         let display =
@@ -140,8 +140,8 @@ fn suggestions(prefix: &str) -> Vec<Suggestion> {
     }
 
     // 2. Command ID prefix matches (excluding already matched exact command).
-    let mut id_matches: Vec<&'static cadcraft_engine::CommandSpec> =
-        cadcraft_engine::command_specs().iter().filter(|c| !c.id.contains('.') && !seen_ids.contains(c.id) && c.id.starts_with(&p)).collect();
+    let mut id_matches: Vec<&'static forja_engine::CommandSpec> =
+        forja_engine::command_specs().iter().filter(|c| !c.id.contains('.') && !seen_ids.contains(c.id) && c.id.starts_with(&p)).collect();
     id_matches.sort_by_key(|c| (c.id.len(), c.id));
     for c in id_matches {
         out.push(Suggestion { id: c.id.to_ascii_uppercase(), display: c.id.to_ascii_uppercase(), label: c.label });
@@ -149,8 +149,8 @@ fn suggestions(prefix: &str) -> Vec<Suggestion> {
     }
 
     // 3. Command alias prefix matches (for commands not yet added).
-    let mut alias_matches: Vec<(&'static str, &'static cadcraft_engine::CommandSpec)> = Vec::new();
-    for c in cadcraft_engine::command_specs() {
+    let mut alias_matches: Vec<(&'static str, &'static forja_engine::CommandSpec)> = Vec::new();
+    for c in forja_engine::command_specs() {
         if c.id.contains('.') || seen_ids.contains(c.id) {
             continue;
         }
@@ -176,7 +176,7 @@ fn suggestions(prefix: &str) -> Vec<Suggestion> {
 
 impl CmdLine {
     /// Track the selection: a new selection starts with nothing typed since.
-    pub fn watch_selection(&mut self, sel: &[cadcraft_doc::Handle]) {
+    pub fn watch_selection(&mut self, sel: &[forja_doc::Handle]) {
         if self.seen_selection != sel {
             self.seen_selection = sel.to_vec();
             self.typed_since_selection = false;
@@ -722,8 +722,8 @@ fn history_window(app: &CadApp, ui: &mut egui::Ui, r: Rect) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cadcraft_engine::Session;
     use egui::{Event, PointerButton};
+    use forja_engine::Session;
 
     #[test]
     fn compact_canvas_contains_history_controls_without_changing_line_preference() {
@@ -759,7 +759,7 @@ mod tests {
 
     #[test]
     fn ime_preedit_is_shown_and_its_commit_is_inserted_once() {
-        use cadcraft_engine::geom::Vec2;
+        use forja_engine::geom::Vec2;
         let mut app = CadApp::new(Session::new(), crate::Services::default());
         app.run("text", serde_json::json!({"at": [0, 0], "text": "HELLO", "height": 2.5})).unwrap();
         app.start("textedit");
@@ -780,7 +780,7 @@ mod tests {
         let enter = |pressed| Event::Key { key: Key::Enter, physical_key: None, pressed, repeat: false, modifiers: egui::Modifiers::NONE };
         frame(&mut app, &ctx, vec![enter(true), enter(false)]);
         let text = app.session.doc().unwrap().model.iter().next().map(|e| match &e.kind {
-            cadcraft_engine::doc::EntityKind::Text(t) => t.value.clone(),
+            forja_engine::doc::EntityKind::Text(t) => t.value.clone(),
             _ => String::new(),
         });
         assert_eq!(text.as_deref(), Some("中文"));
@@ -845,7 +845,7 @@ mod tests {
 #[cfg(test)]
 mod delete_key_tests {
     use super::*;
-    use cadcraft_doc::Handle;
+    use forja_doc::Handle;
 
     const PRESS: KeyPress = KeyPress { repeat: false, plain: true };
 
@@ -926,14 +926,14 @@ mod autocomplete_tests {
 
     #[test]
     fn tab_autocompletes_alias_to_resolved_command() {
-        let mut app = CadApp::new(cadcraft_engine::Session::empty(), crate::Services::default());
+        let mut app = CadApp::new(forja_engine::Session::empty(), crate::Services::default());
         app.cmd.buffer = "rec".to_string();
         tab(&mut app);
         assert_eq!(app.cmd.buffer, "RECTANG");
     }
 
     fn app() -> CadApp {
-        let mut app = CadApp::new(cadcraft_engine::Session::empty(), crate::Services::default());
+        let mut app = CadApp::new(forja_engine::Session::empty(), crate::Services::default());
         app.start("ui.sample");
         app
     }

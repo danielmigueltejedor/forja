@@ -5,8 +5,8 @@
 //! left of their extents. Otherwise each TEXT becomes its own MTEXT, attached at the point it
 //! is justified by.
 
-use cadcraft_doc::{EntityKind, HAlign, Handle, MText, Text, VAlign, entity_bounds, mtext_literal};
-use cadcraft_geom::Bounds2;
+use forja_doc::{EntityKind, HAlign, Handle, MText, Text, VAlign, entity_bounds, mtext_literal};
+use forja_geom::Bounds2;
 use serde_json::{Value, json};
 
 use super::curves::KW;
@@ -92,7 +92,7 @@ fn convert(s: &mut Session, hs: &[Handle], o: &Txt2MtxtOptions) -> Result<(Vec<H
         _ => return Ok((Vec::new(), locked)),
     };
     let ext = items.iter().fold(Bounds2::EMPTY, |b, (.., x)| b.union(x));
-    let corner = if ext.is_empty() { insertion(k0) } else { cadcraft_geom::Vec2::new(ext.min.x, ext.max.y) };
+    let corner = if ext.is_empty() { insertion(k0) } else { forja_geom::Vec2::new(ext.min.x, ext.max.y) };
     let sep = if o.wrap { " " } else { "\\P" };
     let contents = items.iter().map(|(_, k, _)| contents(k, height)).collect::<Vec<_>>().join(sep);
     let width = if o.wrap { items.iter().map(|(_, k, _)| line_width(k)).fold(0.0, f64::max) } else { 0.0 };
@@ -119,11 +119,11 @@ fn convert(s: &mut Session, hs: &[Handle], o: &Txt2MtxtOptions) -> Result<(Vec<H
 }
 
 /// The point a TEXT or MTEXT is sorted by: its insertion point.
-fn insertion(k: &EntityKind) -> cadcraft_geom::Vec2 {
+fn insertion(k: &EntityKind) -> forja_geom::Vec2 {
     match k {
         EntityKind::Text(t) => t.insert.xy(),
         EntityKind::MText(m) => m.insert.xy(),
-        _ => cadcraft_geom::Vec2::ZERO,
+        _ => forja_geom::Vec2::ZERO,
     }
 }
 
@@ -162,11 +162,9 @@ fn text_contents(t: &Text, base: f64) -> String {
 /// How wide a text's longest line is in the drafting font: word wrap's MTEXT width.
 fn line_width(k: &EntityKind) -> f64 {
     let w = match k {
-        EntityKind::Text(t) => cadcraft_fonts::line_width(&t.value, t.height, t.width_factor),
+        EntityKind::Text(t) => forja_fonts::line_width(&t.value, t.height, t.width_factor),
         EntityKind::MText(m) if m.width > 0.0 => m.width,
-        EntityKind::MText(m) => {
-            cadcraft_fonts::plain_mtext(&m.contents).lines().map(|l| cadcraft_fonts::line_width(l, m.height, 1.0)).fold(0.0, f64::max)
-        }
+        EntityKind::MText(m) => forja_fonts::plain_mtext(&m.contents).lines().map(|l| forja_fonts::line_width(l, m.height, 1.0)).fold(0.0, f64::max),
         _ => 0.0,
     };
     if w.is_finite() { w } else { 0.0 }

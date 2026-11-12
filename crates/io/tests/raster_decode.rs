@@ -1,8 +1,8 @@
 //! Raster image files decoded to pixels (IMAGEATTACH): round trip through PNG, and hostile files
 //! (truncated, random, absurd sizes) refused without a panic.
 
-use cadcraft_doc::Raster;
-use cadcraft_io::raster::{MAX_IMAGE_PIXELS, decode, encode_png, probe};
+use forja_doc::Raster;
+use forja_io::raster::{MAX_IMAGE_PIXELS, decode, encode_png, probe};
 
 /// A 3 x 2 image with a different colour per pixel, one of them half transparent.
 fn sample() -> Raster {
@@ -142,8 +142,8 @@ fn damaged_files_of_every_format_do_not_panic() {
 
 #[test]
 fn the_pixels_never_reach_the_drawing_file() {
-    use cadcraft_doc::{Common, Drawing, EntityKind, Image, Space};
-    use cadcraft_geom::{Vec2, Vec3};
+    use forja_doc::{Common, Drawing, EntityKind, Image, Space};
+    use forja_geom::{Vec2, Vec3};
     let mut d = Drawing::new_metric();
     let i = Image {
         insert: Vec3::new(3.0, 4.0, 0.0),
@@ -156,9 +156,9 @@ fn the_pixels_never_reach_the_drawing_file() {
     };
     d.add(&Space::Model, Common::default(), EntityKind::Image(i.clone())).unwrap();
     d.rasters.insert("maps/site.png", std::sync::Arc::new(sample()));
-    let text = cadcraft_io::write_dxf(&d);
+    let text = forja_io::write_dxf(&d);
     assert!(text.contains("maps/site.png"));
-    let back = cadcraft_io::read_dxf(text.as_bytes()).unwrap();
+    let back = forja_io::read_dxf(text.as_bytes()).unwrap();
     assert!(back.rasters.is_empty(), "a drawing just read has no pixels");
     let got: Vec<&Image> = back.model.iter().filter_map(|e| if let EntityKind::Image(i) = &e.kind { Some(i) } else { None }).collect();
     // An unclipped image is written with the boundary of the whole image, switched off.

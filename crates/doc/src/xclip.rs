@@ -5,7 +5,7 @@
 //! it is the reference's `ACAD_FILTER` / `SPATIAL` extension-dictionary entry (a SPATIAL_FILTER
 //! object, DXF Reference), read and written by the io crate.
 
-use cadcraft_geom::Vec2;
+use forja_geom::Vec2;
 use serde::{Deserialize, Serialize};
 
 /// Most boundary vertices a clip keeps (hostile files and parameters are capped to this).

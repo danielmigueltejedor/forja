@@ -4,8 +4,8 @@
 
 use std::sync::Arc;
 
-use cadcraft_doc::{Block, Common, Drawing, Entity, EntityKind, Handle, Line};
-use cadcraft_geom::Vec3;
+use forja_doc::{Block, Common, Drawing, Entity, EntityKind, Handle, Line};
+use forja_geom::Vec3;
 
 use super::{Incomplete, Scan, entity_total};
 

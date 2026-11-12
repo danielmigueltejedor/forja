@@ -54,7 +54,7 @@ pub(crate) fn cloud_vertices(boundary: &[Vec2], arc_len: f64, per_edge: bool, re
         }
     } else {
         let chain = Chain {
-            segs: (0..n).filter_map(|i| Some(cadcraft_geom::Segment::Line(Line::new(*pts.get(i)?, *pts.get((i + 1) % n)?)))).collect(),
+            segs: (0..n).filter_map(|i| Some(forja_geom::Segment::Line(Line::new(*pts.get(i)?, *pts.get((i + 1) % n)?)))).collect(),
             closed: true,
         };
         let k = ((perim / arc_len).round() as usize).clamp(3, MAX_GEN);

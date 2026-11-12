@@ -3,14 +3,14 @@ use super::{Color, Ctx, Drawing, Entity, Ink, Lineweight, ink};
 
 /// An object's colour, lineweight (mm), linetype, linetype scale, visibility and the transparency
 /// of the layer it is drawn on (for ByLayer, see [`transparency`]).
-type Resolved = (Ink, f32, Option<cadcraft_doc::Linetype>, f64, bool, u8);
+type Resolved = (Ink, f32, Option<forja_doc::Linetype>, f64, bool, u8);
 
 pub(crate) fn resolve(ctx: &Ctx, e: &Entity, plotting: bool) -> Resolved {
     resolve_common(ctx, &e.common, plotting)
 }
 
 /// [`resolve`] for an object's properties `c`.
-pub(crate) fn resolve_common(ctx: &Ctx, c: &cadcraft_doc::Common, plotting: bool) -> Resolved {
+pub(crate) fn resolve_common(ctx: &Ctx, c: &forja_doc::Common, plotting: bool) -> Resolved {
     let d = ctx.d;
     // Layer "0" inside a block takes the insert's layer.
     let layer_name = if c.layer == "0" { ctx.block_layer.as_deref().unwrap_or("0") } else { c.layer.as_str() };
@@ -42,11 +42,11 @@ pub(crate) fn resolve_common(ctx: &Ctx, c: &cadcraft_doc::Common, plotting: bool
 /// layer's `layer` when ByLayer (layer 0 inside a block: the block reference's layer, as
 /// [`resolve_common`] finds it), the block reference's `block` when ByBlock (opaque outside
 /// blocks).
-pub(crate) fn transparency(t: cadcraft_doc::Transparency, layer: u8, block: u8) -> u8 {
+pub(crate) fn transparency(t: forja_doc::Transparency, layer: u8, block: u8) -> u8 {
     let t = match t {
-        cadcraft_doc::Transparency::Percent(p) => p,
-        cadcraft_doc::Transparency::ByBlock => block,
-        cadcraft_doc::Transparency::ByLayer => layer,
+        forja_doc::Transparency::Percent(p) => p,
+        forja_doc::Transparency::ByBlock => block,
+        forja_doc::Transparency::ByLayer => layer,
     };
     t.min(MAX_TRANSPARENCY)
 }

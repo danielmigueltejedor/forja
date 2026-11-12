@@ -35,7 +35,7 @@ function Invoke-Native([string] $What, [scriptblock] $Block) {
 }
 
 # The version lives in one place: [workspace.package] version in the root Cargo.toml.
-$Version = $env:CADCRAFT_VERSION
+$Version = $env:FORJA_VERSION
 if (-not $Version) {
   $inPkg = $false
   foreach ($line in Get-Content (Join-Path $Root 'Cargo.toml')) {
@@ -52,8 +52,8 @@ $Dist = if ($env:DIST) { $env:DIST } else { Join-Path $Root 'dist\release' }
 $TargetDir = if ($env:CARGO_TARGET_DIR) { $env:CARGO_TARGET_DIR } else { Join-Path $Root 'target' }
 New-Item -ItemType Directory -Force -Path $Dist | Out-Null
 
-if (-not $env:CADCRAFT_BUILD_SHA) { $env:CADCRAFT_BUILD_SHA = (git -C $Root rev-parse HEAD 2>$null) }
-if (-not $env:CADCRAFT_BUILD_DATE) { $env:CADCRAFT_BUILD_DATE = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd') }
+if (-not $env:FORJA_BUILD_SHA) { $env:FORJA_BUILD_SHA = (git -C $Root rev-parse HEAD 2>$null) }
+if (-not $env:FORJA_BUILD_DATE) { $env:FORJA_BUILD_DATE = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd') }
 
 Write-Output "Forja $Version for Windows $Arch ($Target)"
 
@@ -63,7 +63,7 @@ if (-not $SkipBuild) {
   $flagVar = 'CARGO_TARGET_' + ($Target.ToUpper() -replace '-', '_') + '_RUSTFLAGS'
   [Environment]::SetEnvironmentVariable($flagVar, '-C target-feature=+crt-static')
   # Fail the build (rather than warn) if the icon/VERSIONINFO can't be embedded.
-  $env:CADCRAFT_REQUIRE_WINRES = '1'
+  $env:FORJA_REQUIRE_WINRES = '1'
   Invoke-Native "cargo build ($Target)" { cargo build --release --locked -p forja -p forja-cli --target $Target }
 }
 

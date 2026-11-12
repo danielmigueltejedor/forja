@@ -2,8 +2,8 @@
 //! the Model tab shows, and restoring or deleting one (its tiles in the Model tab, layout
 //! viewports in a layout).
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::{EntityKind, Space};
+use forja_engine::Session;
+use forja_engine::doc::{EntityKind, Space};
 use serde_json::json;
 
 /// A drawing with "Two" (two tiles side by side) and "Quad" (four tiles) saved, showing one view.
