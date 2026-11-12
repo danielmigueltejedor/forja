@@ -72,7 +72,7 @@ fn split(axis: SplitAxis, size: SplitSize, first: Node<Panel>, second: Node<Pane
     Node::Split { axis, size, first: Box::new(first), second: Box::new(second) }
 }
 
-/// The saved panel arrangement: craft-ui's workspace over CADCraft's panels.
+/// The saved panel arrangement: craft-ui's workspace over Forja's panels.
 pub type Workspace = craft_ui::docking::Workspace<Panel>;
 
 /// The panel layout's shape version, saved beside it. Layouts saved without it, or with an
@@ -344,7 +344,7 @@ pub fn show(app: &mut crate::CadApp, ui: &mut egui::Ui) {
     style.new_dock_zones = true;
     style.drop_edges = Sides::NONE;
     style.title_bar_docks = false;
-    let mut area = DockArea::new(egui::Id::unique("cadcraft-docking")).input_blocked(native_input_blocked(app, ui.ctx()));
+    let mut area = DockArea::new(egui::Id::unique("forja-docking")).input_blocked(native_input_blocked(app, ui.ctx()));
     if let Some(panel) = app.raise_panel.take() {
         area = area.raise_panel(panel);
     }
@@ -372,7 +372,7 @@ pub fn show(app: &mut crate::CadApp, ui: &mut egui::Ui) {
     let _ = sync(&mut workspace, app);
     let stale = workspace != rendered;
     if stale {
-        craft_ui::docking::cancel_drag::<Panel>(ui.ctx(), egui::Id::unique("cadcraft-docking"));
+        craft_ui::docking::cancel_drag::<Panel>(ui.ctx(), egui::Id::unique("forja-docking"));
     }
     publish_visibility(app, &workspace);
     app.ui.docking = workspace;
@@ -465,7 +465,7 @@ fn round_canvas(ui: &egui::Ui, bodies: &[(Panel, egui::LayerId, egui::Rect)], fr
 /// The accent underline under each group's active tab: the panel whose body was drawn. The tab's
 /// place is the dock's response for it this frame.
 fn underline_active_tabs(ui: &egui::Ui, bodies: &[(Panel, egui::LayerId, egui::Rect)], accent: egui::Color32) {
-    let area = egui::Id::unique("cadcraft-docking");
+    let area = egui::Id::unique("forja-docking");
     for (panel, layer, _) in bodies {
         if *layer != ui.layer_id() || *panel == Panel::Canvas {
             continue;

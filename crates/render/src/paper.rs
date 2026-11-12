@@ -5,8 +5,8 @@
 //! Layout paper coordinates place the printable-area origin at the plot offset;
 //! the physical sheet may therefore extend into negative paper coordinates.
 
-use cadcraft_doc::{Drawing, PageSetup};
-use cadcraft_geom::{Bounds2, Vec2};
+use forja_doc::{Drawing, PageSetup};
+use forja_geom::{Bounds2, Vec2};
 
 /// Maximum model-space plot offset accepted by the PLOT command, in millimetres.
 pub const MAX_PLOT_OFFSET_MM: f64 = 100_000.0;
@@ -92,7 +92,7 @@ pub fn page_unit_mm(d: &Drawing, page: &PageSetup) -> f64 {
 
 /// Millimetres per paper-space unit on the layout holding the paper-space entity `h` (the
 /// drawing's when no layout holds it).
-pub fn unit_mm_of(d: &Drawing, h: cadcraft_doc::Handle) -> f64 {
+pub fn unit_mm_of(d: &Drawing, h: forja_doc::Handle) -> f64 {
     d.layouts.iter().find(|l| l.entities.contains(h)).map_or_else(|| paper_unit_mm(d), |l| page_unit_mm(d, &l.page))
 }
 

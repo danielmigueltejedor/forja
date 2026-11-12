@@ -10,9 +10,9 @@
 use std::rc::Rc;
 use std::sync::mpsc::{Receiver, channel};
 
-use cadcraft_ui_egui::{ControlRequest, PendingReply};
 use craft_web_api::methods::Methods;
 use craft_web_api::page::{PageApi, Request};
+use forja_ui_egui::{ControlRequest, PendingReply};
 use serde_json::{Value, json};
 use wasm_bindgen_futures::JsFuture;
 

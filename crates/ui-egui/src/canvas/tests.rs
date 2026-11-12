@@ -1,5 +1,5 @@
 use super::*;
-use cadcraft_render::DPrim;
+use forja_render::DPrim;
 
 fn list(handles: &[u64]) -> DisplayList {
     let prim =
@@ -15,11 +15,11 @@ fn hs(v: &[u64]) -> Vec<Handle> {
 /// on, and is opaque when it is off.
 #[test]
 fn dragged_objects_keep_their_transparency() {
-    let mut d = cadcraft_doc::Drawing::new_metric();
-    let common = cadcraft_doc::Common { transparency: cadcraft_doc::Transparency::Percent(50), ..Default::default() };
-    let line = cadcraft_doc::Line { a: cadcraft_geom::Vec3::ZERO, b: cadcraft_geom::Vec3::new(10.0, 0.0, 0.0) };
-    let h = d.add(&cadcraft_doc::Space::Model, common, cadcraft_doc::EntityKind::Line(line)).unwrap();
-    let drag = cadcraft_engine::Drag { handles: vec![h], matrix: cadcraft_geom::Mat3::IDENTITY, extra: Vec::new(), clipboard: false };
+    let mut d = forja_doc::Drawing::new_metric();
+    let common = forja_doc::Common { transparency: forja_doc::Transparency::Percent(50), ..Default::default() };
+    let line = forja_doc::Line { a: forja_geom::Vec3::ZERO, b: forja_geom::Vec3::new(10.0, 0.0, 0.0) };
+    let h = d.add(&forja_doc::Space::Model, common, forja_doc::EntityKind::Line(line)).unwrap();
+    let drag = forja_engine::Drag { handles: vec![h], matrix: forja_geom::Mat3::IDENTITY, extra: Vec::new(), clipboard: false };
     let rect = Rect::from_min_size(Pos2::ZERO, vec2(200.0, 100.0));
     let xf = Xf { rect, center: Vec2::new(5.0, 0.0), scale: 10.0, twist: 0.0 };
     let painter = egui::Painter::new(egui::Context::default(), egui::LayerId::background(), rect);
@@ -41,9 +41,9 @@ fn dragged_objects_keep_their_transparency() {
 /// was drawn, and CLAYER's transparency isn't the objects'.
 #[test]
 fn rebuilt_previews_stay_opaque_on_a_transparent_current_layer() {
-    let mut s = cadcraft_engine::Session::new();
+    let mut s = forja_engine::Session::new();
     let d = s.doc_mut().unwrap();
-    d.layers.push(cadcraft_doc::Layer { name: "Glass".into(), transparency: 40, ..Default::default() });
+    d.layers.push(forja_doc::Layer { name: "Glass".into(), transparency: 40, ..Default::default() });
     d.header.set_str("CLAYER", "Glass");
     assert!(s.settings.transparency_display);
     // LINE: the segment from the first point to the cursor.
@@ -54,7 +54,7 @@ fn rebuilt_previews_stay_opaque_on_a_transparent_current_layer() {
     assert_eq!(ents[0].common.layer, "Glass");
     let doc = s.doc().unwrap();
     // Built with transparency, the preview would take CLAYER's 40 %.
-    let with = cadcraft_render::build_entities(doc, ents.iter(), &cadcraft_render::Options { transparency: true, ..preview_options(1.0) });
+    let with = forja_render::build_entities(doc, ents.iter(), &forja_render::Options { transparency: true, ..preview_options(1.0) });
     assert!(with.prims.iter().all(|p| p.transparency == 40));
     let list = rebuilt_preview(doc, ents.iter(), 1.0);
     assert!(!list.prims.is_empty() && list.prims.iter().all(|p| p.transparency == 0));
@@ -82,25 +82,25 @@ fn viewport_highlight_tolerance_is_constant_within_a_zoom_band() {
 
 #[test]
 fn selection_area_fill_follows_the_area_effect_settings() {
-    let mut s = cadcraft_engine::Settings::default();
+    let mut s = forja_engine::Settings::default();
     // Window: ACI 150 at 25 %; crossing: ACI 100.
     let rgb = |c: Rgb| Color32::from_rgb(c.0, c.1, c.2);
-    assert_eq!(selection_area_fill(&s, false), Some(rgb(cadcraft_color::aci_rgb(150)).gamma_multiply(0.25)));
-    assert_eq!(selection_area_fill(&s, true), Some(rgb(cadcraft_color::aci_rgb(100)).gamma_multiply(0.25)));
+    assert_eq!(selection_area_fill(&s, false), Some(rgb(forja_color::aci_rgb(150)).gamma_multiply(0.25)));
+    assert_eq!(selection_area_fill(&s, true), Some(rgb(forja_color::aci_rgb(100)).gamma_multiply(0.25)));
     s.selectionareaopacity = 100;
-    assert_eq!(selection_area_fill(&s, false), Some(rgb(cadcraft_color::aci_rgb(150))));
+    assert_eq!(selection_area_fill(&s, false), Some(rgb(forja_color::aci_rgb(150))));
     s.selectionarea = false;
     assert_eq!(selection_area_fill(&s, false), None, "Indicate selection area off: no fill");
 }
 
 #[test]
 fn viewport_highlight_is_tessellated_once_per_selection_and_zoom_band() {
-    use cadcraft_doc::{Circle, Common, Drawing, EntityKind, Space};
+    use forja_doc::{Circle, Common, Drawing, EntityKind, Space};
     let mut d = Drawing::new_imperial();
-    let circle = |r| EntityKind::Circle(Circle { center: cadcraft_geom::Vec3::new(0.0, 0.0, 0.0), radius: r });
+    let circle = |r| EntityKind::Circle(Circle { center: forja_geom::Vec3::new(0.0, 0.0, 0.0), radius: r });
     let a = d.add(&Space::Model, Common::default(), circle(10.0)).unwrap();
     let b = d.add(&Space::Model, Common::default(), circle(5.0)).unwrap();
-    let st = cadcraft_engine::DocState::new(d, "highlight", None);
+    let st = forja_engine::DocState::new(d, "highlight", None);
     let points = |l: &DisplayList| l.prims.iter().map(|p| l.points(p).len()).sum::<usize>();
     let (mut sel, mut hover) = (VpHighlight::default(), VpHighlight::default());
     sel.update(&st, &[a], 10.0);
@@ -211,7 +211,7 @@ pub(crate) fn painted_text(app: &mut CadApp, ctx: &egui::Context, pointer: Pos2)
 /// units (LUNITS/LUPREC), as DIST and the status bar do (#841).
 #[test]
 fn dynamic_input_distance_follows_the_drawing_units() {
-    let mut app = CadApp::new(cadcraft_engine::Session::new(), crate::Services::default());
+    let mut app = CadApp::new(forja_engine::Session::new(), crate::Services::default());
     app.session.execute("units", &serde_json::json!({"lunits": 4, "luprec": 4})).unwrap();
     let ctx = egui::Context::default();
     painted_text(&mut app, &ctx, pos2(700.0, 450.0));
@@ -221,12 +221,12 @@ fn dynamic_input_distance_follows_the_drawing_units() {
     painted_text(&mut app, &ctx, at);
     let text = painted_text(&mut app, &ctx, at);
     let c = app.canvas.cursor.unwrap();
-    let arch = |v: f64| cadcraft_engine::units::format_distance(v, 4, 4);
+    let arch = |v: f64| forja_engine::units::format_distance(v, 4, 4);
     // The status bar shows X and Y in the same units: the distance must be neither.
     assert!(arch(c.len()) != arch(c.x) && arch(c.len()) != arch(c.y), "{c:?}");
     assert!(text.contains(&arch(c.len())), "no {} in:\n{text}", arch(c.len()));
     // Without the value boxes (a window corner pending) the tooltip shows the distance too.
-    app.session.pending_window = Some(cadcraft_engine::PendingWindow { corner: Vec2::ZERO, during_command: true });
+    app.session.pending_window = Some(forja_engine::PendingWindow { corner: Vec2::ZERO, during_command: true });
     let text = painted_text(&mut app, &ctx, at);
     assert!(text.contains(&format!("   {}  <", arch(c.len()))), "no {} in:\n{text}", arch(c.len()));
 }

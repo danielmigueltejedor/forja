@@ -12,9 +12,9 @@
 use std::collections::{BTreeMap, BTreeSet};
 use std::sync::Arc;
 
-use cadcraft_doc::{Block, Circle, Drawing, Entity, EntityKind, Handle, Space};
-use cadcraft_geom::Vec3;
-use cadcraft_io::Version;
+use forja_doc::{Block, Circle, Drawing, Entity, EntityKind, Handle, Space};
+use forja_geom::Vec3;
+use forja_io::Version;
 
 use super::super::{
     cases::{self, Case, complex},

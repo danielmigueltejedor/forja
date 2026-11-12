@@ -14,7 +14,7 @@
 
 use std::collections::{BTreeMap, HashMap, HashSet};
 
-use cadcraft_geom::{Mat3, Vec2, Vec3};
+use forja_geom::{Mat3, Vec2, Vec3};
 
 use super::{ActionKind, DynamicBlock, ParameterKind, Value, dynamic_block, reference};
 use crate::foreign::{ForeignExtra, ForeignObject};
@@ -674,7 +674,7 @@ fn apply(
 /// Associative hatches of block `b` whose loop is one closed polyline of the block take its
 /// outline again (it may have been stretched).
 fn refill_hatches(b: &mut Block) {
-    let outlines: HashMap<Handle, Vec<cadcraft_geom::PolyVertex>> = b
+    let outlines: HashMap<Handle, Vec<forja_geom::PolyVertex>> = b
         .entities
         .iter()
         .filter_map(|e| match &e.kind {

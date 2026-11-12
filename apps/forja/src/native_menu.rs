@@ -5,8 +5,8 @@ use std::collections::HashMap;
 use std::str::FromStr;
 use std::sync::mpsc;
 
-use cadcraft_ui_egui::menus::{self, Entry};
-use cadcraft_ui_egui::{CadApp, i18n};
+use forja_ui_egui::menus::{self, Entry};
+use forja_ui_egui::{CadApp, i18n};
 use muda::accelerator::Accelerator;
 use muda::{Menu, MenuEvent, MenuItem, PredefinedMenuItem, Submenu};
 
@@ -137,14 +137,14 @@ impl NativeMenu {
                 submenu.set_text(i18n::tr_menu(language, label));
             }
         }
-        let now = cadcraft_ui_egui::now_ms();
+        let now = forja_ui_egui::now_ms();
         if !refresh_due(now, self.last_refresh) {
             return;
         }
         self.last_refresh = now;
         let typing = menus::text_field_window(ctx).is_some();
         for (cmd, _, item) in self.items.values() {
-            let en = (typing && menus::edits_text(cmd)) || cadcraft_engine::find_command(cmd).is_none_or(|c| (c.enabled)(&app.session).is_ok());
+            let en = (typing && menus::edits_text(cmd)) || forja_engine::find_command(cmd).is_none_or(|c| (c.enabled)(&app.session).is_ok());
             item.set_enabled(en);
         }
     }

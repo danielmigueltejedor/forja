@@ -1,9 +1,9 @@
 //! Property, symbol-table and identity inputs. Values are authored before serialization;
 //! each family can fail independently without suppressing unrelated preservation checks.
 
-use cadcraft_color::{Color, Rgb};
-use cadcraft_doc::{Common, DashElement, Entity, EntityKind, HAlign, Handle, Layer, Line, Lineweight, RawTag, Text, TextStyle, Transparency, VAlign};
-use cadcraft_geom::{Vec2, Vec3};
+use forja_color::{Color, Rgb};
+use forja_doc::{Common, DashElement, Entity, EntityKind, HAlign, Handle, Layer, Line, Lineweight, RawTag, Text, TextStyle, Transparency, VAlign};
+use forja_geom::{Vec2, Vec3};
 
 use super::{Case, common_case, drawing, entity_case, text};
 
@@ -109,7 +109,7 @@ pub(crate) fn text_style_flags() -> Vec<Case> {
 
 pub(crate) fn text_style_fonts() -> Vec<Case> {
     // Names only; no font files are read or required.
-    [("CADCraft Stroke", ""), ("SyntheticSans.ttf", ""), ("synthetic.shx", "synthetic-big.shx")]
+    [("Forja Stroke", ""), ("SyntheticSans.ttf", ""), ("synthetic.shx", "synthetic-big.shx")]
         .map(|(font, big_font)| {
             style_case(
                 &format!("style/font={font}/big={big_font}"),
@@ -319,8 +319,8 @@ pub(crate) fn alignment_style_interactions() -> Vec<Case> {
                 ..text()
             };
             if !matches!(halign, HAlign::Aligned | HAlign::Fit) {
-                let (h, v) = cadcraft_render::text_align(halign, valign);
-                let params = cadcraft_fonts::TextParams {
+                let (h, v) = forja_render::text_align(halign, valign);
+                let params = forja_fonts::TextParams {
                     insert: t.insert.xy(),
                     align_pt: Some(Vec2::ZERO),
                     height: t.height,
@@ -332,7 +332,7 @@ pub(crate) fn alignment_style_interactions() -> Vec<Case> {
                     backwards: style.backwards,
                     upside_down: style.upside_down,
                 };
-                t.insert = cadcraft_fonts::baseline_start(&cadcraft_fonts::TextFont::Stroke, &t.value, &params).to3(0.0);
+                t.insert = forja_fonts::baseline_start(&forja_fonts::TextFont::Stroke, &t.value, &params).to3(0.0);
             }
             let mut case = entity_case(&format!("text/alignment-style/{halign:?}/{valign:?}/flags={flags}"), Common::default(), EntityKind::Text(t));
             *case.drawing.text_styles.iter_mut().find(|s| s.name == "Notes").unwrap() = style;

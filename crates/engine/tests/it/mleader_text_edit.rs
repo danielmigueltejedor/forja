@@ -1,9 +1,9 @@
 //! #1081: a multileader's text can be edited: TEXTEDIT (what a double-click starts) takes it and
 //! hands it to the in-place editor, and the Properties palette's Contents field changes it.
 
-use cadcraft_engine::doc::EntityKind;
-use cadcraft_engine::geom::Vec2;
-use cadcraft_engine::{Input, Session};
+use forja_engine::doc::EntityKind;
+use forja_engine::geom::Vec2;
+use forja_engine::{Input, Session};
 use serde_json::json;
 
 fn text_of(s: &Session) -> String {
@@ -61,8 +61,8 @@ fn an_edited_multileader_text_undoes_and_survives_a_dxf_save() {
     s.input(Input::Text("edited\nsecond line".into())).unwrap();
     s.cancel();
     // 2007 DXF: older versions keep a multileader as a LEADER and an MTEXT.
-    let opts = cadcraft_io::SaveOptions { version: Some(cadcraft_io::Version::R2007), binary: false };
-    let reopened = cadcraft_io::read_dxf(&cadcraft_io::write_with(s.doc().unwrap(), "x.dxf", &opts).unwrap()).unwrap();
+    let opts = forja_io::SaveOptions { version: Some(forja_io::Version::R2007), binary: false };
+    let reopened = forja_io::read_dxf(&forja_io::write_with(s.doc().unwrap(), "x.dxf", &opts).unwrap()).unwrap();
     let saved =
         reopened.model.iter().find_map(|e| if let EntityKind::MLeader(m) = &e.kind { m.text.as_ref().map(|t| t.contents.clone()) } else { None });
     assert_eq!(saved.as_deref(), Some("edited\\Psecond line"));
@@ -106,7 +106,7 @@ fn a_text_too_long_for_the_editor_is_asked_for_at_the_command_line() {
         .iter()
         .find_map(|e| if let EntityKind::MLeader(m) = &e.kind { m.text.as_ref().map(|t| (e.handle, t.insert.xy())) } else { None })
         .unwrap();
-    let long = format!("example text {}", "x".repeat(cadcraft_engine::mtext_edit::MAX_CHARS));
+    let long = format!("example text {}", "x".repeat(forja_engine::mtext_edit::MAX_CHARS));
     s.execute("properties.set", &json!({"handles": [h.hex()], "text": long})).unwrap();
     assert_eq!(text_of(&s), long);
     s.cmdline("TEXTEDIT").unwrap();

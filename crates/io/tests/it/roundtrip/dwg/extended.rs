@@ -5,7 +5,7 @@
 use super::super::cases::{Case, blocks, complex, geometry, properties};
 use super::super::collections;
 use super::check;
-use cadcraft_io::Version;
+use forja_io::Version;
 
 // DWG references a table record by handle, not by an independently spelled name. These
 // explicit expected spellings test resolution, not a blanket case-folding comparator.
@@ -18,7 +18,7 @@ fn canonical_reference(kind: &str, name: &str) {
                 "layer" => e.common.layer = name.into(),
                 "linetype" => e.common.linetype = name.into(),
                 "style" => {
-                    let cadcraft_doc::EntityKind::Text(t) = &mut e.kind else { panic!("expected TEXT") };
+                    let forja_doc::EntityKind::Text(t) = &mut e.kind else { panic!("expected TEXT") };
                     t.style = name.into();
                 }
                 _ => panic!("unknown reference family"),
@@ -324,7 +324,7 @@ fn dimensions() {
     super::dimensions::check();
 }
 
-fn collection(case: Case, verify: fn(&cadcraft_doc::Drawing, &cadcraft_doc::Drawing, &str)) {
+fn collection(case: Case, verify: fn(&forja_doc::Drawing, &forja_doc::Drawing, &str)) {
     for version in Version::ALL {
         super::check_version_with(&case.name, &case.drawing, &case.drawing, version, verify);
     }

@@ -77,14 +77,14 @@ pub struct ArrowGeom {
 }
 
 fn circle_pts(c: Vec2, r: f64) -> Vec<Vec2> {
-    (0..=24).map(|i| c + Vec2::from_angle(f64::from(i) * cadcraft_geom::TAU / 24.0) * r).collect()
+    (0..=24).map(|i| c + Vec2::from_angle(f64::from(i) * forja_geom::TAU / 24.0) * r).collect()
 }
 
 fn disc(c: Vec2, r: f64) -> Vec<Vec2> {
     let mut t = Vec::with_capacity(72);
     for i in 0..24 {
-        let a0 = f64::from(i) * cadcraft_geom::TAU / 24.0;
-        let a1 = f64::from(i + 1) * cadcraft_geom::TAU / 24.0;
+        let a0 = f64::from(i) * forja_geom::TAU / 24.0;
+        let a1 = f64::from(i + 1) * forja_geom::TAU / 24.0;
         t.extend_from_slice(&[c, c + Vec2::from_angle(a0) * r, c + Vec2::from_angle(a1) * r]);
     }
     t

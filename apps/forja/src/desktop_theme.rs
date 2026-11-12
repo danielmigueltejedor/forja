@@ -34,7 +34,7 @@ impl DesktopTheme {
             return Self::default();
         }
         let (tx, rx) = channel();
-        let started = std::thread::Builder::new().name("cadcraft-desktop-theme".into()).spawn(move || {
+        let started = std::thread::Builder::new().name("forja-desktop-theme".into()).spawn(move || {
             let mut last = read();
             if tx.send(last).is_err() {
                 return;

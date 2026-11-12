@@ -1,9 +1,9 @@
 use super::properties_section;
 use crate::{CadApp, Services};
-use cadcraft_engine::Session;
 use egui::{Rect, Shape, vec2};
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
+use forja_engine::Session;
 use serde_json::json;
 
 fn texts(shape: &Shape, clip: Rect, out: &mut Vec<(String, Rect, Rect)>) {
@@ -51,6 +51,6 @@ fn selected_entity_layer_menu_scrolls_to_its_last_layer() {
     assert!(shown, "{last} was not scrolled into the visible layer menu: {painted:?}");
     if let Some(directory) = shot_dir {
         std::fs::create_dir_all(&directory).unwrap();
-        h.render().unwrap().save(directory.join("cadcraft-properties-layer-menu.png")).unwrap();
+        h.render().unwrap().save(directory.join("forja-properties-layer-menu.png")).unwrap();
     }
 }

@@ -10,8 +10,8 @@ use std::any::Any;
 use std::cell::Cell;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
-use cadcraft_doc::EntityKind;
-use cadcraft_geom::Vec2;
+use forja_doc::EntityKind;
+use forja_geom::Vec2;
 
 use crate::cmd::Factory;
 use crate::{Accept, EngineError, Input, Interactive, Prompt, Result, Session, Step};
@@ -83,7 +83,7 @@ impl Interactive for Guarded {
             Vec::new()
         })
     }
-    fn preview_objects(&self, s: &Session, cursor: Vec2) -> Vec<cadcraft_doc::Entity> {
+    fn preview_objects(&self, s: &Session, cursor: Vec2) -> Vec<forja_doc::Entity> {
         if self.broken.get().is_some() {
             return Vec::new();
         }
@@ -101,7 +101,7 @@ impl Interactive for Guarded {
             None
         })
     }
-    fn editing_mtext(&self) -> Option<cadcraft_doc::MText> {
+    fn editing_mtext(&self) -> Option<forja_doc::MText> {
         if self.broken.get().is_some() {
             return None;
         }
@@ -168,7 +168,7 @@ pub(crate) mod tests {
     }
 
     fn dot(p: Vec2) -> EntityKind {
-        EntityKind::Point(cadcraft_doc::Point { p: p.to3(0.0), angle: 0.0 })
+        EntityKind::Point(forja_doc::Point { p: p.to3(0.0), angle: 0.0 })
     }
 
     /// Panics in the step named by `at` ("factory", "begin", "prompt", "preview" or "input").

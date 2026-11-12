@@ -1,6 +1,6 @@
 [package]
-name = "cadcraft-io"
-description = "CADCraft file formats: DXF read/write mapping, SVG, PNG and PDF export"
+name = "forja-io"
+description = "Forja file formats: DXF read/write mapping, SVG, PNG and PDF export"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -9,13 +9,13 @@ license.workspace = true
 workspace = true
 
 [dependencies]
-cadcraft-geom = { workspace = true }
-cadcraft-color = { workspace = true }
-cadcraft-doc = { workspace = true }
-cadcraft-dxf = { workspace = true }
-cadcraft-dwg = { workspace = true }
-cadcraft-render = { workspace = true }
-cadcraft-fonts = { workspace = true }
+forja-geom = { workspace = true }
+forja-color = { workspace = true }
+forja-doc = { workspace = true }
+forja-dxf = { workspace = true }
+forja-dwg = { workspace = true }
+forja-render = { workspace = true }
+forja-fonts = { workspace = true }
 thiserror = { workspace = true }
 serde_json = { workspace = true }
 serde = { workspace = true }
@@ -29,7 +29,7 @@ tiny-skia = { workspace = true }
 # Reads plotted PDFs back.
 craft-pdf = { workspace = true, features = ["read"] }
 
-# Inspect DWG output only where cadcraft-dwg builds its native bridge. An unconditional
+# Inspect DWG output only where forja-dwg builds its native bridge. An unconditional
 # dev-dependency also builds acadrust during --all-targets, breaking FreeBSD aarch64 (#2526).
 [target.'cfg(not(any(target_arch = "wasm32", all(target_os = "freebsd", target_arch = "aarch64"))))'.dev-dependencies]
 acadrust = "0.6.6"

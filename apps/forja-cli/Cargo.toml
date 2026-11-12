@@ -18,10 +18,10 @@ path = "src/main.rs"
 workspace = true
 
 [dependencies]
-cadcraft-engine = { workspace = true }
-cadcraft-io = { workspace = true }
-cadcraft-mcp = { workspace = true }
-cadcraft-render = { workspace = true }
+forja-engine = { workspace = true }
+forja-io = { workspace = true }
+forja-mcp = { workspace = true }
+forja-render = { workspace = true }
 clap = { workspace = true }
 same-file = { workspace = true }
 serde_json = { workspace = true }

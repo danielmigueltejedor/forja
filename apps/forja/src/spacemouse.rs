@@ -4,7 +4,7 @@
 #[cfg(any(target_os = "windows", target_os = "linux"))]
 mod motion;
 
-use cadcraft_ui_egui::{CadApp, spacemouse::Status};
+use forja_ui_egui::{CadApp, spacemouse::Status};
 #[cfg(any(target_os = "windows", target_os = "linux"))]
 use std::time::Duration;
 use std::{
@@ -71,7 +71,7 @@ impl SpaceMouse {
         app.spacemouse.device.clone_from(&shared.device);
         app.spacemouse.detail.clone_from(&shared.detail);
         if changed && !matches!(shared.status, Status::Unavailable | Status::Searching) {
-            app.set_status(cadcraft_ui_egui::i18n::tr(app.language(), shared.status.message()));
+            app.set_status(forja_ui_egui::i18n::tr(app.language(), shared.status.message()));
         }
         let buttons = std::mem::take(&mut shared.buttons);
         #[cfg(any(target_os = "windows", target_os = "linux"))]

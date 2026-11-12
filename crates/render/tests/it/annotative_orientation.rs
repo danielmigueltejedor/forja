@@ -1,9 +1,9 @@
 //! Annotative text with "Match orientation to layout" (`AcadAnnoPO` xdata = 1) draws upright,
 //! ignoring its stored rotation (#2498).
 
-use cadcraft_doc::{Common, Drawing, EntityKind, RawTag, Space, Text};
-use cadcraft_geom::{Bounds2, Vec3};
-use cadcraft_render::{Options, build};
+use forja_doc::{Common, Drawing, EntityKind, RawTag, Space, Text};
+use forja_geom::{Bounds2, Vec3};
+use forja_render::{Options, build};
 
 fn tag(code: i32, value: &str) -> RawTag {
     RawTag { code, value: value.into() }

@@ -1,7 +1,7 @@
 //! A native layout with no media or paper-space viewport has never been activated.
 //! Preserve that distinction from an intentionally empty, configured sheet.
-use cadcraft_doc::{Common, Drawing, EntityKind, Line, Space};
-use cadcraft_geom::Vec3;
+use forja_doc::{Common, Drawing, EntityKind, Line, Space};
+use forja_geom::Vec3;
 
 fn native_empty_layout(extra: &str, entities: &str, media: &str) -> Drawing {
     let dxf = format!(
@@ -12,7 +12,7 @@ fn native_empty_layout(extra: &str, entities: &str, media: &str) -> Drawing {
          100\nAcDbLayout\n1\nPresentación1\n71\n1\n330\n1F\n{extra}\
          0\nENDSEC\n0\nEOF\n"
     );
-    cadcraft_io::read_dxf(dxf.as_bytes()).unwrap()
+    forja_io::read_dxf(dxf.as_bytes()).unwrap()
 }
 
 #[test]
@@ -30,13 +30,13 @@ fn identifies_only_an_unvisited_unsized_empty_layout() {
 #[test]
 fn unvisited_state_survives_saving_without_visiting_the_layout() {
     let d = native_empty_layout("", "", "");
-    let read = cadcraft_io::read_dxf(cadcraft_io::write_dxf(&d).as_bytes()).unwrap();
+    let read = forja_io::read_dxf(forja_io::write_dxf(&d).as_bytes()).unwrap();
     assert!(read.layouts[0].needs_initialization);
     assert!(read.layouts[0].entities.is_empty());
     #[cfg(not(target_arch = "wasm32"))]
     {
-        let dwg = cadcraft_io::write(&d, "unvisited.dwg").unwrap();
-        let read = cadcraft_io::read(&dwg, "unvisited.dwg").unwrap();
+        let dwg = forja_io::write(&d, "unvisited.dwg").unwrap();
+        let read = forja_io::read(&dwg, "unvisited.dwg").unwrap();
         assert!(read.layouts[0].needs_initialization);
         assert!(read.layouts[0].entities.is_empty());
     }
@@ -47,7 +47,7 @@ fn saving_existing_content_does_not_mark_the_layout_unvisited() {
     let mut d = Drawing::new_metric();
     d.layouts[0].needs_initialization = true;
     d.add(&Space::Paper("Layout1".into()), Common::default(), EntityKind::Line(Line { a: Vec3::ZERO, b: Vec3::new(10.0, 10.0, 0.0) })).unwrap();
-    let read = cadcraft_io::read_dxf(cadcraft_io::write_dxf(&d).as_bytes()).unwrap();
+    let read = forja_io::read_dxf(forja_io::write_dxf(&d).as_bytes()).unwrap();
     assert!(!read.layouts[0].needs_initialization);
     assert_eq!(read.layouts[0].entities.len(), 1);
 }

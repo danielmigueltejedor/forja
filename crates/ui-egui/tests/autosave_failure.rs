@@ -1,10 +1,10 @@
 //! A failed autosave reaches the user: a notice and one command-line message, gone once a write
 //! works. SAVEFILEPATH is process-wide, so everything runs in one test.
 
-use cadcraft_engine::Session;
-use cadcraft_engine::cmd::file::{IoHooks, set_io};
-use cadcraft_engine::doc::Drawing;
-use cadcraft_ui_egui::{CadApp, Services};
+use forja_engine::Session;
+use forja_engine::cmd::file::{IoHooks, set_io};
+use forja_engine::doc::Drawing;
+use forja_ui_egui::{CadApp, Services};
 
 fn wait_for(app: &mut CadApp, ctx: &egui::Context, done: impl Fn(&CadApp) -> bool) {
     for _ in 0..500 {
@@ -27,7 +27,7 @@ fn painted_text(app: &mut CadApp, ctx: &egui::Context) -> String {
     }
     let mut text = String::new();
     for _ in 0..2 {
-        let mut out = ctx.run_ui(egui::RawInput::default(), |ui| cadcraft_ui_egui::autosave::failure_notice(app, ui.ctx()));
+        let mut out = ctx.run_ui(egui::RawInput::default(), |ui| forja_ui_egui::autosave::failure_notice(app, ui.ctx()));
         out.textures_delta.clear(); // no renderer here
         text.clear();
         out.shapes.iter().for_each(|s| collect(&s.shape, &mut text));
@@ -38,13 +38,13 @@ fn painted_text(app: &mut CadApp, ctx: &egui::Context) -> String {
 #[test]
 fn a_failed_autosave_is_shown_until_a_write_works() {
     set_io(IoHooks { read: |_, _| Ok(Drawing::new_metric()), write: |_, _| Ok(b"0\nEOF\n".to_vec()), plot: None });
-    let root = std::env::temp_dir().join(format!("cadcraft-autosave-failure-{}", std::process::id()));
+    let root = std::env::temp_dir().join(format!("forja-autosave-failure-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&root);
     std::fs::create_dir_all(&root).unwrap();
     // The folder can't be created while a file holds its name.
     let dir = root.join("out");
     std::fs::write(&dir, b"not a folder").unwrap();
-    cadcraft_engine::autosave::set_savefilepath(&dir.to_string_lossy());
+    forja_engine::autosave::set_savefilepath(&dir.to_string_lossy());
 
     let mut app = CadApp::new(Session::new(), Services::default());
     app.enable_autosave(&dir);

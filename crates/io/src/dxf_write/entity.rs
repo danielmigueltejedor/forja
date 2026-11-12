@@ -36,7 +36,7 @@ pub(super) fn hatch_reactors(d: &Drawing) -> HashMap<Handle, Vec<String>> {
 /// (128) per face that names them (the others draw nothing and are dropped, as on read). Counts
 /// and indices are 16-bit groups (71–74), and no index is above the vertex count: a mesh too large
 /// for them is written as its 3D faces rather than with numbers cut short.
-fn polyface(w: &mut W, d: &Drawing, e: &Entity, m: &cadcraft_doc::PolyfaceMesh, owner: &str, paper: bool, cx: &Ctx) {
+fn polyface(w: &mut W, d: &Drawing, e: &Entity, m: &forja_doc::PolyfaceMesh, owner: &str, paper: bool, cx: &Ctx) {
     let faces: Vec<&[i32; 4]> = m.faces.iter().filter(|f| m.face3d(f).is_some()).collect();
     let max = usize::try_from(i16::MAX).unwrap_or(usize::MAX);
     if m.vertices.len() > max || faces.len() > max {
@@ -397,7 +397,7 @@ fn write_dimension_entity(w: &mut W, d: &Drawing, e: &Entity, owner: &str, paper
         w.s(2, bname);
         w.p(10, dm.defpt);
         let style = d.dim_style(&dm.style).cloned().unwrap_or_default();
-        let g = cadcraft_render::dimension_geometry(dm, &style, d.header.f64("DIMSCALE", 1.0));
+        let g = forja_render::dimension_geometry(dm, &style, d.header.f64("DIMSCALE", 1.0));
         w.p(11, if dm.user_text_pos { dm.text_mid } else { g.text_pos.to3(0.0) });
         // Group 12: a block read from a file keeps the dimension's moved-by offset (AutoCAD
         // draws the block translated by it); regenerated geometry already sits where the
@@ -413,7 +413,7 @@ fn write_dimension_entity(w: &mut W, d: &Drawing, e: &Entity, owner: &str, paper
             DimKind::Radius => 4,
             DimKind::Angular3P => 5,
             DimKind::Ordinate { x_type } => 6 | if x_type { 64 } else { 0 },
-            // Written as aligned, marked by CADCraft xdata (see `dim_xdata`).
+            // Written as aligned, marked by Forja xdata (see `dim_xdata`).
             DimKind::ArcLength => 1,
         };
         w.i(70, ty | 32 | if dm.user_text_pos { 128 } else { 0 });
@@ -502,7 +502,7 @@ fn write_table_entity(w: &mut W, _d: &Drawing, e: &Entity, owner: &str, paper: b
         for c in t.col_widths.iter().take(cols) {
             w.f(142, *c);
         }
-        let cov = cadcraft_render::table_covered(t);
+        let cov = forja_render::table_covered(t);
         let span = |v: u32| i64::from(v.min(i16::MAX as u32));
         for r in 0..rows {
             for c in 0..cols {
@@ -645,7 +645,7 @@ fn write_hatch_entity(w: &mut W, d: &Drawing, e: &Entity, owner: &str, paper: bo
         if !h.solid {
             // The lines read from the file, else the library's pattern of that name.
             let lines = if h.pattern_lines.is_empty() {
-                cadcraft_doc::library::pattern_for(d, &h.pattern).map(|p| p.lines).unwrap_or_default()
+                forja_doc::library::pattern_for(d, &h.pattern).map(|p| p.lines).unwrap_or_default()
             } else {
                 h.pattern_lines.clone()
             };
@@ -688,7 +688,7 @@ fn write_viewport_entity(w: &mut W, d: &Drawing, e: &Entity, owner: &str, paper:
         w.i(68, if v.on { i64::from(v.id.clamp(1, 32767)) } else { 0 });
         w.i(69, i64::from(v.id));
         // Within one turn, so a hostile twist (from JSON or MCP) writes a sane angle.
-        let twist = cadcraft_geom::norm_angle(v.view_twist());
+        let twist = forja_geom::norm_angle(v.view_twist());
         // The view centre in display coordinates (turned by the twist).
         w.p2(12, dxf_ext::model_center_to_dcs(v.view_center, twist));
         w.f(45, v.view_height);
@@ -701,7 +701,7 @@ fn write_viewport_entity(w: &mut W, d: &Drawing, e: &Entity, owner: &str, paper:
         let clip = v.clip.filter(|h| *h != e.handle && d.entity(*h).is_some());
         let flags = 32768 | if v.locked { 16384 } else { 0 } | if clip.is_some() { 65536 } else { 0 } | if v.on { 0 } else { 131072 };
         // AutoCAD's frozen-layer list, before group 90 as in the DXF Reference: one pointer per
-        // layer, to its LAYER record. A name with no record goes in CADCraft's xdata below.
+        // layer, to its LAYER record. A name with no record goes in Forja's xdata below.
         let mut unrecorded: Vec<String> = Vec::new();
         for name in &v.frozen_layers {
             match w.layers.get(&name.to_ascii_uppercase()).cloned() {
@@ -713,7 +713,7 @@ fn write_viewport_entity(w: &mut W, d: &Drawing, e: &Entity, owner: &str, paper:
         if let Some(h) = clip {
             w.s(340, h.hex());
         }
-        // One CADCraft xdata group holds both lists: readers stop at the first group of an app.
+        // One Forja xdata group holds both lists: readers stop at the first group of an app.
         if !unrecorded.is_empty() || !v.layer_colors.is_empty() {
             w.s(1001, dxf_ext::APP);
             if !unrecorded.is_empty() {
@@ -767,7 +767,7 @@ fn write_other_entity(w: &mut W, _d: &Drawing, e: &Entity, owner: &str, paper: b
             w.s(1, &t.text);
             w.p(11, t.dir);
         }
-        // Entity types CADCraft doesn't model aren't written; the save command reports them.
+        // Entity types Forja doesn't model aren't written; the save command reports them.
         EntityKind::Unknown(_) => {}
         _ => {}
     }
@@ -797,7 +797,7 @@ fn mleader_fallback(w: &mut W, d: &Drawing, e: &Entity, m: &MLeader, owner: &str
 /// A hatch's gradient fill (DXF Reference, HATCH group codes 450–470): two-colour gradient
 /// with its rotation (radians), shift (0 = centered, 1 = shifted) and per-colour 463 records
 /// carrying ACI (63) and, for true colours, the RGB value (421). Those groups belong to R2004+
-/// files, so the same gradient also travels as `CADCRAFT` xdata, which survives this R2000
+/// files, so the same gradient also travels as `FORJA` xdata, which survives this R2000
 /// file's conversion to DWG (where the native fields don't exist).
 fn gradient(w: &mut W, g: &Gradient) {
     w.i(450, 1);
@@ -811,7 +811,7 @@ fn gradient(w: &mut W, g: &Gradient) {
         w.f(463, k);
         match c {
             Color::True(rgb) => {
-                w.i(63, i64::from(cadcraft_color::nearest_aci(rgb)));
+                w.i(63, i64::from(forja_color::nearest_aci(rgb)));
                 w.i(421, i64::from(rgb.to_u32()));
             }
             c => w.i(63, i64::from(c.to_aci())),
@@ -854,11 +854,11 @@ fn extrusion(w: &mut W, e: &Entity) {
     }
 }
 
-/// Hatch origin and background colour as `CADCRAFT` xdata: `1000 HATCH`, the origin as a
+/// Hatch origin and background colour as `FORJA` xdata: `1000 HATCH`, the origin as a
 /// world position (`1011`, moved with the hatch by other programs) and the background colour
 /// name (`1000`, empty for none). The DXF Reference has no HATCH groups for either: other
 /// readers get the origin through the pattern lines' base points (43/44), the background isn't
-/// carried. Appended to the gradient's `CADCRAFT` xdata when there is one.
+/// carried. Appended to the gradient's `FORJA` xdata when there is one.
 fn hatch_xdata(w: &mut W, h: &Hatch) {
     if h.origin == Vec2::ZERO && h.background.is_none() {
         return;

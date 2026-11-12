@@ -1,5 +1,5 @@
 //! The user's keyboard shortcuts (Tools ▸ Customize ▸ Keyboard Shortcuts...): any command can get
-//! one, and a shortcut the user gives wins over CADCraft's own; the command that had it loses it,
+//! one, and a shortcut the user gives wins over Forja's own; the command that had it loses it,
 //! and the dialog says so. They are kept with the other preferences (`shortcuts`).
 //!
 //! Recording a shortcut (click, press the keys, Esc to cancel) and the conflict rules come from
@@ -120,7 +120,7 @@ pub fn by_specificity<T>(pairs: &mut [(KeyboardShortcut, T)]) {
     pairs.sort_by_key(|(s, _)| std::cmp::Reverse(weight(s)));
 }
 
-/// CADCraft's own shortcuts: the shortcut table, plus Cmd+8 (QuickCalc), which the shortcut
+/// Forja's own shortcuts: the shortcut table, plus Cmd+8 (QuickCalc), which the shortcut
 /// handler reads before a focused text field can take it.
 fn defaults() -> Vec<(KeyboardShortcut, &'static str)> {
     let mut v = crate::menus::builtin_shortcuts();
@@ -131,14 +131,14 @@ fn defaults() -> Vec<(KeyboardShortcut, &'static str)> {
 /// The command a built-in shortcut belongs to in the editor: the table runs some commands' UI
 /// form (`ui.open` for OPEN), which is the same command for the user.
 fn owner(id: &str) -> &str {
-    id.strip_prefix("ui.").filter(|c| cadcraft_engine::find_command(c).is_some()).unwrap_or(id)
+    id.strip_prefix("ui.").filter(|c| forja_engine::find_command(c).is_some()).unwrap_or(id)
 }
 
 fn known(id: &str) -> bool {
-    cadcraft_engine::find_command(id).is_some() || crate::menus::is_ui_command(id)
+    forja_engine::find_command(id).is_some() || crate::menus::is_ui_command(id)
 }
 
-/// The shortcuts in force: the user's first, then CADCraft's own unless the user gave that
+/// The shortcuts in force: the user's first, then Forja's own unless the user gave that
 /// command another shortcut or gave the key to another command. Most specific first.
 pub fn effective(user: &UserKeys) -> Vec<(KeyboardShortcut, String)> {
     let mut out: Vec<(KeyboardShortcut, String)> = Vec::new();
@@ -186,7 +186,7 @@ pub fn shown(user: &UserKeys, id: &str, default: Option<&str>) -> Option<String>
 
 /// The built-in shortcut a command shows (its registry `key`, or a UI command's).
 pub fn default_key(id: &str) -> Option<&'static str> {
-    cadcraft_engine::find_command(id).and_then(|c| c.shortcut).or_else(|| crate::menus::UI_COMMANDS.iter().find(|c| c.0 == id).and_then(|c| c.3))
+    forja_engine::find_command(id).and_then(|c| c.shortcut).or_else(|| crate::menus::UI_COMMANDS.iter().find(|c| c.0 == id).and_then(|c| c.3))
 }
 
 /// Give `id` the shortcut `key` ("" removes its shortcut). The commands that had the key, built
@@ -300,7 +300,7 @@ pub fn stop_recording(ctx: &egui::Context) {
 /// apart: the command name to type, or the menu an interface command sits in).
 fn rows() -> Vec<(&'static str, String, String)> {
     let mut v: Vec<(&'static str, String, String)> = Vec::new();
-    for c in cadcraft_engine::command_specs() {
+    for c in forja_engine::command_specs() {
         if !c.label.is_empty() && !v.iter().any(|(id, ..)| *id == c.id) {
             v.push((c.id, crate::i18n::t(c.label).to_string(), c.id.to_ascii_uppercase()));
         }
@@ -316,7 +316,7 @@ fn rows() -> Vec<(&'static str, String, String)> {
 }
 
 fn label_of(id: &str) -> String {
-    cadcraft_engine::find_command(id)
+    forja_engine::find_command(id)
         .map(|c| crate::i18n::t(c.label).to_string())
         .or_else(|| crate::menus::UI_COMMANDS.iter().find(|c| c.0 == id).map(|c| crate::i18n::t(c.1).to_string()))
         .unwrap_or_else(|| id.to_string())
@@ -458,7 +458,7 @@ pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cadcraft_engine::Session;
+    use forja_engine::Session;
 
     fn app() -> CadApp {
         CadApp::new(Session::new(), crate::Services::default())

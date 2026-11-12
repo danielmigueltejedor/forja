@@ -2,7 +2,7 @@ use super::args::InfoArgs;
 use super::error::Result;
 use super::open;
 use super::output::Streams;
-use cadcraft_engine::Session;
+use forja_engine::Session;
 use serde_json::json;
 
 pub(crate) fn info(a: &InfoArgs, io: &mut Streams) -> Result {

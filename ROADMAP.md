@@ -1,10 +1,10 @@
-# CADCraft roadmap
+# Forja roadmap
 
 **Stage: pre-alpha** · next: alpha, ~2 points (38% → 40% ready for real work) and ~125–190 Opus 5.5 hours away (the four failing core workflows of the [alpha gate](docs/roadmap.md#alpha-gate))
 
 > **Last reviewed:** 2026-10-24 · **Last updated:** 2026-10-24 · **Change:** minor (re-audit against main 41d9b5e95: language table, CI gate, open-PR count; previously: progress log: proxy objects keep their class through a save, #1812; previously minor: HATCHEDIT boundary add/remove progress) · **Target:** Autodesk AutoCAD 2027
 
-CADCraft targets full parity with AutoCAD (2D drafting first, then annotation, layouts and
+Forja targets full parity with AutoCAD (2D drafting first, then annotation, layouts and
 plotting, DWG, parametrics and 3D), plus what AutoCAD doesn't have: agent control over MCP, a
 scriptable CLI, a web build, Linux and FreeBSD builds, and a free licence.
 
@@ -13,7 +13,7 @@ Precise drafting still has approximate ellipse and spline intersections and a fe
 (object snap tracking, TRIM/EXTEND/OFFSET options and typed snap overrides have landed); dynamic blocks can't be
 authored and xrefs can't be edited in place (the Block Editor, REFEDIT, dynamic block editing and XCLIP have landed);
 plots go only to PDF, PNG and SVG files (plot styles and the Plot dialog have landed); and a DWG saved by
-CADCraft drops what acadrust doesn't model and has never been checked in
+Forja drops what acadrust doesn't model and has never been checked in
 AutoCAD. Dimensioning passes. Ready for real work (≈ 38%) is also under the ~40% alpha bar. Beta
 is ≈ 600–930 h away.
 
@@ -82,7 +82,7 @@ Hours are Opus 5.5 agent wall-clock hours, calibrated on this repo's own build: 
 
 ## Languages
 
-AutoCAD 2027 for Mac ships 8 interface languages; CADCraft ships English plus eighteen catalogs
+AutoCAD 2027 for Mac ships 8 interface languages; Forja ships English plus eighteen catalogs
 (Ukrainian, Brazilian Portuguese, German, Spanish, Czech, Russian, French, Simplified Chinese, Italian, Korean, Swedish, Arabic, Greek, Hungarian, Turkish, Bosnian, Georgian and Vietnamese). Detail: [localization-parity.md](docs/localization-parity.md).
 
 | Language | Status | UI translated |

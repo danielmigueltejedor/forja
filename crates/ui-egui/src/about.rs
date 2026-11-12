@@ -9,7 +9,7 @@ use crate::ndl_window;
 use crate::theme::Tokens;
 
 const WEBSITE: &str = "https://github.com/danielmigueltejedor/forja";
-const ICON_PNG: &[u8] = include_bytes!("../../../assets/app-icon/hicolor/128x128/apps/ai.storyteller.forja.png");
+const ICON_PNG: &[u8] = include_bytes!("../../../assets/app-icon/hicolor/128x128/apps/dev.danielmiguelt.Forja.png");
 /// The width of the About page: NDL's dialog width.
 const WIDTH: f32 = 380.0;
 

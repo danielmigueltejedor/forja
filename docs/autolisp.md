@@ -1,6 +1,6 @@
 # AutoLISP
 
-CADCraft runs AutoLISP routines (`.lsp` files). What is here and what is not yet:
+Forja runs AutoLISP routines (`.lsp` files). What is here and what is not yet:
 [gaps.md](gaps.md) (E1).
 
 ## Loading and running
@@ -27,9 +27,9 @@ CADCraft runs AutoLISP routines (`.lsp` files). What is here and what is not yet
 
 ### At startup
 
-CADCraft loads LISP from its **support folder**, `support` in the settings folder (on Windows
-`%APPDATA%\CADCraft\support`, on macOS `~/Library/Application Support/CADCraft/support`, on
-Linux `~/.config/cadcraft/support`; created at first start):
+Forja loads LISP from its **support folder**, `support` in the settings folder (on Windows
+`%APPDATA%\Forja\support`, on macOS `~/Library/Application Support/Forja/support`, on
+Linux `~/.config/forja/support`; created at first start):
 
 - `acad.lsp` once per session, into the first drawing; with `ACADLSPASDOC` set to 1, into every
   drawing;
@@ -86,7 +86,7 @@ reached", malformed source is a reader error, and every built-in checks its argu
   CHAMFERD and DIMJOGANG in radians, as in AutoCAD; the SETVAR command shows them in degrees.
 - **No-ops:** `vl-load-com gc redraw`; `ver`
 
-Entity lists use the DXF group codes of CADCraft's DXF files: what `entget` returns is what a
+Entity lists use the DXF group codes of Forja's DXF files: what `entget` returns is what a
 DXF file holds for the object, plus `-1` (its name) and `410` (its layout). Angles (groups 50–58)
 are in radians, as in AutoCAD, where the file holds degrees; `entmake`, `entmod` and `ssget`
 filters take radians too.
@@ -101,6 +101,6 @@ fails drops the one it began.
 
 ## Testing against the corpus
 
-The AutoLISP conformance corpus (#648) lives in its own repository. Point `CADCRAFT_LISP_CORPUS`
-at it and run `cargo test -p cadcraft-engine --test it lisp_corpus::`; without the variable the test
+The AutoLISP conformance corpus (#648) lives in its own repository. Point `FORJA_LISP_CORPUS`
+at it and run `cargo test -p forja-engine --test it lisp_corpus::`; without the variable the test
 says it was skipped.

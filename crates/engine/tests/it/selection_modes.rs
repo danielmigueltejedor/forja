@@ -1,7 +1,7 @@
 //! Selection modes typed at "Select objects": Window, Crossing, Fence, WPolygon, CPolygon.
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::EntityKind;
+use forja_engine::Session;
+use forja_engine::doc::EntityKind;
 
 /// Three lines on the X axis: A 0–10, B 12–20, C 30–40.
 fn drawing() -> Session {
@@ -89,8 +89,8 @@ fn escape_during_a_mode_cancels_the_command() {
 }
 
 /// The lasso a press-and-drag draws: a loop around A and the left half of B.
-fn lasso(rightwards: bool) -> Vec<cadcraft_engine::geom::Vec2> {
-    use cadcraft_engine::geom::Vec2;
+fn lasso(rightwards: bool) -> Vec<forja_engine::geom::Vec2> {
+    use forja_engine::geom::Vec2;
     let mut pts = vec![
         Vec2::new(-2.0, -3.0),
         Vec2::new(4.0, -4.0),
@@ -145,7 +145,7 @@ fn a_lasso_at_select_objects_feeds_the_command() {
 
 #[test]
 fn degenerate_or_hostile_lassos_select_nothing() {
-    use cadcraft_engine::geom::Vec2;
+    use forja_engine::geom::Vec2;
     let mut s = drawing();
     s.lasso(&[Vec2::new(0.0, 0.0), Vec2::new(10.0, 0.0)], false).unwrap();
     s.lasso(&[Vec2::new(0.0, 0.0), Vec2::new(f64::NAN, 1.0), Vec2::new(10.0, 0.0)], false).unwrap();

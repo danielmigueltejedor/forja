@@ -1,11 +1,11 @@
-//! What a DXF file holds that CADCraft does not model, kept as raw groups so that saving writes
+//! What a DXF file holds that Forja does not model, kept as raw groups so that saving writes
 //! it back (#528): entities and objects of other types, other applications' xdata, extension
 //! dictionaries, persistent reactors, colour book colours and other unmodelled entity properties.
 //!
 //! Reading ([`read`]) keeps the data with the file's handles in [`Drawing::foreign`], plus the
-//! role of every handle it refers to that CADCraft writes itself (a table record, a block, the
+//! role of every handle it refers to that Forja writes itself (a table record, a block, the
 //! named object dictionary…). Writing ([`finish`]) runs over the finished tag list: it places the
-//! entities of types CADCraft doesn't model among the written ones (the entity writer leaves them
+//! entities of types Forja doesn't model among the written ones (the entity writer leaves them
 //! out), puts the data back on the records that still exist and points each reference at what now
 //! has the role it named. Kept objects get new handles above the written ones (so they never
 //! collide with the handles the writer hands out). A reference to something that is gone is
@@ -16,12 +16,12 @@ use std::borrow::Cow;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::sync::Arc;
 
-use cadcraft_doc::foreign::{Foreign, ForeignExtra, ForeignKey, ForeignObject, class_group, class_index, class_number};
-use cadcraft_doc::{Drawing, Entity, EntityKind, Handle, RawTag, Unknown};
-use cadcraft_dxf::{Section, Tag};
+use forja_doc::foreign::{Foreign, ForeignExtra, ForeignKey, ForeignObject, class_group, class_index, class_number};
+use forja_doc::{Drawing, Entity, EntityKind, Handle, RawTag, Unknown};
+use forja_dxf::{Section, Tag};
 
-/// Named object dictionary entries CADCraft writes itself from its model (plus every key that
-/// starts with `CADCRAFT`): they are read into the model, not kept raw. A change that starts
+/// Named object dictionary entries Forja writes itself from its model (plus every key that
+/// starts with `FORJA`): they are read into the model, not kept raw. A change that starts
 /// modelling another entry adds it here. (An entry the writer writes is also never written
 /// twice: the kept one is left out.)
 const MODELLED_KEYS: &[&str] = &[
@@ -36,14 +36,14 @@ const MODELLED_KEYS: &[&str] = &[
     "ACAD_IMAGE_VARS",
 ];
 
-/// Extension dictionary entries not kept raw: dimension associativity (CADCraft reads and
+/// Extension dictionary entries not kept raw: dimension associativity (Forja reads and
 /// rewrites it), draw order and annotation scale contexts (written from their own models by the
 /// changes that model them; stale copies would contradict the drawing).
 const MODELLED_XDICT_KEYS: &[&str] = &["ACAD_DIMASSOC", "ACAD_SORTENTS", "ACDBCONTEXTDATAMANAGER"];
 
-/// Applications whose xdata CADCraft reads and writes itself. `ACAD` holds dimension overrides
+/// Applications whose xdata Forja reads and writes itself. `ACAD` holds dimension overrides
 /// (DSTYLE) on dimensions and dimension styles; elsewhere it is kept.
-const OWN_APPS: &[&str] = &["CADCRAFT", "ACADANNOTATIVE", "ACCMTRANSPARENCY", "ACAECLAYERSTANDARD"];
+const OWN_APPS: &[&str] = &["FORJA", "ACADANNOTATIVE", "ACCMTRANSPARENCY", "ACAECLAYERSTANDARD"];
 
 /// Most objects kept from one file.
 const MAX_OBJECTS: usize = 1_000_000;
@@ -71,7 +71,7 @@ fn raw(t: &Tag) -> RawTag {
 /// A kept group with the value type its code has (so binary output encodes it right); text that
 /// doesn't parse as that type stays text.
 fn tag(r: &RawTag) -> Tag {
-    use cadcraft_dxf::{Kind, Value, kind_of};
+    use forja_dxf::{Kind, Value, kind_of};
     let v = r.value.trim();
     let value = match kind_of(r.code) {
         Kind::Real => v.parse::<f64>().ok().filter(|x| x.is_finite()).map(Value::Real),
@@ -175,7 +175,7 @@ fn is_dictionary(kind: &str) -> bool {
 
 fn modelled_key(key: &str) -> bool {
     let k = up(key);
-    k.starts_with("CADCRAFT") || MODELLED_KEYS.contains(&k.as_str())
+    k.starts_with("FORJA") || MODELLED_KEYS.contains(&k.as_str())
 }
 
 /// The roles of a file's handles (see [`ForeignKey`]): table records and tables by type and
@@ -304,7 +304,7 @@ fn put_xdata(d: &mut Drawing, mut xdata: HashMap<Handle, Vec<RawTag>>) {
     if xdata.is_empty() {
         return;
     }
-    let mut give = |store: &mut cadcraft_doc::EntityStore| {
+    let mut give = |store: &mut forja_doc::EntityStore| {
         let hs: Vec<Handle> = store.iter().map(|e| e.handle).filter(|h| xdata.contains_key(h)).collect();
         for h in hs {
             if let Some(xd) = xdata.remove(&h) {
@@ -325,7 +325,7 @@ fn put_xdata(d: &mut Drawing, mut xdata: HashMap<Handle, Vec<RawTag>>) {
 pub(crate) fn read(secs: &[Section], d: &mut Drawing) {
     let get = |name: &str| secs.iter().find(|s| s.name == name).map(|s| split(&s.tags)).unwrap_or_default();
     let (classes, tables, blocks, entities, objects) = (get("CLASSES"), get("TABLES"), get("BLOCKS"), get("ENTITIES"), get("OBJECTS"));
-    // The drawing's entities by handle: whether each is of a type CADCraft doesn't model.
+    // The drawing's entities by handle: whether each is of a type Forja doesn't model.
     let ents = entity_types(d);
     let ids = identities(&tables, &blocks, &objects);
     // Extension dictionaries of entities and records: owner → dictionary.
@@ -394,7 +394,7 @@ pub(crate) fn read(secs: &[Section], d: &mut Drawing) {
             f.records.entry(key).or_insert(x);
         }
     }
-    // The classes of kept objects and of entities of types CADCraft doesn't model.
+    // The classes of kept objects and of entities of types Forja doesn't model.
     let mut types: HashSet<String> = f.objects.iter().map(|o| up(&o.kind)).collect();
     types.extend(all_entities(d).filter_map(|e| match &e.kind {
         EntityKind::Unknown(u) => Some(up(&u.dxf_type)),
@@ -653,9 +653,9 @@ pub(crate) fn data_store(tags: &mut Vec<Tag>, d: &Drawing, modern: bool) {
     let first = ds.iter().position(|t| t.code == 0).unwrap_or(ds.len());
     out.extend(ds.iter().take(first).map(tag));
     let mut records = 0usize;
-    for rec in cadcraft_doc::foreign::data_store_records(ds) {
+    for rec in forja_doc::foreign::data_store_records(ds) {
         let is_record = rec.first().is_some_and(|t| t.value.trim().eq_ignore_ascii_case("ACDSRECORD"));
-        let owner = cadcraft_doc::foreign::data_store_owner(rec).map(|t| norm(&t.value));
+        let owner = forja_doc::foreign::data_store_owner(rec).map(|t| norm(&t.value));
         if !is_record || owner.as_ref().is_some_and(|h| written.contains(h)) {
             records += usize::from(is_record);
             out.extend(rec.iter().map(tag));
@@ -684,7 +684,7 @@ fn strip_entries(tags: &mut Vec<RawTag>) {
     *tags = out;
 }
 
-/// An entity of a type CADCraft doesn't model, as read, with its handle, owner, space and layer
+/// An entity of a type Forja doesn't model, as read, with its handle, owner, space and layer
 /// from the drawing. Its reactors, extension dictionary and xdata are added by [`finish`] (they
 /// are kept with the drawing's other foreign data); its references are remapped there too.
 pub(crate) fn unknown_entity(u: &Unknown, e: &Entity, owner: &str, paper: bool) -> Vec<Tag> {
@@ -876,7 +876,7 @@ fn extra_for<'a>(f: &'a Foreign, xd: &XdataOf, rec: &Rec, body: &[Tag], block: &
     }
 }
 
-/// Entities' own xdata ([`cadcraft_doc::Common::xdata`]), by handle.
+/// Entities' own xdata ([`forja_doc::Common::xdata`]), by handle.
 type XdataOf<'a> = HashMap<Handle, &'a [RawTag]>;
 
 /// The extras of entity `h`: what the drawing keeps for it, with the entity's own xdata.
@@ -926,7 +926,7 @@ pub(crate) fn finish(tags: &mut Vec<Tag>, d: &Drawing, reactors: &HashMap<Handle
         numbers.entry(n).or_insert(500_i64.saturating_add(i64::try_from(i).unwrap_or(i64::MAX)));
     }
     let renumber = |old| proxy_class_number(f, &numbers, old);
-    // Entities of types CADCraft doesn't model, placed among the written ones.
+    // Entities of types Forja doesn't model, placed among the written ones.
     let mut planned = plan_unknown(d, &recs, tags, &roles, modern);
     for list in planned.values_mut() {
         list.retain_mut(|(_, t)| {
@@ -1122,7 +1122,7 @@ fn source_class_record(f: &Foreign, record: &Rec, recs: &[Rec], tags: &[Tag], cl
     false
 }
 
-/// Where the entities of types CADCraft doesn't model go: each before the next written entity of
+/// Where the entities of types Forja doesn't model go: each before the next written entity of
 /// its space or block (else at the end of it), as `(section, record)` lists by the index of the
 /// record they precede. Owners come from the written block records.
 fn plan_unknown(
@@ -1147,10 +1147,10 @@ fn plan_unknown(
         recs.iter().skip(i).find(|r| r.kind == "ENDBLK").map(|r| r.start)
     };
     let br = |name: &str| roles.get(&("BLOCK_RECORD".to_string(), up(name))).cloned();
-    let first_at = |s: &cadcraft_doc::EntityStore| s.iter().find_map(|e| at.get(&e.handle.hex()).copied());
+    let first_at = |s: &forja_doc::EntityStore| s.iter().find_map(|e| at.get(&e.handle.hex()).copied());
     let layouts = d.paper_space_layouts();
     // (entities, owner, paper space, end of the space, section)
-    let mut stores: Vec<(&cadcraft_doc::EntityStore, Option<String>, bool, Option<usize>, &str)> = Vec::new();
+    let mut stores: Vec<(&forja_doc::EntityStore, Option<String>, bool, Option<usize>, &str)> = Vec::new();
     let model_end = layouts.first().and_then(|l| first_at(&l.entities)).or(ents_end);
     stores.push((&d.model, br("*Model_Space"), false, model_end, "ENTITIES"));
     for (i, l) in layouts.iter().enumerate() {
@@ -1170,7 +1170,7 @@ fn plan_unknown(
         for e in store.iter() {
             match &e.kind {
                 EntityKind::Unknown(u) => {
-                    if modern && cadcraft_doc::foreign::sat_text_acis(u, e.handle, &stored) {
+                    if modern && forja_doc::foreign::sat_text_acis(u, e.handle, &stored) {
                         continue;
                     }
                     let t = unknown_entity(u, e, &owner, paper);

@@ -6,7 +6,7 @@
 //! solid, whose first two corners are the previous one's last two, until Enter at "Specify third
 //! point". Enter there right after the second point makes nothing.
 
-use cadcraft_doc::Solid;
+use forja_doc::Solid;
 
 use super::{Accept, EntityKind, Input, Interactive, Prompt, Result, Session, Step, Value, Vec2, bad, json, points_param, v3};
 

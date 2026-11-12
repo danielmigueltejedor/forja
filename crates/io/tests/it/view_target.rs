@@ -3,9 +3,9 @@
 //! ArchiCAD's AutoCAD 2018 export puts each layout viewport's location in the target with a
 //! centre of 0,0, so reading the centre alone showed model point 0,0 (#2492).
 
-use cadcraft_doc::geom::Vec2;
-use cadcraft_doc::{Drawing, EntityKind, Viewport};
-use cadcraft_io::{read_dxf, write_dxf};
+use forja_doc::geom::Vec2;
+use forja_doc::{Drawing, EntityKind, Viewport};
+use forja_io::{read_dxf, write_dxf};
 
 /// An ASCII DXF of `tags`.
 fn dxf(tags: &[(i32, &str)]) -> String {
@@ -80,7 +80,7 @@ fn a_viewport_looks_at_its_target_plus_its_centre() {
     assert_eq!(view_center(&with_viewport(["10", "5"], ["0", "0", "0"])), Vec2::new(10.0, 5.0));
 }
 
-/// CADCraft draws every viewport as a plan view (the view direction, 16/26/36, isn't applied). A
+/// Forja draws every viewport as a plan view (the view direction, 16/26/36, isn't applied). A
 /// viewport looking along another direction is centred on what it looks at, its target, as
 /// AutoCAD's view of it is; its centre is in that view's own axes, so only the target is exact.
 #[test]
@@ -89,7 +89,7 @@ fn a_viewport_looking_along_another_direction_centres_on_its_target() {
     assert_eq!(c, Vec2::new(500.0, -200.0));
 }
 
-/// Saved and reopened, the viewport still looks at the same place: CADCraft writes the whole
+/// Saved and reopened, the viewport still looks at the same place: Forja writes the whole
 /// location as the centre with a target of 0.
 #[test]
 fn the_view_survives_a_save_and_reopen() {

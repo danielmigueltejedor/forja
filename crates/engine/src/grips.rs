@@ -4,8 +4,8 @@
 //! The UI calls [`Session::grip_edit`]; every edit runs through a `grip.*` command so it is
 //! undoable and reachable from scripts, the control channel and MCP.
 
-use cadcraft_doc::{DimKind, EntityKind, Handle, LwPolyline};
-use cadcraft_geom::{Arc, EPS, Mat3, Polyline, Vec2, Vec3, norm_angle};
+use forja_doc::{DimKind, EntityKind, Handle, LwPolyline};
+use forja_geom::{Arc, EPS, Mat3, Polyline, Vec2, Vec3, norm_angle};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 
@@ -246,7 +246,7 @@ pub fn stretch_grip(kind: &EntityKind, index: usize, to: Vec2) -> Option<EntityK
     Some(k)
 }
 
-fn stretch_arc(kind: &EntityKind, arc: &cadcraft_doc::Arc, index: usize, to: Vec2, delta: Vec2) -> Option<EntityKind> {
+fn stretch_arc(kind: &EntityKind, arc: &forja_doc::Arc, index: usize, to: Vec2, delta: Vec2) -> Option<EntityKind> {
     let geometry = Arc::new(arc.center.xy(), arc.radius, arc.start, arc.end);
     let (mut start, mut mid, mut end) = (geometry.start_point(), geometry.mid_point(), geometry.end_point());
     match index {
@@ -259,7 +259,7 @@ fn stretch_arc(kind: &EntityKind, arc: &cadcraft_doc::Arc, index: usize, to: Vec
     Some(crate::cmd::helpers::arc(&adjusted))
 }
 
-fn stretch_ellipse(ellipse: &mut cadcraft_doc::Ellipse, index: usize, to: Vec2) -> Option<()> {
+fn stretch_ellipse(ellipse: &mut forja_doc::Ellipse, index: usize, to: Vec2) -> Option<()> {
     let center = ellipse.center.xy();
     let major = ellipse.major.xy();
     let major_len = major.len();
@@ -274,7 +274,7 @@ fn stretch_ellipse(ellipse: &mut cadcraft_doc::Ellipse, index: usize, to: Vec2) 
     Some(())
 }
 
-fn stretch_ellipse_major(ellipse: &mut cadcraft_doc::Ellipse, index: usize, to: Vec2, center: Vec2, minor_len: f64) -> Option<()> {
+fn stretch_ellipse_major(ellipse: &mut forja_doc::Ellipse, index: usize, to: Vec2, center: Vec2, minor_len: f64) -> Option<()> {
     let axis = if index == 1 { to - center } else { center - to };
     let len = axis.len();
     if len <= EPS {
@@ -291,7 +291,7 @@ fn stretch_ellipse_major(ellipse: &mut cadcraft_doc::Ellipse, index: usize, to: 
     Some(())
 }
 
-fn stretch_ellipse_minor(ellipse: &mut cadcraft_doc::Ellipse, to: Vec2, center: Vec2, major: Vec2, major_len: f64) -> Option<()> {
+fn stretch_ellipse_minor(ellipse: &mut forja_doc::Ellipse, to: Vec2, center: Vec2, major: Vec2, major_len: f64) -> Option<()> {
     let unit = major / major_len;
     let minor_len = (to - center).dot(unit.perp()).abs();
     if minor_len <= EPS {
@@ -326,8 +326,8 @@ fn stretch_polyline(polyline: &mut LwPolyline, index: usize, to: Vec2, delta: Ve
     Some(())
 }
 
-fn shift_params(e: &mut cadcraft_doc::Ellipse, by: f64) {
-    let full = (cadcraft_geom::ccw_sweep(e.start, e.end) - cadcraft_geom::TAU).abs() < 1e-9;
+fn shift_params(e: &mut forja_doc::Ellipse, by: f64) {
+    let full = (forja_geom::ccw_sweep(e.start, e.end) - forja_geom::TAU).abs() < 1e-9;
     if !full {
         e.start = norm_angle(e.start + by);
         e.end = norm_angle(e.end + by);
@@ -435,7 +435,7 @@ pub fn grip_action(kind: &EntityKind, index: usize, action: GripAction, to: Opti
             let v = p.vertices.get_mut(at)?;
             // The segment is split in two straight ones.
             v.bulge = 0.0;
-            let nv = cadcraft_geom::PolyVertex { p: to, bulge: 0.0, ..*v };
+            let nv = forja_geom::PolyVertex { p: to, bulge: 0.0, ..*v };
             p.vertices.insert(at + 1, nv);
         }
         (EntityKind::LwPolyline(p), GripAction::RemoveVertex) => {
@@ -497,8 +497,8 @@ pub fn grip_action(kind: &EntityKind, index: usize, action: GripAction, to: Opti
             } else {
                 a.end = ang;
             }
-            let sweep = cadcraft_geom::ccw_sweep(a.start, a.end);
-            if !(sweep > 1e-9 && sweep < cadcraft_geom::TAU - 1e-9) {
+            let sweep = forja_geom::ccw_sweep(a.start, a.end);
+            if !(sweep > 1e-9 && sweep < forja_geom::TAU - 1e-9) {
                 return None;
             }
         }

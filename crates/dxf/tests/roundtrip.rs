@@ -2,7 +2,7 @@
 //! supported version. Inputs have the group code's type and representable values; lossy
 //! coercions are not accepted as round-trip equality. Real values must retain their bits.
 
-use cadcraft_dxf::{Tag, Value, Version, is_binary, parse, write_ascii_as, write_binary};
+use forja_dxf::{Tag, Value, Version, is_binary, parse, write_ascii_as, write_binary};
 
 fn check(case: &str, body: &[Tag]) {
     for version in Version::ALL {

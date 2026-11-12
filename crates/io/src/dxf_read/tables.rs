@@ -4,7 +4,7 @@ use super::{
     Color, DashElement, DimStyle, Drawing, HVal, HashMap, Layer, Linetype, Lineweight, NamedView, Rgb, Rx, Tag, TextStyle, Ucs, Vec2, Vec3,
     VportConfig, VportTile, records,
 };
-use cadcraft_fonts::windows::windows_font;
+use forja_fonts::windows::windows_font;
 
 pub(super) fn header(tags: &[Tag], d: &mut Drawing) {
     let mut i = 0;
@@ -33,9 +33,9 @@ pub(super) fn header(tags: &[Tag], d: &mut Drawing) {
                 [x, y, z] if x.code == 10 => HVal::Point(Vec3::new(x.f64(), y.f64(), z.f64())),
                 [x, y] if x.code == 10 => HVal::Point(Vec3::new(x.f64(), y.f64(), 0.0)),
                 [v] => match &v.value {
-                    cadcraft_dxf::Value::Real(r) => HVal::Real(*r),
-                    cadcraft_dxf::Value::Int(n) => HVal::Int(*n),
-                    cadcraft_dxf::Value::Bool(b) => HVal::Int(i64::from(*b)),
+                    forja_dxf::Value::Real(r) => HVal::Real(*r),
+                    forja_dxf::Value::Int(n) => HVal::Int(*n),
+                    forja_dxf::Value::Bool(b) => HVal::Int(i64::from(*b)),
                     other => HVal::Str(other.as_str()),
                 },
                 _ => continue,
@@ -66,7 +66,7 @@ fn annotative(tags: &[Tag]) -> bool {
     list.iter().filter(|t| t.code == 1070).nth(1).is_some_and(|t| t.i64() != 0)
 }
 
-/// A text style's font: CADCraft's own font name from `CADCRAFT` xdata (`1000 FONT`, name)
+/// A text style's font: Forja's own font name from `FORJA` xdata (`1000 FONT`, name)
 /// while the font file is still the `txt` or Windows font written for other readers; the TrueType
 /// family of the style's `ACAD` xdata (`1000` typeface) when it has no font file (how AutoCAD
 /// stores TrueType styles); otherwise the file.
@@ -224,7 +224,7 @@ pub(super) fn tables(tags: &[Tag], d: &mut Drawing, rx: &mut Rx) {
                 if name.is_empty() || !(h.is_finite() && w.is_finite() && h > 0.0 && w > 0.0) || d.views.len() >= MAX_OBJECTS {
                     continue;
                 }
-                let twist = t.f(50).map_or(0.0, |a| cadcraft_geom::norm_angle(a.to_radians()));
+                let twist = t.f(50).map_or(0.0, |a| forja_geom::norm_angle(a.to_radians()));
                 // The view centre 10/20 is in display coordinates, whose origin is the target 12/22/32.
                 let center = t.view_center(10, 12, twist);
                 if !(center.x.is_finite() && center.y.is_finite()) {
@@ -234,7 +234,7 @@ pub(super) fn tables(tags: &[Tag], d: &mut Drawing, rx: &mut Rx) {
                 let field = |key: &str| {
                     x.iter().position(|t| t.code == 1000 && t.str() == key).and_then(|i| x.get(i + 1)).filter(|t| t.code == 1000).map(Tag::str)
                 };
-                // 70 bit 1: a paper space view; its layout is CADCraft xdata.
+                // 70 bit 1: a paper space view; its layout is Forja xdata.
                 let layout = (t.i(70).unwrap_or(0) & 1 != 0).then(|| field("LAYOUT").unwrap_or_default());
                 let v = NamedView { name: name.clone(), center, height: h, width: w, layer_state: field("LAYERSTATE"), twist, layout };
                 match d.views.iter_mut().find(|x| x.name.eq_ignore_ascii_case(&name)) {
@@ -288,7 +288,7 @@ pub(super) fn tables(tags: &[Tag], d: &mut Drawing, rx: &mut Rx) {
     }
     // One *Active viewport is no tiling: its single tile is not a configuration to switch to. Its
     // view was kept in the HEADER pair as it was read (see `vport_record`), and the record stays
-    // only for its view twist (see `cadcraft_engine::DocState`).
+    // only for its view twist (see `forja_engine::DocState`).
     d.vports.retain(|c| c.tiles.len() > usize::from(c.is_active()) || c.tiles.first().is_some_and(|t| t.twist != 0.0));
 }
 
@@ -328,7 +328,7 @@ const MAX_VPORT_TILES: usize = 64;
 fn vport_record(d: &mut Drawing, t: &T, first_active: bool) {
     let name = t.s(2).map(|n| n.trim().to_string()).unwrap_or_default();
     // View twist (group 51, degrees).
-    let twist = t.f(51).map_or(0.0, |a| cadcraft_geom::norm_angle(a.to_radians()));
+    let twist = t.f(51).map_or(0.0, |a| forja_geom::norm_angle(a.to_radians()));
     // The view centre 12/22 is in display coordinates, whose origin is the view target 17/27/37.
     let (min, max, center) = (t.p(10).xy(), t.p(11).xy(), t.view_center(12, 17, twist));
     // A modern file keeps the view it was saved at in the first `*ACTIVE` record (12/22 centre,

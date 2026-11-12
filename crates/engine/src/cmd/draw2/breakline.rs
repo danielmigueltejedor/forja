@@ -5,8 +5,8 @@
 //! zigzag; the Block option takes a block of the drawing that marks its attachment points with
 //! two POINT objects on the Defpoints layer and draws the symbol with lines and polylines.
 
-use cadcraft_doc::{Drawing, EntityKind};
-use cadcraft_geom::{PolyVertex, Vec2};
+use forja_doc::{Drawing, EntityKind};
+use forja_geom::{PolyVertex, Vec2};
 use serde_json::Value;
 
 use super::super::machines::number;

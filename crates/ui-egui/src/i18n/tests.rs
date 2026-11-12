@@ -2,7 +2,7 @@ use std::collections::BTreeSet;
 
 use super::*;
 use crate::{CadApp, Services};
-use cadcraft_engine::Session;
+use forja_engine::Session;
 use serde_json::json;
 
 fn placeholders(text: &str) -> BTreeSet<&str> {
@@ -76,7 +76,7 @@ fn missing_commands_menus_tools_and_snap_labels(language: &str) -> Vec<String> {
     sources.extend(crate::menus::MENUS.iter().copied());
     // File ▸ Open Recent is built at run time, not from a command's menu path.
     sources.extend([crate::menus::OPEN_RECENT, crate::menus::CLEAR_RECENT]);
-    for c in cadcraft_engine::command_specs() {
+    for c in forja_engine::command_specs() {
         sources.insert(c.label);
         sources.extend(c.menu.iter().copied());
     }
@@ -90,7 +90,7 @@ fn missing_commands_menus_tools_and_snap_labels(language: &str) -> Vec<String> {
             sources.extend(large.iter().chain(*small).map(|(_, _, label)| *label));
         }
     }
-    sources.extend(cadcraft_engine::snap::mode::ALL.iter().map(|(_, name)| *name));
+    sources.extend(forja_engine::snap::mode::ALL.iter().map(|(_, name)| *name));
     sources.into_iter().filter(|s| !s.is_empty() && !catalog.contains_key(&("", *s))).map(str::to_string).collect()
 }
 

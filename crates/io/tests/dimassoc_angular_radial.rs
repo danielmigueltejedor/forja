@@ -1,10 +1,10 @@
 //! #1651: angular, diameter and radius dimensions are saved with a DIMASSOC object, as linear
 //! and ordinate dimensions already are, so AutoCAD follows their geometry. The standard objects
-//! alone (CADCraft xdata stripped) must associate the same points, in DXF and in DWG.
+//! alone (Forja xdata stripped) must associate the same points, in DXF and in DWG.
 
-use cadcraft_doc::{AssocSnap, Circle, Common, DimAssoc, DimKind, Dimension, Drawing, EntityKind, Handle, Line, Space};
-use cadcraft_geom::Vec3;
-use cadcraft_io::{Version, read, read_dxf, write_dxf};
+use forja_doc::{AssocSnap, Circle, Common, DimAssoc, DimKind, Dimension, Drawing, EntityKind, Handle, Line, Space};
+use forja_geom::Vec3;
+use forja_io::{Version, read, read_dxf, write_dxf};
 
 /// A dimension entity of the given kind with all its definition points and associations, for
 /// adding straight to a drawing; the style and text are left at defaults since only the
@@ -177,14 +177,14 @@ fn string(rec: &[(i32, String)], code: i32) -> Option<&str> {
     rec.iter().find(|(c, _)| *c == code).map(|(_, v)| v.as_str())
 }
 
-/// A DXF without CADCraft's xdata, as a file from another writer (whose DIMASSOC objects must
+/// A DXF without Forja's xdata, as a file from another writer (whose DIMASSOC objects must
 /// stand on their own).
-fn without_cadcraft_xdata(text: &str) -> String {
+fn without_forja_xdata(text: &str) -> String {
     let mut out = String::new();
     let mut skipping = false;
     for (c, v) in pairs(text) {
         if c == 1001 {
-            skipping = v == "CADCRAFT";
+            skipping = v == "FORJA";
         } else if c < 1000 {
             skipping = false;
         }
@@ -210,7 +210,7 @@ fn same_angle(a: f64, b: f64) -> bool {
     d.min(turn - d) < 1e-6
 }
 
-/// The associations the standard objects give, without CADCraft's xdata.
+/// The associations the standard objects give, without Forja's xdata.
 fn assert_standard_assoc(c: &Case, d: &Drawing, what: &str) {
     let dia = assoc_of(d, c.hd);
     assert_eq!(dia.len(), 2, "{what}: diameter defpt and p15");
@@ -273,19 +273,19 @@ fn angular_diameter_and_radius_dimensions_are_saved_with_dimassoc() {
     assert!(string(&refs[2], 332).is_some_and(|h| h.eq_ignore_ascii_case(&c.l2.hex())), "angular: the intersection's other line");
 }
 
-/// The reader half of #1651, and the one that matters for interchange: with CADCraft's xdata
+/// The reader half of #1651, and the one that matters for interchange: with Forja's xdata
 /// stripped, the standard DIMASSOC objects alone must rebuild the same associations, both from
 /// DXF and through the DWG bridge. Guards the dimension-kind slot table and the radial centre
 /// reference in `dxf_read::dimassoc`, plus the curve start/end osnap semantics in `infer_snap`.
 #[test]
 fn standard_dimassoc_associates_in_dxf_and_dwg() {
     let c = case();
-    let plain = without_cadcraft_xdata(&write_dxf(&c.d));
+    let plain = without_forja_xdata(&write_dxf(&c.d));
 
     let back = read_dxf(plain.as_bytes()).unwrap();
     assert_standard_assoc(&c, &back, "DXF");
 
-    let dwg = cadcraft_dwg::dxf_to_dwg_as(plain.as_bytes(), Version::R2018.code()).unwrap();
+    let dwg = forja_dwg::dxf_to_dwg_as(plain.as_bytes(), Version::R2018.code()).unwrap();
     let back = read(&dwg, "case.dwg").unwrap();
     assert_standard_assoc(&c, &back, "DWG");
 }

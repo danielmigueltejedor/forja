@@ -7,7 +7,7 @@ use std::ffi::{OsStr, OsString};
 
 use clap::{Arg, Command};
 
-/// For `Command::mut_args`: an empty or blank variable counts as unset, so `CADCRAFT_CONTROL_PORT=`
+/// For `Command::mut_args`: an empty or blank variable counts as unset, so `FORJA_CONTROL_PORT=`
 /// turns a fallback off without `unset`. clap would pass the empty value to the parser. `var`
 /// looks the variable up.
 pub fn blank_env_is_unset(arg: Arg, var: impl Fn(&OsStr) -> Option<OsString>) -> Arg {
@@ -41,7 +41,7 @@ mod tests {
 
     #[test]
     fn blank_variables_count_as_unset() {
-        let arg = || Arg::new("control").long("control").env("CADCRAFT_CONTROL_PORT");
+        let arg = || Arg::new("control").long("control").env("FORJA_CONTROL_PORT");
         for value in ["", "  "] {
             assert_eq!(blank_env_is_unset(arg(), |_| Some(value.into())).get_env(), None, "{value:?}");
         }

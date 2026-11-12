@@ -1,4 +1,4 @@
-//! The CADCraft drawing database.
+//! The Forja drawing database.
 //!
 //! A [`Drawing`] holds the header variables, symbol tables (layers, linetypes, styles), block
 //! definitions, model space and paper-space layouts. Entity collections are copy-on-write
@@ -25,14 +25,14 @@ mod xclip;
 use std::collections::{BTreeMap, BTreeSet};
 
 pub use array::*;
-pub use cadcraft_color as color;
-pub use cadcraft_geom as geom;
 pub use constraint::*;
 pub use entity::*;
 pub use extents::{
     BlockBoundsCache, MAX_BLOCK_DEPTH, entity_bounds, entity_bounds_cached, extent_bounds, extent_bounds_cached, ole_frame, ole_frame_accepts,
     ole_frame_transform,
 };
+pub use forja_color as color;
+pub use forja_geom as geom;
 pub use format::Format;
 pub use gdt::*;
 pub use header::{HVal, Header};
@@ -44,7 +44,7 @@ pub use store::EntityStore;
 pub use tables::*;
 pub use xclip::{ClipBoundary, MAX_CLIP_VERTICES};
 
-/// File data CADCraft doesn't model, kept for saving (#528).
+/// File data Forja doesn't model, kept for saving (#528).
 pub mod dynblock;
 pub mod foreign;
 
@@ -94,7 +94,7 @@ impl Space {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Drawing {
     pub header: Header,
-    /// File data CADCraft does not model, written back on save.
+    /// File data Forja does not model, written back on save.
     pub foreign: std::sync::Arc<foreign::Foreign>,
     pub layers: Vec<Layer>,
     pub linetypes: Vec<Linetype>,
@@ -140,7 +140,7 @@ pub struct Drawing {
     /// file), counted by the section they came from. Never written to a file.
     pub skipped_records: BTreeMap<String, usize>,
     /// A save option, set on the copy SAVEAS `portableFonts` writes: the file gets Windows fonts
-    /// for the Linux fonts of text styles, and each style keeps its own in CADCraft xdata, so the
+    /// for the Linux fonts of text styles, and each style keeps its own in Forja xdata, so the
     /// drawing reopens with it. Never set on an open drawing.
     pub portable_fonts: bool,
     /// The pixels of the raster images that are loaded (IMAGE). Never written to a file.
@@ -391,8 +391,8 @@ impl Drawing {
     }
 
     /// Bounds of the entities in a space that count in its extents ([`Drawing::in_extents`]).
-    pub fn extents(&self, space: &Space) -> cadcraft_geom::Bounds2 {
-        let mut b = cadcraft_geom::Bounds2::EMPTY;
+    pub fn extents(&self, space: &Space) -> forja_geom::Bounds2 {
+        let mut b = forja_geom::Bounds2::EMPTY;
         // One block-bounds cache for the whole space: every reference to a block reuses its
         // measured contents instead of measuring the definition again.
         let mut cache = BlockBoundsCache::default();

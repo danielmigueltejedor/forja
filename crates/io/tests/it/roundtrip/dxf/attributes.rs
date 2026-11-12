@@ -5,9 +5,9 @@
 //! ODA's DWG specification §20.4.4 maps the R2018+ embedded object to DXF group 101.
 
 use super::super::cases::blocks;
-use cadcraft_doc::{Attrib, Drawing, EntityKind, Space};
-use cadcraft_io::{SaveOptions, Version};
-use cadcraft_render::{DisplayList, Options, build};
+use forja_doc::{Attrib, Drawing, EntityKind, Space};
+use forja_io::{SaveOptions, Version};
+use forja_render::{DisplayList, Options, build};
 
 const EDITED_VALUE: &str = "edited {value}\nthird line";
 const EDITED_CONTENTS: &str = "edited \\{value\\}\\Pthird line";
@@ -46,10 +46,10 @@ fn edit_primary(drawing: &mut Drawing, edit: impl Fn(&mut Attrib)) {
 
 fn reopen(drawing: &Drawing, version: Version, binary: bool, context: &str) -> Drawing {
     let options = SaveOptions { version: Some(version), binary };
-    let bytes = cadcraft_io::write_with(drawing, "attributes.dxf", &options).unwrap_or_else(|e| panic!("{context}: write: {e}"));
-    assert_eq!(cadcraft_dxf::is_binary(&bytes), binary, "{context}: encoding");
-    let back = cadcraft_io::read(&bytes, "attributes.dxf").unwrap_or_else(|e| panic!("{context}: read: {e}"));
-    assert_eq!(cadcraft_io::save_version(&back), version, "{context}: version");
+    let bytes = forja_io::write_with(drawing, "attributes.dxf", &options).unwrap_or_else(|e| panic!("{context}: write: {e}"));
+    assert_eq!(forja_dxf::is_binary(&bytes), binary, "{context}: encoding");
+    let back = forja_io::read(&bytes, "attributes.dxf").unwrap_or_else(|e| panic!("{context}: read: {e}"));
+    assert_eq!(forja_io::save_version(&back), version, "{context}: version");
     assert!(back.read_notes.is_empty(), "{context}: {:?}", back.read_notes);
     assert!(back.skipped_records.is_empty(), "{context}: {:?}", back.skipped_records);
     back

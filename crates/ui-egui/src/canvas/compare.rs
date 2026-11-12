@@ -4,10 +4,10 @@
 
 use std::sync::Arc;
 
-use cadcraft_engine::cmd::file::compare::Comparison;
-use cadcraft_engine::doc::{Drawing, Handle};
-use cadcraft_render::DisplayList;
 use egui::{Rect, RichText, Stroke, vec2};
+use forja_engine::cmd::file::compare::Comparison;
+use forja_engine::doc::{Drawing, Handle};
+use forja_render::DisplayList;
 use serde_json::json;
 
 use super::{Xf, draw_highlight};
@@ -27,7 +27,7 @@ struct Cache {
 }
 
 fn id() -> egui::Id {
-    egui::Id::unique("cadcraft-compare-overlay")
+    egui::Id::unique("forja-compare-overlay")
 }
 
 /// The display lists of the differences for this frame: the stored ones when they still match
@@ -35,12 +35,11 @@ fn id() -> egui::Id {
 fn cache_for(ctx: &egui::Context, key: (u64, u64, usize, usize, i64), doc: &Drawing, c: &Comparison, scale: f64) -> Cache {
     let mut cache: Cache = ctx.data_mut(|d| d.get_temp(id())).unwrap_or_default();
     if cache.key != key || cache.ours.is_none() {
-        let opts = cadcraft_render::Options { tolerance: 0.5 / scale.max(1e-12), ..Default::default() };
+        let opts = forja_render::Options { tolerance: 0.5 / scale.max(1e-12), ..Default::default() };
         let ours: Vec<Handle> = c.added.iter().copied().chain(c.changed.iter().map(|(a, _)| *a)).take(MAX_DRAWN).collect();
         let theirs: Vec<Handle> = c.removed.iter().copied().chain(c.changed.iter().map(|(_, b)| *b)).take(MAX_DRAWN).collect();
-        let list = |d: &Drawing, hs: &[Handle]| {
-            Arc::new(cadcraft_render::build_entities(d, hs.iter().filter_map(|h| d.entity(*h)).map(|e| e.as_ref()), &opts))
-        };
+        let list =
+            |d: &Drawing, hs: &[Handle]| Arc::new(forja_render::build_entities(d, hs.iter().filter_map(|h| d.entity(*h)).map(|e| e.as_ref()), &opts));
         cache = Cache { key, ours: Some(list(doc, &ours)), theirs: Some(list(&c.other, &theirs)) };
         ctx.data_mut(|d| d.insert_temp(id(), cache.clone()));
     }

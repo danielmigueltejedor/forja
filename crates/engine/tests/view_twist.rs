@@ -1,8 +1,8 @@
 //! The view twist (VIEWTWIST): DVIEW TWist turns the Model tab's view, ZOOM Previous turns it
 //! back, each VPORTS tile keeps its own (DXF VPORT group 51), and VIEW Save/Restore keep it.
 
-use cadcraft_engine::geom::Vec2;
-use cadcraft_engine::{Session, View, sysvars};
+use forja_engine::geom::Vec2;
+use forja_engine::{Session, View, sysvars};
 use serde_json::json;
 
 fn session() -> Session {
@@ -86,18 +86,18 @@ fn a_single_untiled_view_keeps_its_twist_through_a_dxf_round_trip() {
     let mut s = session();
     s.execute("dview", &json!({ "twist": 30 })).unwrap();
     assert!(s.model_tiles().len() <= 1, "untiled");
-    let dxf = cadcraft_io::write_dxf(s.doc().unwrap());
+    let dxf = forja_io::write_dxf(s.doc().unwrap());
     let lines: Vec<&str> = dxf.lines().map(str::trim).collect();
     let written = lines.windows(2).any(|w| w[0] == "51" && w[1].parse::<f64>().is_ok_and(|a| near(a, 30.0)));
     assert!(written, "the lone *ACTIVE VPORT carries group 51");
-    let back = cadcraft_io::read_dxf(dxf.as_bytes()).unwrap();
+    let back = forja_io::read_dxf(dxf.as_bytes()).unwrap();
     let mut o = Session::new();
     o.viewport_px = (1200.0, 800.0);
     o.open_drawing(back.clone(), "single", None);
     assert!(near(twist_deg(&o), 30.0), "twist {}", twist_deg(&o));
     assert!(o.model_tiles().len() <= 1, "still untiled");
     // And again: saved from the reopened session, it is still turned.
-    let again = cadcraft_io::read_dxf(cadcraft_io::write_dxf(o.doc().unwrap()).as_bytes()).unwrap();
+    let again = forja_io::read_dxf(forja_io::write_dxf(o.doc().unwrap()).as_bytes()).unwrap();
     let mut o2 = Session::new();
     o2.viewport_px = (1200.0, 800.0);
     o2.open_drawing(again, "again", None);
@@ -105,7 +105,7 @@ fn a_single_untiled_view_keeps_its_twist_through_a_dxf_round_trip() {
     // Turned back (ZOOM Previous here), the drawing keeps no twist.
     s.execute("zoom", &json!({ "mode": "previous" })).unwrap();
     assert_eq!(view(&s).twist, 0.0);
-    let back = cadcraft_io::read_dxf(cadcraft_io::write_dxf(s.doc().unwrap()).as_bytes()).unwrap();
+    let back = forja_io::read_dxf(forja_io::write_dxf(s.doc().unwrap()).as_bytes()).unwrap();
     let mut o3 = Session::new();
     o3.viewport_px = (1200.0, 800.0);
     o3.open_drawing(back, "plain", None);
@@ -141,11 +141,11 @@ fn each_tile_keeps_its_twist_through_a_dxf_round_trip() {
     assert!(near(twist_deg(&s), 30.0));
     // A saved configuration keeps both twists through DXF (VPORT group 51).
     s.execute("-vports", &json!({ "option": "save", "name": "Pair" })).unwrap();
-    let dxf = cadcraft_io::write_dxf(s.doc().unwrap());
+    let dxf = forja_io::write_dxf(s.doc().unwrap());
     let lines: Vec<&str> = dxf.lines().map(str::trim).collect();
     let written = lines.windows(2).any(|w| w[0] == "51" && w[1].parse::<f64>().is_ok_and(|a| near(a, 30.0)));
     assert!(written, "group 51 written");
-    let back = cadcraft_io::read_dxf(dxf.as_bytes()).unwrap();
+    let back = forja_io::read_dxf(dxf.as_bytes()).unwrap();
     let pair = back.vports.iter().find(|c| c.name == "Pair").unwrap();
     let mut tw: Vec<f64> = pair.tiles.iter().map(|t| t.twist.to_degrees()).collect();
     tw.sort_by(f64::total_cmp);
@@ -165,7 +165,7 @@ fn opening_a_tiled_drawing_shows_the_current_tile_twisted() {
     let mut s = session();
     s.execute("dview", &json!({ "twist": 45 })).unwrap();
     s.execute("-vports", &json!({ "option": "2" })).unwrap();
-    let back = cadcraft_io::read_dxf(cadcraft_io::write_dxf(s.doc().unwrap()).as_bytes()).unwrap();
+    let back = forja_io::read_dxf(forja_io::write_dxf(s.doc().unwrap()).as_bytes()).unwrap();
     let mut o = Session::new();
     o.viewport_px = (1200.0, 800.0);
     o.open_drawing(back, "tiled", None);

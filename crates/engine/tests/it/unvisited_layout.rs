@@ -1,5 +1,5 @@
-use cadcraft_doc::{Drawing, EntityKind, Space};
-use cadcraft_engine::Session;
+use forja_doc::{Drawing, EntityKind, Space};
+use forja_engine::Session;
 use serde_json::json;
 
 fn session(metric: bool) -> Session {
@@ -30,7 +30,7 @@ fn first_activation_sets_a_landscape_page_and_fits_the_model() {
         assert!(vp.view_height >= 50.0);
         assert!(vp.width > vp.height);
         assert!(s.state().unwrap().is_dirty());
-        let list = cadcraft_render::build(d, &Space::Paper("Layout1".into()), &cadcraft_render::Options::default());
+        let list = forja_render::build(d, &Space::Paper("Layout1".into()), &forja_render::Options::default());
         assert!(!list.prims.is_empty(), "the model is visible through the viewport");
         s.execute("layout.set", &json!({"name": "Model"})).unwrap();
         s.execute("layout.set", &json!({"name": "Layout1"})).unwrap();
@@ -58,15 +58,15 @@ fn initialized_layout_and_its_visible_viewport_survive_saving() {
         formats.push("saved.dwg");
     }
     for name in formats {
-        let bytes = cadcraft_io::write(s.doc().unwrap(), name).unwrap();
-        let d = cadcraft_io::read(&bytes, name).unwrap();
+        let bytes = forja_io::write(s.doc().unwrap(), name).unwrap();
+        let d = forja_io::read(&bytes, name).unwrap();
         assert!(!d.layouts[0].needs_initialization, "{name}");
         let mut reopened = Session::new();
         *reopened.doc_mut().unwrap() = d;
         reopened.execute("layout.set", &json!({"name": "Layout1"})).unwrap();
         let d = reopened.doc().unwrap();
         assert_eq!(d.layouts[0].entities.len(), 1, "{name}");
-        let list = cadcraft_render::build(d, &Space::Paper("Layout1".into()), &cadcraft_render::Options::default());
+        let list = forja_render::build(d, &Space::Paper("Layout1".into()), &forja_render::Options::default());
         assert!(!list.prims.is_empty(), "{name}: the viewport must still show the model");
     }
 }
@@ -79,7 +79,7 @@ fn configured_empty_layouts_are_left_empty_and_custom_pages_are_kept() {
     s.execute("layout.set", &json!({"name": "Layout1"})).unwrap();
     let d = s.doc().unwrap();
     assert!(d.layouts[0].entities.is_empty());
-    let sheet = cadcraft_render::sheet(d, "Layout1").unwrap();
+    let sheet = forja_render::sheet(d, "Layout1").unwrap();
     assert!(sheet.size.x > sheet.size.y);
     assert_eq!(s.state().unwrap().paper_view().center, sheet.bounds().center());
     assert!(s.state().unwrap().paper_view().height >= sheet.size.x * 1000.0 / 900.0, "the entire sheet fits a narrow drawing area");
@@ -87,6 +87,6 @@ fn configured_empty_layouts_are_left_empty_and_custom_pages_are_kept() {
     let value = serde_json::to_value(Drawing::new_metric().layouts[0].clone()).unwrap();
     let mut value = value.as_object().unwrap().clone();
     value.remove("needsInitialization");
-    let l: cadcraft_doc::Layout = serde_json::from_value(value.into()).unwrap();
+    let l: forja_doc::Layout = serde_json::from_value(value.into()).unwrap();
     assert!(!l.needs_initialization);
 }

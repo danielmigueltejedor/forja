@@ -37,7 +37,7 @@ impl SystemAnimations {
             return Self::default();
         }
         let (tx, rx) = channel();
-        let started = std::thread::Builder::new().name("cadcraft-system-animations".into()).spawn(move || {
+        let started = std::thread::Builder::new().name("forja-system-animations".into()).spawn(move || {
             let mut last = read();
             if tx.send(last).is_err() {
                 return;

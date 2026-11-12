@@ -1,11 +1,11 @@
 //! DIMTFILL and DIMTFILLCLR: a dimension's text background hides what is drawn under the text,
 //! in the drawing's background color (1) or in DIMTFILLCLR (2).
 
-use cadcraft_color::{Color, Rgb};
-use cadcraft_doc::{Block, Circle, Common, DimKind, DimStyle, Dimension, Drawing, Entity, EntityKind, Handle, Line, MText, Space};
-use cadcraft_geom::{Vec2, Vec3};
-use cadcraft_render::raster::{RasterOptions, View, render};
-use cadcraft_render::{DisplayList, Kind, Options, build, dimension_geometry};
+use forja_color::{Color, Rgb};
+use forja_doc::{Block, Circle, Common, DimKind, DimStyle, Dimension, Drawing, Entity, EntityKind, Handle, Line, MText, Space};
+use forja_geom::{Vec2, Vec3};
+use forja_render::raster::{RasterOptions, View, render};
+use forja_render::{DisplayList, Kind, Options, build, dimension_geometry};
 
 /// A linear dimension from (0, 0) to (10, 0) with its line at y = 5, in style "Fill".
 fn dimension() -> Dimension {
@@ -109,7 +109,7 @@ fn inspection_frame_is_drawn_over_the_background() {
     };
     let mut dm = dimension();
     // No label or rate: the same text, and a frame of top, bottom and two ends.
-    dm.marks.inspect = Some(cadcraft_doc::Inspection { shape: 1, label: String::new(), rate: String::new() });
+    dm.marks.inspect = Some(forja_doc::Inspection { shape: 1, label: String::new(), rate: String::new() });
     let frame = dimension_geometry(&dm, &style(1, Color::ByBlock), 1.0).text_marks.len();
     assert_eq!(frame, 4);
     let (plain, inspected) = (after_mask(dimension()), after_mask(dm));
@@ -132,7 +132,7 @@ fn inspection_frame_is_drawn_over_the_background() {
 #[test]
 fn a_dimension_read_with_its_block_keeps_the_block_and_gets_the_background() {
     // The block (as read from a file) holds a circle the dimension's own geometry does not have,
-    // then the text, placed away from where CADCraft would put it.
+    // then the text, placed away from where Forja would put it.
     let mut d = Drawing::new_imperial();
     d.dim_styles.push(style(1, Color::ByBlock));
     let mut blk = Block::new("*D1");
@@ -192,13 +192,13 @@ fn every_text_of_a_block_gets_a_background() {
 
 #[test]
 fn a_block_that_holds_its_background_gets_no_second_one() {
-    // A block with a SOLID, then its text at (20, 20), away from where CADCraft would put it: the
+    // A block with a SOLID, then its text at (20, 20), away from where Forja would put it: the
     // number of masks drawn.
     let masks = |solid: [(f64, f64); 4]| {
         let mut d = Drawing::new_imperial();
         d.dim_styles.push(style(1, Color::ByBlock));
         let mut blk = Block::new("*D1");
-        let solid = cadcraft_doc::Solid { corners: solid.map(|(x, y)| Vec3::new(x, y, 0.0)) };
+        let solid = forja_doc::Solid { corners: solid.map(|(x, y)| Vec3::new(x, y, 0.0)) };
         blk.entities.push(Entity::new(Handle(1), EntityKind::Solid(solid)));
         let text = MText {
             insert: Vec3::new(20.0, 20.0, 0.0),
@@ -230,7 +230,7 @@ fn a_block_with_turned_text_gets_a_turned_background() {
     let mut d = Drawing::new_imperial();
     d.dim_styles.push(style(1, Color::ByBlock));
     let mut blk = Block::new("*D1");
-    let text = cadcraft_doc::Text {
+    let text = forja_doc::Text {
         insert: Vec3::new(20.0, 20.0, 0.0),
         align_pt: None,
         height: 0.5,

@@ -47,7 +47,7 @@ mod tests {
     /// Regular-file reads accept the byte boundary and reject any larger payload.
     #[test]
     fn reads_within_limit_and_rejects_oversize() {
-        let dir = std::env::temp_dir().join(format!("cadcraft-cr-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("forja-cr-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let p = dir.join("f.bin");
         std::fs::write(&p, vec![7u8; 100]).unwrap();
@@ -72,7 +72,7 @@ mod tests {
     #[cfg(unix)]
     #[test]
     fn rejects_fifo_without_a_writer() {
-        let dir = std::env::temp_dir().join(format!("cadcraft-cr-fifo-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("forja-cr-fifo-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let fifo = dir.join("pipe");
         assert!(std::process::Command::new("mkfifo").arg(&fifo).status().unwrap().success());

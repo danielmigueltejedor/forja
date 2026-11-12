@@ -1,8 +1,8 @@
 //! MLEADER's leader types (straight, spline, none) and block content: applied to the multileader
 //! `mleader_kind` builds, for the prompt machine and the JSON form.
 
-use cadcraft_doc::{Entity, EntityKind, Handle, Insert};
-use cadcraft_geom::{Vec2, Vec3};
+use forja_doc::{Entity, EntityKind, Handle, Insert};
+use forja_geom::{Vec2, Vec3};
 use serde_json::Value;
 
 use super::{bad, str_param};
@@ -60,7 +60,7 @@ pub(super) fn apply(s: &Session, k: EntityKind, c: &Content) -> Result<EntityKin
             // Move the block so the centre of its extents lands on the anchor.
             let d = s.doc()?;
             let probe = Entity { handle: Handle(0), common: Default::default(), kind: EntityKind::Insert(ins.clone()) };
-            let b = cadcraft_doc::entity_bounds(d, &probe, 0);
+            let b = forja_doc::entity_bounds(d, &probe, 0);
             if !b.is_empty() {
                 let c = b.center();
                 if c.is_finite() {

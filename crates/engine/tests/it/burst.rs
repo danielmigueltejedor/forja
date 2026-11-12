@@ -1,9 +1,9 @@
 //! BURST (Express Tools): a block reference explodes like EXPLODE, its visible attributes become
 //! TEXT with their values, its invisible ones and the block's attribute definitions go.
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::color::Color;
-use cadcraft_engine::doc::{Entity, EntityKind, Handle};
+use forja_engine::Session;
+use forja_engine::doc::color::Color;
+use forja_engine::doc::{Entity, EntityKind, Handle};
 use serde_json::{Value, json};
 
 /// Block B: attribute PART (on layer TAGS, height 1), NOTE (on layer 0, height 0.5), SECRET
@@ -142,8 +142,8 @@ fn burst_at_the_command_line_selects_then_bursts() {
     let (mut s, r) = drawing([0.0, 0.0], [1.0, 1.0]);
     s.cmdline("burst").unwrap();
     assert!(s.prompt_text().contains("Select objects"), "{}", s.prompt_text());
-    s.input(cadcraft_engine::Input::Pick(vec![r])).unwrap();
-    s.input(cadcraft_engine::Input::Enter).unwrap();
+    s.input(forja_engine::Input::Pick(vec![r])).unwrap();
+    s.input(forja_engine::Input::Enter).unwrap();
     assert_eq!(inserts(&s), ["N"]);
     assert_eq!(texts(&s).len(), 2);
 }

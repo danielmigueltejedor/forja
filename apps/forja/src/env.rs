@@ -1,21 +1,21 @@
-//! The `CADCRAFT_*` variables of the desktop app, read once at startup into [`Env`] and passed on
+//! The `FORJA_*` variables of the desktop app, read once at startup into [`Env`] and passed on
 //! from there; no library crate reads them. `--help` lists them from [`VARS`]. `--control`'s
-//! fallback, `CADCRAFT_CONTROL_PORT`, is clap's (see `launch_args`).
+//! fallback, `FORJA_CONTROL_PORT`, is clap's (see `launch_args`).
 
 use std::ffi::OsString;
 use std::fmt::Write as _;
 use std::path::PathBuf;
 
-use cadcraft_ui_egui::switch::Switch;
+use forja_ui_egui::switch::Switch;
 
-const CONFIG_DIR: &str = "CADCRAFT_CONFIG_DIR";
-const LOCALE: &str = "CADCRAFT_LOCALE";
-const VSYNC: &str = "CADCRAFT_VSYNC";
-const WAYLAND: &str = "CADCRAFT_WAYLAND";
-const NO_NATIVE_MENU: &str = "CADCRAFT_NO_NATIVE_MENU";
-const SYSTEM_CURSOR: &str = "CADCRAFT_SYSTEM_CURSOR";
-const FONTALT: &str = "CADCRAFT_FONTALT";
-const FONTFALLBACK: &str = "CADCRAFT_FONTFALLBACK";
+const CONFIG_DIR: &str = "FORJA_CONFIG_DIR";
+const LOCALE: &str = "FORJA_LOCALE";
+const VSYNC: &str = "FORJA_VSYNC";
+const WAYLAND: &str = "FORJA_WAYLAND";
+const NO_NATIVE_MENU: &str = "FORJA_NO_NATIVE_MENU";
+const SYSTEM_CURSOR: &str = "FORJA_SYSTEM_CURSOR";
+const FONTALT: &str = "FORJA_FONTALT";
+const FONTFALLBACK: &str = "FORJA_FONTFALLBACK";
 
 /// Every variable [`Env`] reads, with its `--help` line.
 pub(crate) const VARS: &[(&str, &str)] = &[
@@ -30,11 +30,11 @@ pub(crate) const VARS: &[(&str, &str)] = &[
 ];
 
 /// The process environment, read once at startup. A blank variable counts as unset, except
-/// `CADCRAFT_CONFIG_DIR`.
+/// `FORJA_CONFIG_DIR`.
 #[derive(Debug, PartialEq)]
 pub(crate) struct Env {
-    /// The settings folder (logs, autosave, workspace, plotters): `CADCRAFT_CONFIG_DIR`; else, when
-    /// that is unset, the platform's (`cadcraft_engine::settings_dir::platform`). `None`: no
+    /// The settings folder (logs, autosave, workspace, plotters): `FORJA_CONFIG_DIR`; else, when
+    /// that is unset, the platform's (`forja_engine::settings_dir::platform`). `None`: no
     /// folder, because the variable is empty or blank (the way to run without one) or the
     /// platform has none.
     pub(crate) config_dir: Option<PathBuf>,
@@ -69,7 +69,7 @@ impl Env {
             config_dir: match var(CONFIG_DIR) {
                 Some(dir) if dir.to_str().is_some_and(|d| d.trim().is_empty()) => None,
                 Some(dir) => Some(PathBuf::from(dir)),
-                None => cadcraft_engine::settings_dir::platform(&var),
+                None => forja_engine::settings_dir::platform(&var),
             },
             locale: text(LOCALE),
             vsync: switch(VSYNC),
@@ -107,7 +107,7 @@ mod tests {
             asked.borrow_mut().push(k.to_owned());
             None
         });
-        let ours: Vec<String> = asked.into_inner().into_iter().filter(|k| k.starts_with("CADCRAFT_")).collect();
+        let ours: Vec<String> = asked.into_inner().into_iter().filter(|k| k.starts_with("FORJA_")).collect();
         let help = help();
         let unset = Env::from_vars(|_| None);
         for k in &ours {
@@ -159,7 +159,7 @@ mod tests {
     #[test]
     fn config_dir_unset_is_the_platform_folder_set_is_that_folder_blank_is_none() {
         let platform = [("HOME", "/home/u"), ("XDG_CONFIG_HOME", "/x"), ("APPDATA", "C:\\a")];
-        let expected = cadcraft_engine::settings_dir::platform(env(&platform));
+        let expected = forja_engine::settings_dir::platform(env(&platform));
         assert!(expected.is_some());
         assert_eq!(Env::from_vars(env(&platform)).config_dir, expected);
         let set = [platform.as_slice(), &[(CONFIG_DIR, "/private/cc")]].concat();

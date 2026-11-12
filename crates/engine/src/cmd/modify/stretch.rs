@@ -8,7 +8,7 @@ use super::{
 /// point.
 #[derive(Clone)]
 enum StretchArea {
-    Box(cadcraft_geom::Bounds2),
+    Box(forja_geom::Bounds2),
     Polygon(Vec<Vec2>),
 }
 
@@ -16,7 +16,7 @@ impl StretchArea {
     fn contains(&self, p: Vec2) -> bool {
         match self {
             StretchArea::Box(bx) => bx.contains(p),
-            StretchArea::Polygon(poly) => cadcraft_geom::point_in_polygon(poly, p),
+            StretchArea::Polygon(poly) => forja_geom::point_in_polygon(poly, p),
         }
     }
 }
@@ -24,7 +24,7 @@ impl StretchArea {
 /// Add to `hs` the visible multilines in `space` with a control vertex inside `area`. A crossing
 /// selection tests the drawn element lines, which sit away from the control vertices by the
 /// multiline's scale, so a small area around a vertex alone would miss them.
-fn add_mline_vertex_hits(d: &cadcraft_doc::Drawing, space: &cadcraft_doc::Space, area: &StretchArea, hs: &mut Vec<Handle>) {
+fn add_mline_vertex_hits(d: &forja_doc::Drawing, space: &forja_doc::Space, area: &StretchArea, hs: &mut Vec<Handle>) {
     let Some(store) = d.space(space) else { return };
     for e in store.iter() {
         if let EntityKind::MLine(m) = &e.kind
@@ -40,7 +40,7 @@ fn add_mline_vertex_hits(d: &cadcraft_doc::Drawing, space: &cadcraft_doc::Space,
 /// Move the vertices of `e` that lie inside any of the areas `wins` by `d` (STRETCH).
 fn stretch_entity(e: &mut Entity, wins: &[StretchArea], d: Vec2) {
     let inside = |p: Vec2| wins.iter().any(|a| a.contains(p));
-    let mv = |p: &mut cadcraft_geom::Vec3| {
+    let mv = |p: &mut forja_geom::Vec3| {
         if inside(p.xy()) {
             p.x += d.x;
             p.y += d.y;
@@ -103,7 +103,7 @@ pub(super) fn run_stretch(s: &mut Session, p: &Value) -> Result<Value> {
     } else {
         let w = points_param(p, "window").ok_or_else(|| bad("stretch", "`window` [[x,y],[x,y]], `polygon` or `fence` is required"))?;
         let (Some(a), Some(b)) = (w.first(), w.get(1)) else { return Err(bad("stretch", "window needs 2 corners")) };
-        let bx = cadcraft_geom::Bounds2::new(*a, *b);
+        let bx = forja_geom::Bounds2::new(*a, *b);
         (crate::select::select_window(s.doc()?, &space, bx, true), StretchArea::Box(bx))
     };
     add_mline_vertex_hits(s.doc()?, &space, &area, &mut hs);
@@ -181,9 +181,7 @@ impl StretchM {
         };
         let area = match (m.kind, m.pts.first().zip(m.pts.get(1))) {
             (SelectKind::WPolygon | SelectKind::CPolygon, _) => Some(StretchArea::Polygon(m.pts)),
-            (SelectKind::Window | SelectKind::Crossing | SelectKind::Box, Some((a, b))) => {
-                Some(StretchArea::Box(cadcraft_geom::Bounds2::new(*a, *b)))
-            }
+            (SelectKind::Window | SelectKind::Crossing | SelectKind::Box, Some((a, b))) => Some(StretchArea::Box(forja_geom::Bounds2::new(*a, *b))),
             // A fence marks no area: what it crosses moves whole.
             _ => None,
         };
@@ -226,7 +224,7 @@ impl StretchM {
         match i {
             Input::Point(p) => match self.corner.take() {
                 Some(c) => {
-                    let bx = cadcraft_geom::Bounds2::new(c, p);
+                    let bx = forja_geom::Bounds2::new(c, p);
                     let space = s.space();
                     let mut hs = crate::select::select_window(s.doc()?, &space, bx, p.x < c.x);
                     if !self.removing {

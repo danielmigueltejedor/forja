@@ -2,7 +2,7 @@
 //! channel and the headless MCP backend both answer `ui.render`, and both read these here.
 //!
 //! Colour 7 (white/black) follows the background, as on a plot: the rasteriser draws it white on
-//! a dark background and black on a light one ([`cadcraft_color::display_rgb`]).
+//! a dark background and black on a light one ([`forja_color::display_rgb`]).
 //!
 //! A render with a plot style table draws on white unless `background` says otherwise, as a plot
 //! prints on paper: the tables that change colours print colour 7 (and, in `monochrome.ctb`,
@@ -14,9 +14,9 @@
 
 use std::sync::Arc;
 
-use cadcraft_color::Rgb;
-use cadcraft_doc::{Drawing, PlotStyleTable};
-use cadcraft_render::raster::RasterOptions;
+use forja_color::Rgb;
+use forja_doc::{Drawing, PlotStyleTable};
+use forja_render::raster::RasterOptions;
 use serde_json::Value;
 
 /// The background a render draws on without `background`: the dark canvas.
@@ -96,10 +96,10 @@ pub fn background(v: &str) -> Option<Rgb> {
 /// The plot style table `name` names: one the drawing holds, or a built-in one (`.ctb` may be
 /// left out); `none` or an empty name is no table. `Err` lists the tables there are.
 fn plot_style(d: &Drawing, name: &str) -> Result<Option<PlotStyleTable>, String> {
-    if cadcraft_doc::no_plot_style_table(name) {
+    if forja_doc::no_plot_style_table(name) {
         return Ok(None);
     }
-    cadcraft_doc::plot_style_table(d, name.trim())
+    forja_doc::plot_style_table(d, name.trim())
         .map(Some)
         .ok_or_else(|| format!("unknown plot style table `{}`: use none or one of {}", echo(name), table_list(d)))
 }
@@ -107,10 +107,10 @@ fn plot_style(d: &Drawing, name: &str) -> Result<Option<PlotStyleTable>, String>
 /// The tables a drawing can use, for an error message: the built-in ones, then at most
 /// [`MAX_LISTED_TABLES`] of the drawing's own and how many more there are.
 fn table_list(d: &Drawing) -> String {
-    let builtin = |n: &String| cadcraft_doc::BUILTIN_PLOT_STYLE_TABLES.iter().any(|b| b.eq_ignore_ascii_case(n));
-    let names = cadcraft_doc::plot_style_table_names(d);
+    let builtin = |n: &String| forja_doc::BUILTIN_PLOT_STYLE_TABLES.iter().any(|b| b.eq_ignore_ascii_case(n));
+    let names = forja_doc::plot_style_table_names(d);
     let own: Vec<String> = names.iter().filter(|n| !builtin(n)).map(|n| echo(n)).collect();
-    let mut list: Vec<String> = cadcraft_doc::BUILTIN_PLOT_STYLE_TABLES.iter().map(|b| (*b).to_string()).collect();
+    let mut list: Vec<String> = forja_doc::BUILTIN_PLOT_STYLE_TABLES.iter().map(|b| (*b).to_string()).collect();
     list.extend(own.iter().take(MAX_LISTED_TABLES).cloned());
     let mut text = list.join(", ");
     if own.len() > MAX_LISTED_TABLES {
@@ -186,7 +186,7 @@ mod tests {
             d.plot_style_tables.push(PlotStyleTable::color_dependent(&format!("{}{i}.ctb", "own".repeat(30)), "", |_| None));
         }
         let e = RenderLook::from_params(&d, &json!({"plot_style": "nope.ctb"})).unwrap_err();
-        for b in cadcraft_doc::BUILTIN_PLOT_STYLE_TABLES {
+        for b in forja_doc::BUILTIN_PLOT_STYLE_TABLES {
             assert!(e.contains(b), "{b}: {e}");
         }
         assert!(e.contains("and 490 more"), "{e}");

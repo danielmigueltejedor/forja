@@ -1,7 +1,7 @@
 //! The headless backend answers `cmdline.input` and `app.open` with the same reply shape as the
-//! app's control channel (`cadcraft_ui_egui::control`, tested in `crates/ui-egui/tests/it/control_cmdline.rs`).
+//! app's control channel (`forja_ui_egui::control`, tested in `crates/ui-egui/tests/it/control_cmdline.rs`).
 
-use cadcraft_mcp::{Backend, Headless};
+use forja_mcp::{Backend, Headless};
 use serde_json::{Value, json};
 
 const STATE_KEYS: [&str; 7] = ["prompt", "running", "keywords", "accept", "buffer", "history", "historyExpanded"];

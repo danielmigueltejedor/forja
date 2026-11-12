@@ -1,9 +1,9 @@
 //! Synthetic native DXF records: attributes use group 74, and a top-view centre is relative
 //! to the WCS target. No reference application files or assets are fixtures here.
 
-use cadcraft_doc::{EntityKind, HAlign, Space, VAlign};
-use cadcraft_geom::Vec2;
-use cadcraft_io::{read_dxf, write_dxf};
+use forja_doc::{EntityKind, HAlign, Space, VAlign};
+use forja_geom::Vec2;
+use forja_io::{read_dxf, write_dxf};
 
 fn dxf(body: &str) -> String {
     format!("0\nSECTION\n2\nENTITIES\n{body}0\nENDSEC\n0\nEOF\n")
@@ -29,11 +29,10 @@ fn attributes_ignore_field_length_and_use_their_vertical_justification() {
     assert_eq!(def.text.valign, VAlign::Middle);
     let EntityKind::Text(text) = &entities[2].kind else { panic!("text") };
     assert_eq!(text.valign, VAlign::Middle);
-    let (_, bounds) = cadcraft_render::place_text_entity(&doc, title, &title.value);
+    let (_, bounds) = forja_render::place_text_entity(&doc, title, &title.value);
     // Middle justification centres the cap height, leaving room for descenders below it.
     assert!((bounds.max.y - 25.0).abs() < 1e-6);
-    for reopened in
-        [read_dxf(write_dxf(&doc).as_bytes()).unwrap(), cadcraft_io::read(&cadcraft_io::write(&doc, "test.dwg").unwrap(), "test.dwg").unwrap()]
+    for reopened in [read_dxf(write_dxf(&doc).as_bytes()).unwrap(), forja_io::read(&forja_io::write(&doc, "test.dwg").unwrap(), "test.dwg").unwrap()]
     {
         let EntityKind::Insert(ins) = &reopened.model.iter().next().unwrap().kind else { panic!("insert") };
         assert_eq!(ins.attribs[0].text.valign, VAlign::Middle);
@@ -53,9 +52,9 @@ fn top_view_target_moves_the_model_window_and_survives_saving() {
     for doc in [doc.clone(), read_dxf(write_dxf(&doc).as_bytes()).unwrap()] {
         let EntityKind::Viewport(vp) = &doc.space(&space).unwrap().iter().next().unwrap().kind else { panic!("viewport") };
         assert_eq!(vp.view_center, Vec2::new(215.0, 158.5));
-        let display = cadcraft_render::build(&doc, &space, &cadcraft_render::Options::default());
+        let display = forja_render::build(&doc, &space, &forja_render::Options::default());
         // Only the viewport border: the model line around the origin is outside its window.
-        assert!(display.prims.iter().all(|p| p.handle == cadcraft_doc::Handle(0x20)));
+        assert!(display.prims.iter().all(|p| p.handle == forja_doc::Handle(0x20)));
     }
 }
 
@@ -72,7 +71,7 @@ fn top_view_direction_length_and_rounding_noise_do_not_change_the_model_center()
         for reopened in [
             doc.clone(),
             read_dxf(write_dxf(&doc).as_bytes()).unwrap(),
-            cadcraft_io::read(&cadcraft_io::write(&doc, "view.dwg").unwrap(), "view.dwg").unwrap(),
+            forja_io::read(&forja_io::write(&doc, "view.dwg").unwrap(), "view.dwg").unwrap(),
         ] {
             let vp = reopened
                 .space(&space)
@@ -90,8 +89,8 @@ fn top_view_direction_length_and_rounding_noise_do_not_change_the_model_center()
 
 #[test]
 fn frozen_layers_use_native_331_and_leave_paper_entities_visible() {
-    use cadcraft_doc::{Common, Drawing, Layer, Line, Viewport};
-    use cadcraft_geom::Vec3;
+    use forja_doc::{Common, Drawing, Layer, Line, Viewport};
+    use forja_geom::Vec3;
     let mut d = Drawing::new_metric();
     d.layers.push(Layer { name: "Notes".into(), ..Layer::default() });
     let paper = Space::Paper("Layout1".into());
@@ -99,12 +98,12 @@ fn frozen_layers_use_native_331_and_leave_paper_entities_visible() {
     d.add(&Space::Model, Common { layer: "Notes".into(), ..Common::default() }, line.clone()).unwrap();
     let h = d.add(&paper, Common { layer: "Notes".into(), ..Common::default() }, line).unwrap();
     d.add(&paper, Common::default(), EntityKind::Viewport(Viewport { id: 1, frozen_layers: vec!["Notes".into()], ..Viewport::default() })).unwrap();
-    let opts = cadcraft_io::SaveOptions { version: Some(cadcraft_io::Version::R2018), binary: false };
-    let saved = cadcraft_io::write_with(&d, "freeze.dxf", &opts).unwrap();
-    let tags = cadcraft_dxf::parse(&saved).unwrap();
-    let sections = cadcraft_dxf::sections(&tags);
+    let opts = forja_io::SaveOptions { version: Some(forja_io::Version::R2018), binary: false };
+    let saved = forja_io::write_with(&d, "freeze.dxf", &opts).unwrap();
+    let tags = forja_dxf::parse(&saved).unwrap();
+    let sections = forja_dxf::sections(&tags);
     let entities = sections.iter().find(|s| s.name == "ENTITIES").unwrap();
-    let records = cadcraft_dxf::records(&entities.tags);
+    let records = forja_dxf::records(&entities.tags);
     let vp = records.iter().find(|(kind, _)| kind == "VIEWPORT").unwrap();
     assert!(vp.1.iter().any(|t| t.code == 331), "standard frozen-layer reference");
     assert!(!vp.1.iter().any(|t| t.code == 341), "R2018 uses 331; 341 belongs to R2000 DXF");
@@ -122,8 +121,8 @@ fn frozen_layers_use_native_331_and_leave_paper_entities_visible() {
             native.push(tag);
         }
     }
-    let mut cases = vec![read_dxf(cadcraft_dxf::write_ascii(&native).as_bytes()).unwrap()];
-    cases.push(cadcraft_io::read(&cadcraft_io::write(&d, "freeze.dwg").unwrap(), "freeze.dwg").unwrap());
+    let mut cases = vec![read_dxf(forja_dxf::write_ascii(&native).as_bytes()).unwrap()];
+    cases.push(forja_io::read(&forja_io::write(&d, "freeze.dwg").unwrap(), "freeze.dwg").unwrap());
     for reopened in cases {
         let layout = reopened.layout("Layout1").unwrap();
         let vp = layout
@@ -135,7 +134,7 @@ fn frozen_layers_use_native_331_and_leave_paper_entities_visible() {
             })
             .unwrap();
         assert_eq!(vp.frozen_layers, vec!["Notes"]);
-        let display = cadcraft_render::build(&reopened, &paper, &cadcraft_render::Options::default());
+        let display = forja_render::build(&reopened, &paper, &forja_render::Options::default());
         assert!(display.prims.iter().any(|p| p.handle == h), "paper annotations remain visible");
     }
 }

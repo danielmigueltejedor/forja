@@ -16,9 +16,9 @@ fn dwg_and_damaged_copy() -> (Vec<u8>, Vec<u8>) {
         dxf += &format!("0\nLINE\n8\n0\n10\n{i}\n20\n0\n11\n{i}\n21\n10\n");
     }
     dxf += "0\nENDSEC\n0\nEOF\n";
-    let d = cadcraft_io::read(dxf.as_bytes(), "lines.dxf").unwrap();
-    let opts = cadcraft_io::SaveOptions { version: Some(cadcraft_io::Version::R2000), binary: false };
-    let dwg = cadcraft_io::write_with(&d, "lines.dwg", &opts).unwrap();
+    let d = forja_io::read(dxf.as_bytes(), "lines.dxf").unwrap();
+    let opts = forja_io::SaveOptions { version: Some(forja_io::Version::R2000), binary: false };
+    let dwg = forja_io::write_with(&d, "lines.dwg", &opts).unwrap();
     let damaged = (dwg.len() / 4..dwg.len() * 3 / 5)
         .step_by(97)
         .map(|at| {
@@ -26,7 +26,7 @@ fn dwg_and_damaged_copy() -> (Vec<u8>, Vec<u8>) {
             b[at..at + 6].iter_mut().for_each(|x| *x ^= 0xA5);
             b
         })
-        .find(|b| cadcraft_io::read(b, "damaged.dwg").is_ok_and(|d| !d.read_notes.is_empty()))
+        .find(|b| forja_io::read(b, "damaged.dwg").is_ok_and(|d| !d.read_notes.is_empty()))
         .expect("no damaged copy read partially");
     (dwg, damaged)
 }

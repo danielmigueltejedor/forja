@@ -3,9 +3,9 @@
 
 use std::sync::Arc;
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::{Block, Circle, DimStyle, Entity, EntityKind, Handle};
-use cadcraft_engine::geom::Vec3;
+use forja_engine::Session;
+use forja_engine::doc::{Block, Circle, DimStyle, Entity, EntityKind, Handle};
+use forja_engine::geom::Vec3;
 use serde_json::json;
 
 #[test]

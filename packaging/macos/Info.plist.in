@@ -13,7 +13,7 @@
   <key>CFBundleExecutable</key>
   <string>Forja</string>
   <key>CFBundleIdentifier</key>
-  <string>ai.storyteller.forja</string>
+  <string>dev.danielmiguelt.Forja</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundlePackageType</key>
@@ -24,9 +24,9 @@
   <string>@SHORT_VERSION@</string>
   <key>CFBundleVersion</key>
   <string>@SHORT_VERSION@</string>
-  <key>CADCraftVersion</key>
+  <key>ForjaVersion</key>
   <string>@VERSION@</string>
-  <key>CADCraftBuildCommit</key>
+  <key>ForjaBuildCommit</key>
   <string>@BUILD_SHA@</string>
   <key>CFBundleIconFile</key>
   <string>Forja</string>
@@ -50,7 +50,7 @@
   <array>
     <dict>
       <key>UTTypeIdentifier</key>
-      <string>ai.storyteller.forja.dxf</string>
+      <string>dev.danielmiguelt.Forja.dxf</string>
       <key>UTTypeDescription</key>
       <string>Drawing Exchange Format</string>
       <key>UTTypeConformsTo</key>
@@ -65,7 +65,7 @@
     </dict>
     <dict>
       <key>UTTypeIdentifier</key>
-      <string>ai.storyteller.forja.dwg</string>
+      <string>dev.danielmiguelt.Forja.dwg</string>
       <key>UTTypeDescription</key>
       <string>Drawing</string>
       <key>UTTypeConformsTo</key>
@@ -89,7 +89,7 @@
       <key>LSHandlerRank</key>
       <string>Alternate</string>
       <key>LSItemContentTypes</key>
-      <array><string>ai.storyteller.forja.dxf</string></array>
+      <array><string>dev.danielmiguelt.Forja.dxf</string></array>
       <key>CFBundleTypeIconFile</key>
       <string>Forja</string>
     </dict>
@@ -101,7 +101,7 @@
       <key>LSHandlerRank</key>
       <string>Alternate</string>
       <key>LSItemContentTypes</key>
-      <array><string>ai.storyteller.forja.dwg</string></array>
+      <array><string>dev.danielmiguelt.Forja.dwg</string></array>
       <key>CFBundleTypeIconFile</key>
       <string>Forja</string>
     </dict>

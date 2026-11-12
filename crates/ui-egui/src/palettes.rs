@@ -1,8 +1,8 @@
 //! Tool Sets (left) and the Layers / Properties palettes (right).
 
-use cadcraft_color::{Color, Rgb};
-use cadcraft_doc::EntityKind;
 use egui::{Color32, Rect, Sense, Stroke, pos2, vec2};
+use forja_color::{Color, Rgb};
+use forja_doc::EntityKind;
 use serde_json::{Value, json};
 
 use crate::CadApp;
@@ -137,7 +137,7 @@ pub const DRAFTING: &[(&str, &[Tool], &[Tool])] = &[
 ];
 
 fn command_known(id: &str) -> bool {
-    cadcraft_engine::find_command(id).is_some() || crate::menus::is_ui_command(id)
+    forja_engine::find_command(id).is_some() || crate::menus::is_ui_command(id)
 }
 
 /// Tool Sets strip with Drafting/Modeling tabs, their command buttons and the collapse control.
@@ -576,7 +576,7 @@ fn edit_field(ui: &mut egui::Ui, id: egui::Id, value: String) -> Option<String> 
 /// `6 1/2`). Text it can't read goes to `bad`, to be reported rather than dropped.
 fn number(typed: Option<String>, bad: &mut Option<String>) -> Option<f64> {
     let typed = typed?;
-    let v = cadcraft_engine::units::parse_distance(&typed);
+    let v = forja_engine::units::parse_distance(&typed);
     if v.is_none() {
         *bad = Some(typed);
     }
@@ -611,17 +611,17 @@ fn unavailable(ui: &mut egui::Ui, text: &str) {
     value_box(ui, crate::i18n::t(text), false, false).on_hover_text(crate::tl!("Not available yet"));
 }
 
-type Custom = Option<(String, Vec<cadcraft_engine::doc::dynblock::CustomProperty>)>;
+type Custom = Option<(String, Vec<forja_engine::doc::dynblock::CustomProperty>)>;
 
 /// The dynamic block name and custom properties of block reference `h`, worked out once per
 /// drawing revision.
-fn custom_properties(ui: &egui::Ui, app: &CadApp, h: cadcraft_engine::doc::Handle) -> Custom {
+fn custom_properties(ui: &egui::Ui, app: &CadApp, h: forja_engine::doc::Handle) -> Custom {
     let st = app.session.state().ok()?;
     let id = egui::Id::unique(("dynamic-block-custom", st.uid, st.revision, h));
     if let Some(c) = ui.data(|d| d.get_temp::<Custom>(id)) {
         return c;
     }
-    let c = cadcraft_engine::doc::dynblock::custom_properties(&st.doc, h);
+    let c = forja_engine::doc::dynblock::custom_properties(&st.doc, h);
     ui.data_mut(|d| d.insert_temp(id, c.clone()));
     c
 }
@@ -741,7 +741,7 @@ impl SelectionMemo {
 
 /// The memo for the current drawing revision and selection; `extra` holds whatever else the shown
 /// values depend on (units, angle settings).
-fn selection_memo(ui: &egui::Ui, app: &CadApp, sel: &[cadcraft_engine::doc::Handle], extra: impl std::hash::Hash) -> SelectionMemo {
+fn selection_memo(ui: &egui::Ui, app: &CadApp, sel: &[forja_engine::doc::Handle], extra: impl std::hash::Hash) -> SelectionMemo {
     use std::hash::{Hash, Hasher};
     let fresh = || {
         let ids = sel.iter().map(|h| h.hex()).collect();
@@ -795,7 +795,7 @@ pub(crate) fn properties_section(app: &mut CadApp, ui: &mut egui::Ui) {
     let h = &d.header;
     // Lengths are shown as the drawing's units say (UNITS), and read back in any format.
     let (lu, lp) = (h.i64("LUNITS", 2), h.i64("LUPREC", 4));
-    let len = |v: f64| cadcraft_engine::units::format_distance(v, lu, lp);
+    let len = |v: f64| forja_engine::units::format_distance(v, lu, lp);
     let lenx = |v: f64| exact(len(v), v);
     let mut bad: Option<String> = None;
     if sel.is_empty() {
@@ -864,14 +864,14 @@ pub(crate) fn properties_section(app: &mut CadApp, ui: &mut egui::Ui) {
             }
         });
         prop_row(ui, "Lineweight", |ui| {
-            ui.menu_button(crate::i18n::t(&cadcraft_doc::Lineweight::from_dxf(h.i64("CELWEIGHT", -1) as i16).name()), |ui| {
+            ui.menu_button(crate::i18n::t(&forja_doc::Lineweight::from_dxf(h.i64("CELWEIGHT", -1) as i16).name()), |ui| {
                 for n in ["ByLayer", "ByBlock", "Default"] {
                     if ui.button(crate::i18n::t(n)).clicked() {
                         act("lweight", json!({ "lineweight": n }));
                         ui.close();
                     }
                 }
-                for v in cadcraft_doc::Lineweight::STANDARD {
+                for v in forja_doc::Lineweight::STANDARD {
                     if ui.button(format!("{:.2} mm", f64::from(v) / 100.0)).clicked() {
                         act("lweight", json!({ "lineweight": f64::from(v) / 100.0 }));
                         ui.close();
@@ -914,7 +914,7 @@ pub(crate) fn properties_section(app: &mut CadApp, ui: &mut egui::Ui) {
         // The current layout's plot style table; named tables give the current plot style.
         let space = app.session.layout_space();
         let layout = space.layout().and_then(|n| d.layout(n).map(|l| (n.to_string(), l.page.plot_style_table.clone())));
-        let table = layout.as_ref().and_then(|(_, t)| cadcraft_doc::plot_style_table(d, t));
+        let table = layout.as_ref().and_then(|(_, t)| forja_doc::plot_style_table(d, t));
         match table.as_ref().filter(|t| !t.is_color_dependent()) {
             Some(t) => prop_row(ui, "Plot style", |ui| {
                 let items = ["ByLayer", "ByBlock"].map(String::from).into_iter().chain(t.styles.iter().map(|s| s.name.clone()));
@@ -927,7 +927,7 @@ pub(crate) fn properties_section(app: &mut CadApp, ui: &mut egui::Ui) {
         match &layout {
             Some((name, current)) => prop_row(ui, "Plot style table", |ui| {
                 let shown = if current.trim().is_empty() { "None".to_string() } else { current.clone() };
-                let items = std::iter::once("None".to_string()).chain(cadcraft_doc::plot_style_table_names(d));
+                let items = std::iter::once("None".to_string()).chain(forja_doc::plot_style_table_names(d));
                 if let Some(n) = pick_menu(ui, &shown, items) {
                     act("pagesetup", json!({ "layout": name, "plotStyleTable": n }));
                 }
@@ -955,7 +955,7 @@ pub(crate) fn properties_section(app: &mut CadApp, ui: &mut egui::Ui) {
     // stay as they are: with thousands of objects selected, redoing it every frame is slow.
     let memo =
         selection_memo(ui, app, &sel, (lu, lp, app.session.angle_settings().shown(0.0).to_bits(), app.session.angle_settings().shown(1.0).to_bits()));
-    let same = |key: &'static str, f: &dyn Fn(&cadcraft_doc::Entity) -> String| -> String {
+    let same = |key: &'static str, f: &dyn Fn(&forja_doc::Entity) -> String| -> String {
         memo.get(key, || {
             let vals: Vec<String> = sel.iter().filter_map(|h| d.entity(*h)).map(|e| f(e)).collect();
             match vals.first() {
@@ -966,7 +966,7 @@ pub(crate) fn properties_section(app: &mut CadApp, ui: &mut egui::Ui) {
     };
     let selected_color = memo.get("color", || Some(e.common.color).filter(|c| sel.iter().filter_map(|h| d.entity(*h)).all(|e| e.common.color == *c)));
     let color = selected_color.map_or_else(|| VARIES.into(), Color::name);
-    let effective_color = |e: &cadcraft_doc::Entity| {
+    let effective_color = |e: &forja_doc::Entity| {
         let layer = d.layer(&e.common.layer).map_or(Color::WHITE, |l| l.color);
         e.common.color.resolve(layer, Color::WHITE)
     };
@@ -1045,7 +1045,7 @@ pub(crate) fn properties_section(app: &mut CadApp, ui: &mut egui::Ui) {
                     ui.close();
                 }
             }
-            for v in cadcraft_doc::Lineweight::STANDARD {
+            for v in forja_doc::Lineweight::STANDARD {
                 if ui.button(format!("{:.2} mm", f64::from(v) / 100.0)).clicked() {
                     set = Some(json!({ "handles": ids, "lineweight": f64::from(v) / 100.0 }));
                     ui.close();
@@ -1178,7 +1178,7 @@ pub(crate) fn properties_section(app: &mut CadApp, ui: &mut egui::Ui) {
             }
             EntityKind::LwPolyline(pl) => {
                 num(ui, "Global width", "width", len(pl.const_width), &mut set, &mut bad, ids);
-                let g = cadcraft_geom::Polyline { vertices: pl.vertices.clone(), closed: pl.closed };
+                let g = forja_geom::Polyline { vertices: pl.vertices.clone(), closed: pl.closed };
                 prop_row(ui, "Length", |ui| read_only(ui, &len(g.len())));
                 if pl.closed {
                     prop_row(ui, "Area", |ui| read_only(ui, &format!("{:.4}", g.area().abs())));
@@ -1270,7 +1270,7 @@ pub(crate) fn properties_section(app: &mut CadApp, ui: &mut egui::Ui) {
         // Several dimensions: every property of one dimension, `*VARIES*` where they differ; an
         // edit applies to all of them.
         group(ui, "Geometry");
-        let shared = |key: &'static str, f: &dyn Fn(&cadcraft_doc::Dimension, &cadcraft_doc::DimStyle) -> String| -> String {
+        let shared = |key: &'static str, f: &dyn Fn(&forja_doc::Dimension, &forja_doc::DimStyle) -> String| -> String {
             memo.get(key, || {
                 let vals: Vec<String> = dims
                     .iter()
@@ -1414,7 +1414,7 @@ pub(crate) fn properties_section(app: &mut CadApp, ui: &mut egui::Ui) {
             }
             EntityKind::LwPolyline(_) => {
                 // Only Length and Area need the vertices; the other rows read one field.
-                let geom = |p: &cadcraft_doc::LwPolyline| cadcraft_geom::Polyline { vertices: p.vertices.clone(), closed: p.closed };
+                let geom = |p: &forja_doc::LwPolyline| forja_geom::Polyline { vertices: p.vertices.clone(), closed: p.closed };
                 let width = shared("poly.width", &|k| if let EntityKind::LwPolyline(p) = k { Some(lenx(p.const_width)) } else { None });
                 num(ui, "Global width", "width", width, &mut set, &mut bad, ids);
                 let length = shared("poly.length", &|k| if let EntityKind::LwPolyline(p) = k { Some(lenx(geom(p).len())) } else { None });
@@ -1465,7 +1465,7 @@ pub(crate) fn properties_section(app: &mut CadApp, ui: &mut egui::Ui) {
                         _ => VARIES.to_string(),
                     }
                 });
-                let position = |key: &'static str, f: fn(&cadcraft_doc::Insert) -> f64| {
+                let position = |key: &'static str, f: fn(&forja_doc::Insert) -> f64| {
                     shared(key, &|k| if let EntityKind::Insert(i) = k { Some(len(f(i))) } else { None })
                 };
                 for (label, value) in [
@@ -1504,9 +1504,9 @@ pub(crate) fn properties_section(app: &mut CadApp, ui: &mut egui::Ui) {
 mod tests {
     use super::*;
     use crate::Services;
-    use cadcraft_engine::Session;
     use egui::{Color32, Shape};
     use egui_kittest::kittest::Queryable;
+    use forja_engine::Session;
 
     #[test]
     fn shown_part_takes_off_only_the_number_tag() {
@@ -1684,7 +1684,7 @@ mod tests {
         let d = app.session.doc().unwrap();
         handles
             .iter()
-            .filter_map(|h| d.entity(cadcraft_doc::Handle::parse_hex(h)?))
+            .filter_map(|h| d.entity(forja_doc::Handle::parse_hex(h)?))
             .filter_map(|e| if let EntityKind::Circle(c) = &e.kind { Some(c.radius) } else { None })
             .collect()
     }

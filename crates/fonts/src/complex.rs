@@ -14,7 +14,7 @@
 use std::ops::Range;
 use std::panic::{AssertUnwindSafe, catch_unwind};
 
-use cadcraft_geom::Vec2;
+use forja_geom::Vec2;
 
 use crate::ttf::{self, Face};
 use crate::{Shaped, bidi, stroke};

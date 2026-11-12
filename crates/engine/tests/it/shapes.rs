@@ -1,9 +1,9 @@
 //! SHAPES: perimeter, area, centroid, winding, self-intersection and duplicate vertices of the
 //! closed shapes in a drawing (#1436).
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::geom::{PolyVertex, Vec2, Vec3};
-use cadcraft_engine::doc::{Common, EntityKind, Face3d, LwPolyline, Space};
+use forja_engine::Session;
+use forja_engine::doc::geom::{PolyVertex, Vec2, Vec3};
+use forja_engine::doc::{Common, EntityKind, Face3d, LwPolyline, Space};
 use serde_json::{Value, json};
 
 const EPS: f64 = 1e-9;

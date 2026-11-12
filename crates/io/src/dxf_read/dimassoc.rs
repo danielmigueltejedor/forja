@@ -6,7 +6,7 @@ use super::{Arc, AssocSnap, Circle, DimAssoc, DimKind, Dimension, Drawing, Entit
 /// for linear, aligned and arc-length dimensions, both ends of both lines (`p13`..`p16`) for
 /// angular dimensions, the three points of an angular-3-point dimension, `p13` for ordinate
 /// dimensions, and for radial or diametric dimensions the single circle reference
-/// ([`radial_links`]). CADCraft's own xdata links, when present, win.
+/// ([`radial_links`]). Forja's own xdata links, when present, win.
 pub(super) fn dimassoc(d: &mut Drawing, tags: &[Tag]) {
     let start = tags.iter().position(|x| x.code == 100 && x.str() == "AcDbDimAssoc").unwrap_or(0);
     let tail = tags.get(start..).unwrap_or(&[]);
@@ -101,7 +101,7 @@ fn circle_centre(d: &Drawing, h: Handle) -> Option<Vec2> {
     }
 }
 
-/// A CADCraft snap from a DIMASSOC object snap type and point, and for a polyline the segment
+/// A Forja snap from a DIMASSOC object snap type and point, and for a polyline the segment
 /// the point is an end of: AutoCAD writes no usable point there (10/20 are 0, #1049), the segment
 /// and the osnap (1 its end, 13 its start) name the vertex. For a line or arc the osnap alone
 /// says which end: 13 is the start and 1 the end, whatever the stored point (the point is

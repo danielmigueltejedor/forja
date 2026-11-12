@@ -1,6 +1,6 @@
 //! The corpus harness: every DXF and DWG file of a folder is opened, saved as DXF and as DWG,
 //! reopened and compared with the drawing first opened; the findings go to a Markdown and a JSON
-//! report. A file that fails, or even makes CADCraft panic, is a reported failure: each stage runs
+//! report. A file that fails, or even makes Forja panic, is a reported failure: each stage runs
 //! under `catch_unwind` here, as a last resort of the harness only.
 
 use std::collections::BTreeMap;
@@ -8,7 +8,7 @@ use std::panic::AssertUnwindSafe;
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
-use cadcraft_doc::Drawing;
+use forja_doc::Drawing;
 use serde::Serialize;
 
 use super::{Category, Census, Change, Comparison, Options, Tally, census, census_of, clip, compare, compare_census};
@@ -36,7 +36,7 @@ impl Format {
     }
     /// The format of a file's bytes: DWG by its magic, otherwise DXF.
     pub fn of(bytes: &[u8]) -> Format {
-        if cadcraft_dwg::is_dwg(bytes) { Format::Dwg } else { Format::Dxf }
+        if forja_dwg::is_dwg(bytes) { Format::Dwg } else { Format::Dxf }
     }
     fn other(self) -> Format {
         match self {
@@ -173,7 +173,7 @@ pub struct CorpusReport {
     pub corpus: String,
     /// UTC, `2026-10-21 09:30`.
     pub generated: String,
-    pub cadcraft_version: String,
+    pub forja_version: String,
     pub abs_tol: f64,
     pub rel_tol: f64,
     pub files: Vec<FileReport>,
@@ -279,7 +279,7 @@ pub fn check_bytes(bytes: &[u8], rel: &str, opts: &CorpusOptions) -> FileReport 
     let format = Format::of(bytes);
     let mut f = FileReport { path: rel.to_string(), format: Some(format), bytes: bytes.len() as u64, ..FileReport::default() };
     if format == Format::Dwg {
-        f.version = cadcraft_dwg::version(bytes).unwrap_or_default();
+        f.version = forja_dwg::version(bytes).unwrap_or_default();
     }
     let start = Instant::now();
     let name = format!("source.{}", format.ext());
@@ -426,7 +426,7 @@ pub fn run(root: &Path, files: &[PathBuf], opts: &CorpusOptions, progress: &mut 
     let mut report = CorpusReport {
         corpus: root.display().to_string(),
         generated: now_utc(),
-        cadcraft_version: env!("CARGO_PKG_VERSION").to_string(),
+        forja_version: env!("CARGO_PKG_VERSION").to_string(),
         abs_tol: opts.compare.abs_tol,
         rel_tol: opts.compare.rel_tol,
         files: Vec::new(),
@@ -524,7 +524,7 @@ impl CorpusReport {
             + routes.iter().filter(|r| [&r.save_error, &r.reopen_error].iter().any(|e| e.as_deref().is_some_and(|e| e.contains("CRASH")))).count();
         s.push_str("# Forja round-trip report\n\n");
         s.push_str(&format!("- Corpus: `{}`\n", self.corpus));
-        s.push_str(&format!("- Generated: {} by Forja {}\n", self.generated, self.cadcraft_version));
+        s.push_str(&format!("- Generated: {} by Forja {}\n", self.generated, self.forja_version));
         s.push_str(&format!("- Tolerance for numbers: {:e} absolute + {:e} relative\n", self.abs_tol, self.rel_tol));
         s.push_str(&format!(
             "- Files: {} ({opened} opened, {} failed to open); round trips: {} ({save_failed} failed to save, {reopen_failed} failed to reopen, {lossless} without any difference); crashes: {crashes}\n",

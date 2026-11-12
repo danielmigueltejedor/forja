@@ -17,7 +17,7 @@ pub fn route(app: &mut CadApp, id: &str, params: &Value) -> Option<Result<Value,
     if !params.is_null() {
         return None;
     }
-    match cadcraft_engine::cmd::resolve_alias(id).as_str() {
+    match forja_engine::cmd::resolve_alias(id).as_str() {
         "xref" => Some(open_palette(app)),
         "xattach" => {
             let picked = app.services.pick_open.as_ref().and_then(|f| f())?;
@@ -29,7 +29,7 @@ pub fn route(app: &mut CadApp, id: &str, params: &Value) -> Option<Result<Value,
             // attacker-controlled (the file picker returns whatever the user selected), and
             // `cmdline` interprets command syntax, so a name like `'closeall` would run an engine
             // command instead of naming the file (CWE-74).
-            if let Err(e) = app.session.input(cadcraft_engine::Input::Text(path)) {
+            if let Err(e) = app.session.input(forja_engine::Input::Text(path)) {
                 return Some(Err(e.to_string()));
             }
             Some(Ok(Value::Null))
@@ -79,9 +79,9 @@ fn rows(app: &CadApp, ui: &egui::Ui) -> Vec<Row> {
     let xrefs: Vec<_> = d.blocks.values().filter(|b| b.xref_path.is_some() && !b.name.contains('|')).collect();
     let mut counts = vec![0usize; xrefs.len()];
     if !xrefs.is_empty() {
-        let mut count = |store: &cadcraft_engine::doc::EntityStore| {
+        let mut count = |store: &forja_engine::doc::EntityStore| {
             for e in store.iter() {
-                if let cadcraft_engine::doc::EntityKind::Insert(i) = &e.kind
+                if let forja_engine::doc::EntityKind::Insert(i) = &e.kind
                     && let Some(k) = xrefs.iter().position(|b| b.name.eq_ignore_ascii_case(&i.block))
                     && let Some(c) = counts.get_mut(k)
                 {
@@ -97,7 +97,7 @@ fn rows(app: &CadApp, ui: &egui::Ui) -> Vec<Row> {
         .iter()
         .zip(counts)
         .map(|(b, references)| {
-            let loaded = b.xref_status == cadcraft_engine::doc::XrefStatus::Loaded;
+            let loaded = b.xref_status == forja_engine::doc::XrefStatus::Loaded;
             Row {
                 name: b.name.clone(),
                 status: if loaded && references == 0 { "Unreferenced".into() } else { b.xref_status.label().into() },

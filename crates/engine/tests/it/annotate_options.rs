@@ -1,8 +1,8 @@
 //! Options listed at the dimension and multileader prompts take effect (#243).
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::{DimKind, Dimension, EntityKind, MLeader};
-use cadcraft_engine::geom::Vec2;
+use forja_engine::Session;
+use forja_engine::doc::{DimKind, Dimension, EntityKind, MLeader};
+use forja_engine::geom::Vec2;
 
 fn last(s: &Session) -> EntityKind {
     s.doc().unwrap().model.last().unwrap().kind.clone()
@@ -23,7 +23,7 @@ fn last_mleader(s: &Session) -> MLeader {
 }
 
 fn value(s: &Session, d: &Dimension) -> String {
-    cadcraft_engine::render::dimension_in(s.doc().unwrap(), d).value
+    forja_engine::render::dimension_in(s.doc().unwrap(), d).value
 }
 
 fn near(a: Vec2, b: Vec2) -> bool {

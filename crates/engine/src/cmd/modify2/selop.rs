@@ -9,10 +9,10 @@ use super::{
 
 pub(crate) fn reverse_kind(k: &EntityKind) -> Option<EntityKind> {
     Some(match k {
-        EntityKind::Line(l) => EntityKind::Line(cadcraft_doc::Line { a: l.b, b: l.a }),
+        EntityKind::Line(l) => EntityKind::Line(forja_doc::Line { a: l.b, b: l.a }),
         EntityKind::LwPolyline(p) => EntityKind::LwPolyline(LwPolyline { vertices: curves::reverse_vertices(&p.vertices, p.closed), ..p.clone() }),
         EntityKind::Polyline3d(p) => {
-            EntityKind::Polyline3d(cadcraft_doc::Polyline3d { points: p.points.iter().rev().copied().collect(), closed: p.closed })
+            EntityKind::Polyline3d(forja_doc::Polyline3d { points: p.points.iter().rev().copied().collect(), closed: p.closed })
         }
         EntityKind::Spline(sp) => EntityKind::Spline(curves::reverse_spline(sp)),
         _ => return None,
@@ -42,7 +42,7 @@ pub(super) fn run_reverse(s: &mut Session, p: &Value) -> Result<Value> {
 
 /// Zero every z coordinate; 3D polylines become 2D polylines.
 pub(crate) fn flatten_kind(k: &mut EntityKind) {
-    let z = |p: &mut cadcraft_geom::Vec3| p.z = 0.0;
+    let z = |p: &mut forja_geom::Vec3| p.z = 0.0;
     match k {
         EntityKind::Line(l) => {
             z(&mut l.a);
@@ -144,7 +144,7 @@ pub(super) fn run_flatten(s: &mut Session, p: &Value) -> Result<Value> {
 }
 
 /// Model↔paper transform through a viewport: paper = center + (model − viewCenter) / scale.
-fn viewport_of(s: &Session, layout: &str, vp: Option<Handle>) -> Option<cadcraft_doc::Viewport> {
+fn viewport_of(s: &Session, layout: &str, vp: Option<Handle>) -> Option<forja_doc::Viewport> {
     let d = s.doc().ok()?;
     if let Some(h) = vp
         && let Some(e) = d.entity(h)

@@ -1,12 +1,12 @@
-//! What AutoCAD reads from CADCraft's DWG and DXF as it is, without recomputing it: justified
+//! What AutoCAD reads from Forja's DWG and DXF as it is, without recomputing it: justified
 //! text's insertion point (#1050), DIMPOST (#1053), the current dimension style and its header
 //! variables (#1051), the colours of a dimension's `*D` block (#1052) and the stored measurement
 //! of a rotated linear dimension (#1054) and of angular dimensions.
 
-use cadcraft_color::Color;
-use cadcraft_doc::{Common, DimKind, DimStyle, Dimension, Drawing, EntityKind, HAlign, Space, Text, VAlign};
-use cadcraft_geom::Vec3;
-use cadcraft_io::{SaveOptions, Version, read, write_dxf, write_with};
+use forja_color::Color;
+use forja_doc::{Common, DimKind, DimStyle, Dimension, Drawing, EntityKind, HAlign, Space, Text, VAlign};
+use forja_geom::Vec3;
+use forja_io::{SaveOptions, Version, read, write_dxf, write_with};
 
 fn dwg_roundtrip(d: &Drawing) -> Drawing {
     let dwg = write_with(d, "case.dwg", &SaveOptions { version: Some(Version::R2018), binary: false }).unwrap();
@@ -39,7 +39,7 @@ fn justified_text_is_written_with_its_baseline_start_as_insertion_point() {
     let mut d = Drawing::new_metric();
     d.add(&Space::Model, Common::default(), text("MIDDLE CENTER", Vec3::new(100.0, 50.0, 0.0), HAlign::Center, VAlign::Middle)).unwrap();
     d.add(&Space::Model, Common::default(), text("BOTTOM RIGHT", Vec3::new(100.0, 30.0, 0.0), HAlign::Right, VAlign::Bottom)).unwrap();
-    let width = |s: &str| cadcraft_fonts::line_width(s, 5.0, 1.0);
+    let width = |s: &str| forja_fonts::line_width(s, 5.0, 1.0);
     let near = |a: f64, b: f64| (a - b).abs() < 1e-6;
 
     // DXF: group 10 is where the baseline starts, group 11 the alignment point.
@@ -155,7 +155,7 @@ fn a_rotated_linear_dimension_stores_its_projected_length() {
         Vec3::new(-40.0, 105.0, 0.0),
     );
     let dwg = write_with(&d, "case.dwg", &SaveOptions { version: Some(Version::R2018), binary: false }).unwrap();
-    let dxf = String::from_utf8(cadcraft_dwg::dwg_to_dxf(&dwg).unwrap()).unwrap();
+    let dxf = String::from_utf8(forja_dwg::dwg_to_dxf(&dwg).unwrap()).unwrap();
     let t = tags(&dxf);
     let dim = t.iter().position(|(c, v)| *c == 0 && v == "DIMENSION").unwrap();
     let m: f64 = t[dim..].iter().find(|(c, _)| *c == 42).unwrap().1.parse().unwrap();
@@ -163,7 +163,7 @@ fn a_rotated_linear_dimension_stores_its_projected_length() {
 }
 
 /// Group 10 and the value of every TEXT in a DXF, in file order.
-fn text_starts(dxf: &str) -> Vec<(String, cadcraft_geom::Vec2)> {
+fn text_starts(dxf: &str) -> Vec<(String, forja_geom::Vec2)> {
     let t = tags(dxf);
     let mut out = Vec::new();
     for (i, (c, v)) in t.iter().enumerate() {
@@ -171,15 +171,15 @@ fn text_starts(dxf: &str) -> Vec<(String, cadcraft_geom::Vec2)> {
             let end = t[i + 1..].iter().position(|(c, _)| *c == 0).map_or(t.len(), |k| i + 1 + k);
             let g = |code: i32| t[i + 1..end].iter().find(|(c, _)| *c == code).map(|(_, v)| v.clone());
             let num = |code: i32| g(code).and_then(|v| v.parse::<f64>().ok()).unwrap_or(f64::NAN);
-            out.push((g(1).unwrap_or_default(), cadcraft_geom::Vec2::new(num(10), num(20))));
+            out.push((g(1).unwrap_or_default(), forja_geom::Vec2::new(num(10), num(20))));
         }
     }
     out
 }
 
-/// Justified TEXT made in CADCraft (insertion point = alignment point) is written with its
+/// Justified TEXT made in Forja (insertion point = alignment point) is written with its
 /// baseline start in group 10, for every justification and rotated too: placed baseline-left at
-/// the written group 10, each text covers what CADCraft draws for the justified one. Left Middle
+/// the written group 10, each text covers what Forja draws for the justified one. Left Middle
 /// and Left Bottom were kept at the alignment point, half or a third of a height off, because
 /// that point passed for AutoCAD's own (test by @lee-cyrille-maskell, from their fix for #1050).
 #[test]
@@ -226,12 +226,12 @@ fn justified_text_made_here_writes_its_baseline_start_for_every_justification() 
     let dxf = write_dxf(&d);
     let starts = text_starts(&dxf);
     assert_eq!(starts.len(), made.len());
-    let near = |a: cadcraft_geom::Vec2, b: cadcraft_geom::Vec2| (a.x - b.x).abs() < 1e-6 && (a.y - b.y).abs() < 1e-6;
+    let near = |a: forja_geom::Vec2, b: forja_geom::Vec2| (a.x - b.x).abs() < 1e-6 && (a.y - b.y).abs() < 1e-6;
     for (t, (value, p)) in made.iter().zip(&starts) {
         assert_eq!(&t.value, value);
-        let (_, want) = cadcraft_render::place_text_entity(&d, t, &t.value);
+        let (_, want) = forja_render::place_text_entity(&d, t, &t.value);
         let start = Text { insert: Vec3::new(p.x, p.y, 0.0), align_pt: None, halign: Left, valign: Baseline, ..t.clone() };
-        let (_, got) = cadcraft_render::place_text_entity(&d, &start, &start.value);
+        let (_, got) = forja_render::place_text_entity(&d, &start, &start.value);
         assert!(near(got.min, want.min) && near(got.max, want.max), "{value}: drawn {want:?}, from group 10 {got:?}");
     }
     // Read back and saved again, group 10 stays put.
@@ -242,7 +242,7 @@ fn justified_text_made_here_writes_its_baseline_start_for_every_justification() 
 /// Group 42 of a dimension in the DXF AutoCAD reads from `d`'s DWG.
 fn stored_measurement(d: &Drawing) -> f64 {
     let dwg = write_with(d, "case.dwg", &SaveOptions { version: Some(Version::R2018), binary: false }).unwrap();
-    let dxf = String::from_utf8(cadcraft_dwg::dwg_to_dxf(&dwg).unwrap()).unwrap();
+    let dxf = String::from_utf8(forja_dwg::dwg_to_dxf(&dwg).unwrap()).unwrap();
     let t = tags(&dxf);
     let dim = t.iter().position(|(c, v)| *c == 0 && v == "DIMENSION").unwrap();
     t[dim..].iter().find(|(c, _)| *c == 42).unwrap().1.parse().unwrap()
@@ -277,16 +277,16 @@ fn an_angular_dimension_stores_its_angle_in_radians() {
 }
 
 /// A justified text read from AutoCAD keeps AutoCAD's insertion point (exact for its own fonts)
-/// when it is near CADCraft's; only a stale one (the alignment point, or a text that has since
+/// when it is near Forja's; only a stale one (the alignment point, or a text that has since
 /// changed length) is replaced.
 #[test]
 fn an_insertion_point_from_autocad_is_kept() {
     let mut d = Drawing::new_metric();
     let at = Vec3::new(100.0, 50.0, 0.0);
-    let ours = 100.0 - cadcraft_fonts::line_width("MIDDLE CENTER", 5.0, 1.0) / 2.0;
+    let ours = 100.0 - forja_fonts::line_width("MIDDLE CENTER", 5.0, 1.0) / 2.0;
     let mut k = text("MIDDLE CENTER", at, HAlign::Center, VAlign::Middle);
     if let EntityKind::Text(t) = &mut k {
-        // AutoCAD's font is a little narrower than CADCraft's.
+        // AutoCAD's font is a little narrower than Forja's.
         t.insert = Vec3::new(ours + 2.5, 47.5, 0.0);
     }
     d.add(&Space::Model, Common::default(), k).unwrap();

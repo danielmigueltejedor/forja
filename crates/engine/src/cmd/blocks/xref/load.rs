@@ -14,7 +14,7 @@ use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use cadcraft_doc::{Attrib, Drawing, Entity, EntityKind, EntityStore, MAX_BLOCK_DEPTH, XrefStatus};
+use forja_doc::{Attrib, Drawing, Entity, EntityKind, EntityStore, MAX_BLOCK_DEPTH, XrefStatus};
 
 use crate::doc_path::{self, Refused};
 
@@ -413,7 +413,7 @@ fn import(d: &mut Drawing, key: &str, x: &Drawing, cx: &mut Ctx) -> Result<(), S
         if let Some(n) = dep(Sym::Linetype, &t.name)
             && have.insert(n.to_ascii_uppercase())
         {
-            d.linetypes.push(cadcraft_doc::Linetype { name: n, ..t.clone() });
+            d.linetypes.push(forja_doc::Linetype { name: n, ..t.clone() });
         }
     }
     let mut have = names(&d.text_styles, |t| &t.name);
@@ -421,7 +421,7 @@ fn import(d: &mut Drawing, key: &str, x: &Drawing, cx: &mut Ctx) -> Result<(), S
         if let Some(n) = dep(Sym::Style, &t.name)
             && have.insert(n.to_ascii_uppercase())
         {
-            d.text_styles.push(cadcraft_doc::TextStyle { name: n, ..t.clone() });
+            d.text_styles.push(forja_doc::TextStyle { name: n, ..t.clone() });
         }
     }
     let mut have = names(&d.dim_styles, |t| &t.name);
@@ -430,7 +430,7 @@ fn import(d: &mut Drawing, key: &str, x: &Drawing, cx: &mut Ctx) -> Result<(), S
             && have.insert(n.to_ascii_uppercase())
         {
             let text_style = dep(Sym::Style, &t.text_style).unwrap_or_else(|| t.text_style.clone());
-            d.dim_styles.push(cadcraft_doc::DimStyle { name: n, text_style, ..t.clone() });
+            d.dim_styles.push(forja_doc::DimStyle { name: n, text_style, ..t.clone() });
         }
     }
     let mut have = names(&d.mleader_styles, |t| &t.name);
@@ -439,7 +439,7 @@ fn import(d: &mut Drawing, key: &str, x: &Drawing, cx: &mut Ctx) -> Result<(), S
             && have.insert(n.to_ascii_uppercase())
         {
             let text_style = dep(Sym::Style, &t.text_style).unwrap_or_else(|| t.text_style.clone());
-            d.mleader_styles.push(cadcraft_doc::MLeaderStyle { name: n, text_style, ..t.clone() });
+            d.mleader_styles.push(forja_doc::MLeaderStyle { name: n, text_style, ..t.clone() });
         }
     }
     let mut have = names(&d.table_styles, |t| &t.name);
@@ -447,7 +447,7 @@ fn import(d: &mut Drawing, key: &str, x: &Drawing, cx: &mut Ctx) -> Result<(), S
         if let Some(n) = dep(Sym::TableStyle, &t.name)
             && have.insert(n.to_ascii_uppercase())
         {
-            d.table_styles.push(cadcraft_doc::TableStyle { name: n, ..t.clone() });
+            d.table_styles.push(forja_doc::TableStyle { name: n, ..t.clone() });
         }
     }
     let adopt = |d: &mut Drawing, e: &Entity| {
@@ -464,7 +464,7 @@ fn import(d: &mut Drawing, key: &str, x: &Drawing, cx: &mut Ctx) -> Result<(), S
         if up.starts_with("*MODEL_SPACE") || up.starts_with("*PAPER_SPACE") {
             continue;
         }
-        let mut nb = cadcraft_doc::Block::new(&format!("{key}|{name}"));
+        let mut nb = forja_doc::Block::new(&format!("{key}|{name}"));
         nb.base = b.base;
         nb.description = b.description.clone();
         nb.anonymous = b.anonymous;
@@ -540,7 +540,7 @@ pub(crate) fn detach(d: &mut Drawing, key: &str) -> usize {
     d.dim_styles.retain(|t| !mine(&t.name));
     d.mleader_styles.retain(|t| !mine(&t.name));
     d.table_styles.retain(|t| !mine(&t.name));
-    let refs = |st: &EntityStore| -> Vec<cadcraft_doc::Handle> {
+    let refs = |st: &EntityStore| -> Vec<forja_doc::Handle> {
         st.iter().filter(|e| matches!(&e.kind, EntityKind::Insert(i) if i.block.eq_ignore_ascii_case(key))).map(|e| e.handle).collect()
     };
     let mut hs = refs(&d.model);
@@ -596,7 +596,7 @@ mod tests {
 
     #[test]
     fn imported_array_blocks_keep_their_parameters() {
-        use cadcraft_doc::{ArrayKind, ArrayParams, Block, RectArray, ReplacedItem};
+        use forja_doc::{ArrayKind, ArrayParams, Block, RectArray, ReplacedItem};
         let rect = RectArray { cols: 3, rows: 2, col_spacing: 5.0, row_spacing: 4.0, axis_angle: 0.0, row_elevation: 0.0 };
         let params = ArrayParams {
             source: "*U1".into(),

@@ -2,14 +2,14 @@
 //! the text's location and width with a formatting toolbar (font, height, bold, italic,
 //! underline, overline, colour, alignment, lists, tabs) and a ruler for the paragraph's indents
 //! and tab stops. The text and its formats live in the engine's
-//! [`cadcraft_engine::mtext_edit::Formatted`]; this file only draws and forwards edits. TEXTEDIT
+//! [`forja_engine::mtext_edit::Formatted`]; this file only draws and forwards edits. TEXTEDIT
 //! (and so a double-click) on an existing MTEXT opens it here with its contents (#842).
 
 use std::sync::Arc;
 
-use cadcraft_engine::mtext_edit::{CharFmt, Flag, Formatted, ListStyle, MTextColor, ParaAlign, TabKind};
 use egui::text::{CCursor, CCursorRange, LayoutJob};
 use egui::{Align2, Color32, FontId, Rect, RichText, Sense, Shape, Stroke, TextFormat, pos2, vec2};
+use forja_engine::mtext_edit::{CharFmt, Flag, Formatted, ListStyle, MTextColor, ParaAlign, TabKind};
 
 use crate::CadApp;
 use crate::theme::Tokens;
@@ -27,7 +27,7 @@ const SNAP: f64 = 0.25;
 /// Keep the actual diameter character in editable text even without optional fonts.
 /// This original circle-and-slash rasterizer is a last fallback, after installed fonts.
 pub(crate) fn install_diameter_glyph(ctx: &egui::Context) {
-    ctx.add_glyph_rasterizer(egui::GlyphRasterizer::new("cadcraft::diameter", |request| {
+    ctx.add_glyph_rasterizer(egui::GlyphRasterizer::new("forja::diameter", |request| {
         if request.cluster != "⌀" || !request.font_size_px.is_finite() || !(1.0..=1024.0).contains(&request.font_size_px) {
             return None;
         }
@@ -78,7 +78,7 @@ struct State {
     focused: bool,
     /// The MTEXT the state was made for (its insertion point and contents when it opened): a
     /// state kept for another one is not reused, so one MTEXT's text never goes to the next.
-    target: Option<(cadcraft_engine::geom::Vec3, String)>,
+    target: Option<(forja_engine::geom::Vec3, String)>,
 }
 
 fn state_id() -> egui::Id {
@@ -92,8 +92,8 @@ fn edit_id() -> egui::Id {
 /// The ACI index or true colour as a screen colour.
 fn color32(c: MTextColor) -> Color32 {
     let rgb = match c {
-        MTextColor::Aci(v) => cadcraft_color::aci_rgb(u8::try_from(v).unwrap_or(7)),
-        MTextColor::Rgb(v) => cadcraft_color::Rgb((v >> 16) as u8, (v >> 8) as u8, v as u8),
+        MTextColor::Aci(v) => forja_color::aci_rgb(u8::try_from(v).unwrap_or(7)),
+        MTextColor::Rgb(v) => forja_color::Rgb((v >> 16) as u8, (v >> 8) as u8, v as u8),
     };
     Color32::from_rgb(rgb.0, rgb.1, rgb.2)
 }
@@ -131,7 +131,7 @@ pub fn show(app: &mut CadApp, ctx: &egui::Context) {
     let code = usize::from(mt.attach.clamp(1, 9) - 1);
     let (col, row) = ((code % 3) as f64, (code / 3) as f64);
     let ww = f64::from(width) / scale;
-    let corner = cadcraft_geom::Vec2::new(mt.insert.x - col * ww / 2.0, mt.insert.y + row * base_h * 2.0);
+    let corner = forja_geom::Vec2::new(mt.insert.x - col * ww / 2.0, mt.insert.y + row * base_h * 2.0);
     let at = app.canvas.xf.map_or(rect.center(), |x| x.to_screen(corner));
     let max_x = (rect.right() - width - 8.0).max(rect.left());
     let pos = pos2(at.x.clamp(rect.left(), max_x), at.y.clamp(rect.top() + st.top, (rect.bottom() - 120.0).max(rect.top() + st.top)));
@@ -177,12 +177,12 @@ pub fn show(app: &mut CadApp, ctx: &egui::Context) {
             let contents = st.fmt.to_contents();
             let unchanged = textedit && Formatted::leaves_unchanged(&mt.contents, Some(mt.height), &contents);
             if !st.fmt.is_empty() && !unchanged {
-                let _ = app.session.input(cadcraft_engine::Input::Text(contents));
+                let _ = app.session.input(forja_engine::Input::Text(contents));
             } else if textedit {
-                let _ = app.session.input(cadcraft_engine::Input::Enter);
+                let _ = app.session.input(forja_engine::Input::Enter);
             }
             if app.session.running.as_ref().is_some_and(|r| r.id == "mtext") {
-                let _ = app.session.input(cadcraft_engine::Input::Enter);
+                let _ = app.session.input(forja_engine::Input::Enter);
             }
         }
         Done::Cancel => {
@@ -594,7 +594,7 @@ fn text_box(ui: &mut egui::Ui, st: &mut State, base_h: f64, px: f32, width: f32,
         .desired_rows(5)
         .margin(egui::Margin::symmetric(4, 4))
         .lock_focus(true)
-        .char_limit(cadcraft_engine::mtext_edit::MAX_CHARS)
+        .char_limit(forja_engine::mtext_edit::MAX_CHARS)
         .layouter(&mut layouter)
         .show(ui);
     out.response.response.clone().accessible_name(crate::tl!("Text"));
@@ -627,10 +627,10 @@ fn text_box(ui: &mut egui::Ui, st: &mut State, base_h: f64, px: f32, width: f32,
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cadcraft_engine::Session;
     use egui::accesskit::Role;
     use egui_kittest::Harness;
     use egui_kittest::kittest::{NodeT, Queryable};
+    use forja_engine::Session;
 
     use crate::Services;
 
@@ -778,8 +778,8 @@ mod tests {
         assert!(ctx.data_mut(|d| d.get_temp::<State>(state_id())).is_none());
         app.start("mtext");
         assert!(app.session.editing_mtext().is_none(), "no box yet");
-        app.session.input(cadcraft_engine::Input::Point(cadcraft_geom::Vec2::new(1.0, 1.0))).unwrap();
-        app.session.input(cadcraft_engine::Input::Point(cadcraft_geom::Vec2::new(6.0, 0.0))).unwrap();
+        app.session.input(forja_engine::Input::Point(forja_geom::Vec2::new(1.0, 1.0))).unwrap();
+        app.session.input(forja_engine::Input::Point(forja_geom::Vec2::new(6.0, 0.0))).unwrap();
         let m = app.session.editing_mtext().expect("box known");
         assert!((m.width - 5.0).abs() < 1e-9, "{}", m.width);
         frame(&mut app);
@@ -787,10 +787,10 @@ mod tests {
         st.fmt.set_text("hello", &CharFmt::default());
         st.fmt.toggle(0..5, Flag::Bold);
         let contents = st.fmt.to_contents();
-        app.session.input(cadcraft_engine::Input::Text(contents.clone())).unwrap();
-        app.session.input(cadcraft_engine::Input::Enter).unwrap();
+        app.session.input(forja_engine::Input::Text(contents.clone())).unwrap();
+        app.session.input(forja_engine::Input::Enter).unwrap();
         let d = app.session.doc().unwrap();
-        let found = d.model.iter().any(|e| matches!(&e.kind, cadcraft_engine::doc::EntityKind::MText(m) if m.contents == contents));
+        let found = d.model.iter().any(|e| matches!(&e.kind, forja_engine::doc::EntityKind::MText(m) if m.contents == contents));
         assert!(found, "{contents}");
     }
 
@@ -812,12 +812,12 @@ mod tests {
         app.run("mtext", serde_json::json!({ "at": [0, 20], "text": "first one", "height": 2.5, "width": 20 })).unwrap();
         app.run("mtext", serde_json::json!({ "at": [0, 60], "text": "second one", "height": 2.5, "width": 20 })).unwrap();
         app.start("textedit");
-        app.session.input(cadcraft_engine::Input::Point(cadcraft_geom::Vec2::new(1.0, 19.0))).unwrap();
+        app.session.input(forja_engine::Input::Point(forja_geom::Vec2::new(1.0, 19.0))).unwrap();
         frame(&mut app);
         assert_eq!(ctx.data_mut(|d| d.get_temp::<State>(state_id())).expect("editor open").fmt.text(), "first one");
         // Both inputs between two frames: the first MTEXT kept as it is, then the second picked.
-        app.session.input(cadcraft_engine::Input::Enter).unwrap();
-        app.session.input(cadcraft_engine::Input::Point(cadcraft_geom::Vec2::new(1.0, 59.0))).unwrap();
+        app.session.input(forja_engine::Input::Enter).unwrap();
+        app.session.input(forja_engine::Input::Point(forja_geom::Vec2::new(1.0, 59.0))).unwrap();
         assert!(app.session.editing_mtext().is_some_and(|m| m.contents.contains("second")), "TEXTEDIT is on the second MTEXT");
         frame(&mut app);
         assert_eq!(ctx.data_mut(|d| d.get_temp::<State>(state_id())).expect("editor open").fmt.text(), "second one");
@@ -837,8 +837,8 @@ mod tests {
         app.run("mtext", serde_json::json!({ "at": [0, 20], "text": "{\\fArial|b1;first}\\Psecond", "height": 2.5, "width": 20 })).unwrap();
         let h = app.session.doc().unwrap().model.last().unwrap().handle;
         app.start("textedit");
-        let at = cadcraft_geom::Vec2::new(1.0, 19.0);
-        app.session.input(cadcraft_engine::Input::Point(at)).unwrap();
+        let at = forja_geom::Vec2::new(1.0, 19.0);
+        app.session.input(forja_engine::Input::Point(at)).unwrap();
         let m = app.session.editing_mtext().expect("an MTEXT to edit");
         assert!(m.contents.contains("second"), "{}", m.contents);
         frame(&mut app);
@@ -847,11 +847,11 @@ mod tests {
         assert!(st.fmt.fmt_at(0).bold && !st.fmt.fmt_at(7).bold, "formats kept");
         let mut st = st;
         st.fmt.set_text("first\nsecond\nthird", &CharFmt::default());
-        app.session.input(cadcraft_engine::Input::Text(st.fmt.to_contents())).unwrap();
+        app.session.input(forja_engine::Input::Text(st.fmt.to_contents())).unwrap();
         frame(&mut app);
         assert!(ctx.data_mut(|d| d.get_temp::<State>(state_id())).is_none(), "editor closed");
         match &app.session.doc().unwrap().entity(h).unwrap().kind {
-            cadcraft_engine::doc::EntityKind::MText(m) => assert!(m.contents.contains("third") && m.contents.contains("b1"), "{}", m.contents),
+            forja_engine::doc::EntityKind::MText(m) => assert!(m.contents.contains("third") && m.contents.contains("b1"), "{}", m.contents),
             _ => panic!(),
         }
     }
@@ -870,18 +870,18 @@ mod tests {
             }
         };
         app.run("mleader", serde_json::json!({ "points": [[16, -10], [20, -5]], "text": "{\\H2x;big} small" })).unwrap();
-        let (at, height) = app
-            .session
-            .doc()
-            .unwrap()
-            .model
-            .iter()
-            .find_map(|e| {
-                if let cadcraft_engine::doc::EntityKind::MLeader(m) = &e.kind { m.text.as_ref().map(|t| (t.insert.xy(), t.height)) } else { None }
-            })
-            .unwrap();
+        let (at, height) =
+            app.session
+                .doc()
+                .unwrap()
+                .model
+                .iter()
+                .find_map(|e| {
+                    if let forja_engine::doc::EntityKind::MLeader(m) = &e.kind { m.text.as_ref().map(|t| (t.insert.xy(), t.height)) } else { None }
+                })
+                .unwrap();
         app.start("textedit");
-        app.session.input(cadcraft_engine::Input::Point(at + cadcraft_geom::Vec2::new(0.5, -0.05))).unwrap();
+        app.session.input(forja_engine::Input::Point(at + forja_geom::Vec2::new(0.5, -0.05))).unwrap();
         assert!(app.session.editing_mtext().is_some(), "the multileader's text is being edited");
         frame(&mut app);
         let st = ctx.data_mut(|d| d.get_temp::<State>(state_id())).expect("editor open");

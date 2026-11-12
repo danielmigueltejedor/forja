@@ -1,7 +1,7 @@
 //! Browser downloads: hand bytes to the user as a file, through web-sys only (a `Blob`, an object
 //! URL and a temporary `<a download>` link). This is the web's file route for everything that
 //! produces a file: drawing saves today (installed as the engine's
-//! [`cadcraft_engine::cmd::file::set_deliver`] hook), plots next.
+//! [`forja_engine::cmd::file::set_deliver`] hook), plots next.
 
 use wasm_bindgen::JsCast as _;
 use web_sys::js_sys;

@@ -1,12 +1,12 @@
 //! Drafting Settings reads drawing spacing and commits edits through SETVAR (#607).
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::{Drawing, HVal};
-use cadcraft_engine::geom::Vec3;
-use cadcraft_ui_egui::{CadApp, Services, dialogs, theme};
 use egui::accesskit::{Action, ActionData, ActionRequest, Role};
 use egui_kittest::Harness;
 use egui_kittest::kittest::{NodeT, Queryable};
+use forja_engine::Session;
+use forja_engine::doc::{Drawing, HVal};
+use forja_engine::geom::Vec3;
+use forja_ui_egui::{CadApp, Services, dialogs, theme};
 use serde_json::json;
 
 fn harness(d: Drawing, render: bool) -> Harness<'static, CadApp> {
@@ -40,7 +40,7 @@ fn set_spacing(h: &mut Harness<'_, CadApp>, index: usize, value: f64) {
 
 #[test]
 fn spacing_controls_update_the_drawing_and_mark_it_dirty() {
-    let directory = std::env::var_os("CADCRAFT_DRAFTING_SHOTS").map(std::path::PathBuf::from);
+    let directory = std::env::var_os("FORJA_DRAFTING_SHOTS").map(std::path::PathBuf::from);
     let mut h = harness(Drawing::new_imperial(), directory.is_some());
     assert!(!h.state().session.state().unwrap().is_dirty());
     set_spacing(&mut h, 0, 0.25);

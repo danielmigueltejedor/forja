@@ -29,7 +29,7 @@ fn linear_of(s: &Session, h: Handle, pick: Option<Vec2>) -> Result<(Vec2, Vec2)>
                 None => segs.first(),
             };
             match seg {
-                Some(cadcraft_geom::Segment::Line(l)) => Ok((l.a, l.dir())),
+                Some(forja_geom::Segment::Line(l)) => Ok((l.a, l.dir())),
                 _ => Err(other("Select a line object.")),
             }
         }

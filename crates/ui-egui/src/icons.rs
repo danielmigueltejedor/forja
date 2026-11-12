@@ -320,7 +320,7 @@ pub fn paint(p: &Painter, rect: Rect, icon: Icon, dim: bool) {
     crate::ndl_icons::paint(p, rect, icon, alpha(t.icon), alpha(t.icon_accent));
 }
 
-/// A shared button interaction with CADCraft's original multicolor icon painting.
+/// A shared button interaction with Forja's original multicolor icon painting.
 pub fn button(ui: &mut egui::Ui, icon: Icon, size: f32, tooltip: &str, selected: bool) -> egui::Response {
     button_bare(ui, icon, size, tooltip, selected).on_hover_text(crate::i18n::t(tooltip))
 }

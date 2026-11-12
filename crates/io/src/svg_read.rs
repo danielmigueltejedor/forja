@@ -15,9 +15,9 @@
 
 use std::collections::{BTreeMap, HashSet};
 
-use cadcraft_color::Color;
-use cadcraft_doc::{Circle, Common, Drawing, Ellipse, EntityKind, Layer, Line, LwPolyline, Space};
-use cadcraft_geom::{Mat3, PolyVertex, Spline, Vec2, Vec3};
+use forja_color::Color;
+use forja_doc::{Circle, Common, Drawing, Ellipse, EntityKind, Layer, Line, LwPolyline, Space};
+use forja_geom::{Mat3, PolyVertex, Spline, Vec2, Vec3};
 use quick_xml::Reader;
 use quick_xml::XmlVersion;
 use quick_xml::events::{BytesStart, Event};

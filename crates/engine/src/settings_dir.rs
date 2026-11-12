@@ -1,4 +1,4 @@
-//! The per-user CADCraft settings directory (logs, autosave, plotter configurations). The host
+//! The per-user Forja settings directory (logs, autosave, plotter configurations). The host
 //! chooses it ([`set`], possibly to none); without a choice it is the platform's ([`platform`]).
 
 use std::ffi::OsString;
@@ -8,9 +8,9 @@ use std::sync::Mutex;
 /// `None`: no choice yet; `Some(None)`: the host chose to have no settings directory.
 static CHOSEN: Mutex<Option<Option<PathBuf>>> = Mutex::new(None);
 
-/// The platform's settings directory, with `var` looking up the OS variables: `$XDG_CONFIG_HOME/cadcraft`
-/// or `~/.config/cadcraft` on Linux and the BSDs, `~/Library/Application Support/CADCraft` on
-/// macOS, `%APPDATA%\CADCraft` on Windows. An empty variable counts as unset, so a blank value
+/// The platform's settings directory, with `var` looking up the OS variables: `$XDG_CONFIG_HOME/forja`
+/// or `~/.config/forja` on Linux and the BSDs, `~/Library/Application Support/Forja` on
+/// macOS, `%APPDATA%\Forja` on Windows. An empty variable counts as unset, so a blank value
 /// never means the working directory.
 pub fn platform(var: impl Fn(&str) -> Option<OsString>) -> Option<PathBuf> {
     let set = |k: &str| var(k).filter(|v| !v.is_empty()).map(PathBuf::from);

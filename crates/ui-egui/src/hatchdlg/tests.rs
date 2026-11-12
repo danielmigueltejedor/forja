@@ -1,7 +1,7 @@
-use cadcraft_color::Color;
-use cadcraft_doc::Handle;
-use cadcraft_engine::geom::Vec2;
-use cadcraft_engine::{HatchPicks, PickMode, Session};
+use forja_color::Color;
+use forja_doc::Handle;
+use forja_engine::geom::Vec2;
+use forja_engine::{HatchPicks, PickMode, Session};
 use serde_json::json;
 
 use super::*;
@@ -28,8 +28,8 @@ fn pick_points_hides_the_dialog_and_brings_it_back_with_the_points() {
     assert!(app.session.prompt_text().contains("Pick internal point"));
     resume(&mut app);
     assert_eq!(app.ui.dialog, None, "still picking");
-    app.session.input(cadcraft_engine::Input::Point(Vec2::new(5.0, 5.0))).unwrap();
-    app.session.input(cadcraft_engine::Input::Enter).unwrap();
+    app.session.input(forja_engine::Input::Point(Vec2::new(5.0, 5.0))).unwrap();
+    app.session.input(forja_engine::Input::Enter).unwrap();
     resume(&mut app);
     assert_eq!(app.ui.dialog.as_deref(), Some("hatch"));
     let st = app.hatch_dlg.clone().unwrap();
@@ -45,7 +45,7 @@ fn escape_brings_the_dialog_back_unchanged() {
     }
     let before = app.hatch_dlg.clone();
     start_pick(&mut app, PickMode::Points);
-    app.session.input(cadcraft_engine::Input::Point(Vec2::new(5.0, 5.0))).unwrap();
+    app.session.input(forja_engine::Input::Point(Vec2::new(5.0, 5.0))).unwrap();
     app.session.cancel();
     resume(&mut app);
     assert_eq!(app.ui.dialog.as_deref(), Some("hatch"));
@@ -57,8 +57,8 @@ fn switching_drawings_drops_the_dialog() {
     let (mut app, _) = app_with_rect();
     open_create(&mut app, false);
     start_pick(&mut app, PickMode::Points);
-    app.session.input(cadcraft_engine::Input::Point(Vec2::new(5.0, 5.0))).unwrap();
-    app.session.input(cadcraft_engine::Input::Enter).unwrap();
+    app.session.input(forja_engine::Input::Point(Vec2::new(5.0, 5.0))).unwrap();
+    app.session.input(forja_engine::Input::Enter).unwrap();
     app.session.new_drawing(false);
     resume(&mut app);
     assert_eq!(app.ui.dialog, None);
@@ -71,13 +71,13 @@ fn hatch_pick_opens_edit_mode_or_nothing() {
     let hx = app.session.execute("hatch", &json!({ "points": [[5, 5]] })).unwrap()["handle"].as_str().unwrap().to_string();
     open_create(&mut app, false);
     start_pick(&mut app, PickMode::Hatch);
-    app.session.input(cadcraft_engine::Input::Pick(vec![Handle::parse_hex(&hx).unwrap()])).unwrap();
+    app.session.input(forja_engine::Input::Pick(vec![Handle::parse_hex(&hx).unwrap()])).unwrap();
     resume(&mut app);
     assert_eq!(app.ui.dialog.as_deref(), Some("hatch"));
     assert_eq!(app.hatch_dlg.clone().unwrap().edit, vec![Handle::parse_hex(&hx).unwrap()]);
     // Nothing picked: no dialog.
     start_pick(&mut app, PickMode::Hatch);
-    app.session.input(cadcraft_engine::Input::Enter).unwrap();
+    app.session.input(forja_engine::Input::Enter).unwrap();
     resume(&mut app);
     assert_eq!((app.ui.dialog.clone(), app.hatch_dlg.clone()), (None, None));
 }
@@ -161,7 +161,7 @@ fn create_ok_runs_and_makes_one_hatch() {
     st.handles.push(c);
     let (cmd, p) = ok_call(&st).unwrap();
     s.execute(cmd, &p).unwrap();
-    let n = s.doc().unwrap().model.iter().filter(|e| matches!(e.kind, cadcraft_doc::EntityKind::Hatch(_))).count();
+    let n = s.doc().unwrap().model.iter().filter(|e| matches!(e.kind, forja_doc::EntityKind::Hatch(_))).count();
     assert_eq!(n, 1);
 }
 
@@ -284,7 +284,7 @@ fn ok_makes_the_hatch_and_closes() {
     }
     assert!(ok(&mut app));
     assert_eq!(app.hatch_dlg, None);
-    assert!(app.session.doc().unwrap().model.iter().any(|e| matches!(e.kind, cadcraft_doc::EntityKind::Hatch(_))));
+    assert!(app.session.doc().unwrap().model.iter().any(|e| matches!(e.kind, forja_doc::EntityKind::Hatch(_))));
 }
 
 #[test]
@@ -346,7 +346,7 @@ fn hatchedit_opens_edit_mode_on_the_selection_or_asks_for_a_hatch() {
     app.cmdline("hatchedit");
     assert_eq!(app.ui.dialog, None);
     assert!(app.session.prompt_text().contains("Select hatch object"), "{}", app.session.prompt_text());
-    app.session.input(cadcraft_engine::Input::Pick(vec![h])).unwrap();
+    app.session.input(forja_engine::Input::Pick(vec![h])).unwrap();
     resume(&mut app);
     assert_eq!(app.ui.dialog.as_deref(), Some("hatch"));
     assert_eq!(app.hatch_dlg.clone().unwrap().edit, vec![h]);
@@ -363,7 +363,7 @@ fn hatchedit_opens_edit_mode_on_the_selection_or_asks_for_a_hatch() {
     }
     assert!(ok(&mut app));
     let d = app.session.doc().unwrap();
-    assert!(matches!(&d.entity(h).unwrap().kind, cadcraft_doc::EntityKind::Hatch(x) if x.pattern == "BRICK"));
+    assert!(matches!(&d.entity(h).unwrap().kind, forja_doc::EntityKind::Hatch(x) if x.pattern == "BRICK"));
     // -HATCHEDIT: the command line (the window, not `ok`, closes the dialog).
     app.ui.dialog = None;
     app.cmdline("-hatchedit");
@@ -388,8 +388,8 @@ fn switching_to_a_layout_drops_the_picks() {
     let (mut app, r) = app_with_rect();
     open_create(&mut app, false);
     start_pick(&mut app, PickMode::Objects);
-    app.session.input(cadcraft_engine::Input::Pick(vec![r])).unwrap();
-    app.session.input(cadcraft_engine::Input::Enter).unwrap();
+    app.session.input(forja_engine::Input::Pick(vec![r])).unwrap();
+    app.session.input(forja_engine::Input::Enter).unwrap();
     app.run("layout", json!({ "option": "set", "name": "Layout1" })).unwrap();
     resume(&mut app);
     assert_eq!((app.ui.dialog.clone(), app.hatch_dlg.clone()), (None, None), "model-space picks never hatch a layout");
@@ -412,7 +412,7 @@ fn a_gradient_hatch_offers_the_current_pattern_on_the_pattern_tab() {
     let (cmd, p) = ok_call(&st).unwrap();
     s.execute(cmd, &p).unwrap();
     match &s.doc().unwrap().entity(h).unwrap().kind {
-        cadcraft_doc::EntityKind::Hatch(x) => assert!(x.gradient.is_none() && x.pattern == "ANSI31"),
+        forja_doc::EntityKind::Hatch(x) => assert!(x.gradient.is_none() && x.pattern == "ANSI31"),
         k => panic!("{k:?}"),
     }
 }

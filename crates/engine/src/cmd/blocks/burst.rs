@@ -1,8 +1,8 @@
 //! BURST (Express Tools): explode block references as EXPLODE does, but their visible attributes
 //! become text with the values they show instead of the block's attribute definitions.
 
-use cadcraft_color::Color;
-use cadcraft_doc::{Common, Drawing, Entity, EntityKind, Handle, Insert};
+use forja_color::Color;
+use forja_doc::{Common, Drawing, Entity, EntityKind, Handle, Insert};
 use serde_json::{Value, json};
 
 use crate::cmd::machines::SelectRun;
@@ -41,7 +41,7 @@ fn burst_pieces(d: &Drawing, e: &Entity) -> Option<Vec<Entity>> {
 /// The properties an attribute is drawn with: its own, else its definition's; layer 0 is the
 /// reference's layer and ByBlock colour the reference's colour, as EXPLODE gives the block's
 /// objects.
-fn attrib_common(d: &Drawing, e: &Entity, ins: &Insert, tag: &str, props: &cadcraft_doc::AttribProps) -> Common {
+fn attrib_common(d: &Drawing, e: &Entity, ins: &Insert, tag: &str, props: &forja_doc::AttribProps) -> Common {
     let def =
         d.block(&ins.block).and_then(|b| b.entities.iter().find(|be| matches!(&be.kind, EntityKind::AttDef(ad) if ad.tag.eq_ignore_ascii_case(tag))));
     // An attribute without a definition follows the reference.

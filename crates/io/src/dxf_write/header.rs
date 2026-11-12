@@ -61,7 +61,7 @@ fn dim_header_vars(w: &mut W, d: &Drawing) {
     let Some(style) = d.dim_styles.iter().find(|s| s.name.eq_ignore_ascii_case(&name)) else { return };
     let v = serde_json::to_value(style).unwrap_or_default();
     let none = |_: &str| None;
-    for (var, field) in cadcraft_doc::DIMVARS {
+    for (var, field) in forja_doc::DIMVARS {
         if *var == "DIMSCALE" {
             continue;
         }
@@ -139,11 +139,11 @@ pub(super) fn header_vars(w: &mut W, d: &Drawing) {
     dim_header_vars(w, d);
 }
 
-/// `$DWGCODEPAGE`: before 2007 the code page read from the file when CADCraft knows it, in which
+/// `$DWGCODEPAGE`: before 2007 the code page read from the file when Forja knows it, in which
 /// a saved file's text is written (characters outside it as `\U+XXXX` escapes); otherwise, and
 /// from 2007 (UTF-8 text), `ANSI_1252`.
 pub(crate) fn code_page(d: &Drawing, version: Version) -> String {
     let read = d.header.get("DWGCODEPAGE").and_then(HVal::as_str).map(str::trim).unwrap_or_default();
-    let known = read.is_ascii() && read.len() <= 32 && cadcraft_dxf::decode_code_page(b"", read).is_some();
+    let known = read.is_ascii() && read.len() <= 32 && forja_dxf::decode_code_page(b"", read).is_some();
     if version < Version::R2007 && known { read.to_string() } else { "ANSI_1252".into() }
 }

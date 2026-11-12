@@ -2,8 +2,8 @@
 //! polyline arcs come out as the ellipses and elliptical arcs the reference draws, not as circles
 //! scaled by the mean of the two scales.
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::{Entity, EntityKind};
+use forja_engine::Session;
+use forja_engine::doc::{Entity, EntityKind};
 use serde_json::json;
 
 const AT: [f64; 2] = [100.0, 50.0];
@@ -40,7 +40,7 @@ fn to_block(p: [f64; 2], scale: [f64; 2]) -> [f64; 2] {
 }
 
 /// Points along an ELLIPSE from its start to its end parameter.
-fn samples(e: &cadcraft_engine::doc::Ellipse) -> Vec<[f64; 2]> {
+fn samples(e: &forja_engine::doc::Ellipse) -> Vec<[f64; 2]> {
     let mut sweep = e.end - e.start;
     if sweep <= 0.0 {
         sweep += std::f64::consts::TAU;
@@ -55,7 +55,7 @@ fn samples(e: &cadcraft_engine::doc::Ellipse) -> Vec<[f64; 2]> {
         .collect()
 }
 
-fn ellipses(v: &[Entity]) -> Vec<cadcraft_engine::doc::Ellipse> {
+fn ellipses(v: &[Entity]) -> Vec<forja_engine::doc::Ellipse> {
     v.iter()
         .filter_map(|e| match &e.kind {
             EntityKind::Ellipse(el) => Some(el.clone()),
@@ -70,7 +70,7 @@ fn near(a: [f64; 2], b: [f64; 2]) -> bool {
 
 /// Every point of `el`, taken back into the block, lies on the circle of radius `r` about `c`
 /// in block coordinates, and its ends are `ends` (the whole circle when `None`).
-fn on_circle(el: &cadcraft_engine::doc::Ellipse, scale: [f64; 2], c: [f64; 2], r: f64, ends: Option<([f64; 2], [f64; 2])>) {
+fn on_circle(el: &forja_engine::doc::Ellipse, scale: [f64; 2], c: [f64; 2], r: f64, ends: Option<([f64; 2], [f64; 2])>) {
     let pts: Vec<[f64; 2]> = samples(el).into_iter().map(|p| to_block(p, scale)).collect();
     for q in &pts {
         let d = (q[0] - c[0]).hypot(q[1] - c[1]);

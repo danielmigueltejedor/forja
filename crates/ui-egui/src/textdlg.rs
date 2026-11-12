@@ -12,7 +12,7 @@ use serde_json::json;
 
 use crate::CadApp;
 use crate::theme::Tokens;
-use cadcraft_engine::doc::EntityKind;
+use forja_engine::doc::EntityKind;
 
 /// The text the window starts with, in the form the user edits: MText line breaks are `\P` in
 /// the drawing and a newline here, and an empty dimension text means the measured value, shown
@@ -51,7 +51,7 @@ struct State {
 fn initial(app: &CadApp, hex: &str) -> State {
     let uid = app.session.state().map(|s| s.uid).unwrap_or_default();
     let mut st = State { handle: hex.to_string(), uid, ..Default::default() };
-    let Some(h) = cadcraft_doc::Handle::parse_hex(hex) else { return st };
+    let Some(h) = forja_doc::Handle::parse_hex(hex) else { return st };
     let Ok(d) = app.session.doc() else { return st };
     let Some(e) = d.entity(h) else { return st };
     st.kind = e.kind.type_name().to_string();

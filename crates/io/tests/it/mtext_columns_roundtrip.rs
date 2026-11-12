@@ -1,10 +1,10 @@
 //! MTEXT columns and paragraph codes survive a DXF round trip (#532): the column groups
 //! 75/76/78/79/48/49/50, tabs as `^I`, carets as `^ `.
 
-use cadcraft_doc::{Common, Drawing, EntityKind, MText, MTextColumnType, MTextColumns, Space};
-use cadcraft_dxf::Tag;
-use cadcraft_geom::Vec3;
-use cadcraft_io::{SaveOptions, Version, entity_from_groups, read_dxf, write_dxf, write_with};
+use forja_doc::{Common, Drawing, EntityKind, MText, MTextColumnType, MTextColumns, Space};
+use forja_dxf::Tag;
+use forja_geom::Vec3;
+use forja_io::{SaveOptions, Version, entity_from_groups, read_dxf, write_dxf, write_with};
 
 fn mtext(contents: &str, rotation: f64, columns: Option<MTextColumns>) -> MText {
     MText {
@@ -101,7 +101,7 @@ fn legacy_column_groups_stay_in_the_mtext_subclass() {
 
 #[test]
 fn heights_written_without_a_count_are_all_kept() {
-    // Files written before the height count (CADCraft up to f536bf4) have group 76 = n and n
+    // Files written before the height count (Forja up to f536bf4) have group 76 = n and n
     // heights, no count: the first 50 is a height there (#2247 review).
     let mut d = Drawing::new_metric();
     d.add(&Space::Model, Common::default(), EntityKind::MText(mtext("x", 0.0, None))).unwrap();
@@ -217,7 +217,7 @@ fn layer_after_an_entmake_subclass_marker_is_kept() {
     let tags = [Tag::s(100, "AcDbLine"), Tag::s(8, "Walls"), Tag::i(62, 3), Tag::f(10, 0.0), Tag::f(20, 0.0), Tag::f(11, 1.0), Tag::f(21, 0.0)];
     let Some((common, _)) = entity_from_groups("LINE", &tags) else { panic!("LINE was not read") };
     assert_eq!(common.layer, "Walls");
-    assert_eq!(common.color, cadcraft_color::Color::from_aci(3));
+    assert_eq!(common.color, forja_color::Color::from_aci(3));
 }
 
 #[test]
@@ -241,13 +241,13 @@ fn markers_inside_an_application_group_do_not_end_the_entity_groups() {
     ];
     let Some((common, _)) = entity_from_groups("LINE", &tags) else { panic!("LINE was not read") };
     assert_eq!(common.layer, "Walls");
-    assert_eq!(common.color, cadcraft_color::Color::from_aci(3));
+    assert_eq!(common.color, forja_color::Color::from_aci(3));
 }
 
 // ---- #2248: R2018 embedded column object ----
 
-fn embedded_tags(count: i64, width: f64, gutter: f64, heights: &[f64]) -> Vec<cadcraft_dxf::Tag> {
-    use cadcraft_dxf::Tag;
+fn embedded_tags(count: i64, width: f64, gutter: f64, heights: &[f64]) -> Vec<forja_dxf::Tag> {
+    use forja_dxf::Tag;
     let mut v = vec![
         Tag::s(8, "0"),
         Tag::f(10, 10.0),
@@ -281,7 +281,7 @@ fn embedded_tags(count: i64, width: f64, gutter: f64, heights: &[f64]) -> Vec<ca
     v
 }
 
-fn mtext_from_groups(tags: &[cadcraft_dxf::Tag]) -> (Common, MText) {
+fn mtext_from_groups(tags: &[forja_dxf::Tag]) -> (Common, MText) {
     let Some((common, EntityKind::MText(t))) = entity_from_groups("MTEXT", tags) else { panic!("MTEXT was not read") };
     (common, t)
 }
@@ -322,7 +322,7 @@ fn embedded_column_height_is_the_entitys_defined_height() {
     // As ezdxf and AutoCAD write static columns: the height in the entity's 46, none in the object.
     let mut tags = embedded_tags(3, 12.5, 2.5, &[]);
     let at = tags.iter().position(|t| t.code == 101).unwrap();
-    tags.insert(at, cadcraft_dxf::Tag::f(46, 20.0));
+    tags.insert(at, forja_dxf::Tag::f(46, 20.0));
     let (_, t) = mtext_from_groups(&tags);
     assert_eq!(t.columns.map(|c| c.height), Some(20.0));
 }
@@ -355,10 +355,10 @@ fn dynamic_auto_height_embedded_count_comes_from_the_total_width() {
     let at = tags.iter().position(|t| t.code == 101).unwrap();
     for t in &mut tags[at..] {
         *t = match t.code {
-            42 => cadcraft_dxf::Tag::f(42, 175.0),
-            71 => cadcraft_dxf::Tag::i(71, 2),
-            72 => cadcraft_dxf::Tag::i(72, 0),
-            73 => cadcraft_dxf::Tag::i(73, 1),
+            42 => forja_dxf::Tag::f(42, 175.0),
+            71 => forja_dxf::Tag::i(71, 2),
+            72 => forja_dxf::Tag::i(72, 0),
+            73 => forja_dxf::Tag::i(73, 1),
             _ => t.clone(),
         };
     }
@@ -373,13 +373,13 @@ fn dynamic_auto_height_count_comes_from_the_widths_when_72_is_zero() {
     // A dynamic auto-height object stores 0 in 72; the count is implied by the total width
     // (42 = n * 44 + (n - 1) * 45): (175 + 12.5) / (50 + 12.5) = 3.
     let mut tags = embedded_tags(0, 50.0, 12.5, &[]);
-    let mut set = |code: i32, v: cadcraft_dxf::Tag| {
+    let mut set = |code: i32, v: forja_dxf::Tag| {
         let at = tags.iter().rposition(|t| t.code == code).unwrap();
         tags[at] = v;
     };
-    set(71, cadcraft_dxf::Tag::i(71, 2));
-    set(73, cadcraft_dxf::Tag::i(73, 1));
-    set(42, cadcraft_dxf::Tag::f(42, 175.0));
+    set(71, forja_dxf::Tag::i(71, 2));
+    set(73, forja_dxf::Tag::i(73, 1));
+    set(42, forja_dxf::Tag::f(42, 175.0));
     let (_, t) = mtext_from_groups(&tags);
     let c = t.columns.expect("columns");
     assert_eq!((c.kind, c.auto_height, c.count), (MTextColumnType::Dynamic, true, 3));
@@ -392,10 +392,10 @@ fn embedded_column_width_wins_over_the_entitys_width() {
     // what the R2018 object gets back (#2467 review).
     let mut tags = embedded_tags(3, 50.0, 12.5, &[20.0, 20.0, 20.0]);
     let own_41 = tags.iter().position(|t| t.code == 41).unwrap();
-    tags[own_41] = cadcraft_dxf::Tag::f(41, 175.0);
+    tags[own_41] = forja_dxf::Tag::f(41, 175.0);
     for code in [40, 42] {
         let at = tags.iter().rposition(|t| t.code == code).unwrap();
-        tags[at] = cadcraft_dxf::Tag::f(code, 175.0);
+        tags[at] = forja_dxf::Tag::f(code, 175.0);
     }
     let (_, t) = mtext_from_groups(&tags);
     assert_eq!(t.width, 50.0, "the column width, not the total");

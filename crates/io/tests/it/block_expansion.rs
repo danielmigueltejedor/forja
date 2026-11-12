@@ -3,12 +3,12 @@
 
 use std::sync::Arc;
 
-use cadcraft_doc::{Block, Common, Drawing, Entity, EntityKind, Handle, Insert, Line, Space, Viewport};
-use cadcraft_geom::{Vec2, Vec3};
-use cadcraft_render::{MAX_BLOCK_EXPANSION, Options, build};
+use forja_doc::{Block, Common, Drawing, Entity, EntityKind, Handle, Insert, Line, Space, Viewport};
+use forja_geom::{Vec2, Vec3};
+use forja_render::{MAX_BLOCK_EXPANSION, Options, build};
 
 fn read(text: &str) -> Drawing {
-    cadcraft_io::read(text.as_bytes(), "x.dxf").unwrap()
+    forja_io::read(text.as_bytes(), "x.dxf").unwrap()
 }
 
 /// Block `A` holds a line and `refs` references to itself; model space holds one `A`.
@@ -50,7 +50,7 @@ fn block_expansion_bombs_are_bounded() {
         let list = build(&d, &Space::Model, &Options::default());
         assert!(!list.prims.is_empty() && list.prims.len() <= MAX_BLOCK_EXPANSION, "{}", list.prims.len());
         // Saving computes the extents again ($EXTMIN/$EXTMAX).
-        assert!(cadcraft_io::write_dxf(&d).contains("$EXTMAX"));
+        assert!(forja_io::write_dxf(&d).contains("$EXTMAX"));
     }
 }
 
@@ -64,7 +64,7 @@ fn ordinary_nested_and_arrayed_blocks_are_drawn_whole() {
     // A self-referencing block draws its line at every level down to MAX_BLOCK_DEPTH.
     let d = read(&self_referencing(1));
     assert!(matches!(d.model.iter().next().map(|e| &e.kind), Some(EntityKind::Insert(_))));
-    assert_eq!(build(&d, &Space::Model, &Options::default()).prims.len(), cadcraft_doc::MAX_BLOCK_DEPTH);
+    assert_eq!(build(&d, &Space::Model, &Options::default()).prims.len(), forja_doc::MAX_BLOCK_DEPTH);
 }
 
 #[test]

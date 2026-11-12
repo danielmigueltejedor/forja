@@ -5,7 +5,7 @@
 use std::ffi::OsString;
 use std::io::Write;
 
-use cadcraft_engine::Session;
+use forja_engine::Session;
 use serde_json::json;
 
 mod args;
@@ -40,19 +40,19 @@ use run::{fill_last, returned_handle};
 use sample::sample;
 
 fn install_io() {
-    cadcraft_engine::cmd::file::set_io(cadcraft_engine::cmd::file::IoHooks {
-        read: |b, name| cadcraft_io::read(b, name).map_err(|e| e.to_string()),
-        write: |d, name| cadcraft_io::write(d, name).map_err(|e| e.to_string()),
-        plot: Some(|d, space, opts| cadcraft_io::plotter::plot(d, space, opts).map_err(|e| e.to_string())),
+    forja_engine::cmd::file::set_io(forja_engine::cmd::file::IoHooks {
+        read: |b, name| forja_io::read(b, name).map_err(|e| e.to_string()),
+        write: |d, name| forja_io::write(d, name).map_err(|e| e.to_string()),
+        plot: Some(|d, space, opts| forja_io::plotter::plot(d, space, opts).map_err(|e| e.to_string())),
     });
-    cadcraft_engine::cmd::file::set_image_decoder(|b| cadcraft_io::raster::decode(b).map_err(|e| e.to_string()));
-    cadcraft_engine::cmd::file::set_write_as(|d, name, o| {
-        cadcraft_io::write_with(d, name, &cadcraft_io::SaveOptions { version: o.version, binary: o.binary }).map_err(|e| e.to_string())
+    forja_engine::cmd::file::set_image_decoder(|b| forja_io::raster::decode(b).map_err(|e| e.to_string()));
+    forja_engine::cmd::file::set_write_as(|d, name, o| {
+        forja_io::write_with(d, name, &forja_io::SaveOptions { version: o.version, binary: o.binary }).map_err(|e| e.to_string())
     });
     // AutoLISP's entget, entmake and entmod see entities as DXF groups.
-    cadcraft_engine::cmd::file::set_entity_codec(cadcraft_engine::cmd::file::EntityCodec {
-        groups: cadcraft_io::entity_groups,
-        entity: cadcraft_io::entity_from_groups,
+    forja_engine::cmd::file::set_entity_codec(forja_engine::cmd::file::EntityCodec {
+        groups: forja_io::entity_groups,
+        entity: forja_io::entity_from_groups,
     });
 }
 
@@ -127,8 +127,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cadcraft_engine::doc::Space;
-    use cadcraft_engine::geom::{Bounds2, Vec2};
+    use forja_engine::doc::Space;
+    use forja_engine::geom::{Bounds2, Vec2};
 
     fn scratch_dir(tag: &str) -> std::path::PathBuf {
         let dir = std::env::temp_dir().join(format!("forja-cli-{tag}-{}", std::process::id()));
@@ -185,7 +185,7 @@ mod tests {
 
     fn sample_session() -> Session {
         let mut s = Session::empty();
-        s.open_drawing(cadcraft_engine::sample::default_sample(), "Bracket", None);
+        s.open_drawing(forja_engine::sample::default_sample(), "Bracket", None);
         s
     }
 
@@ -275,7 +275,7 @@ mod tests {
         let before = model_views(&s);
         // The smallest entity with an area, selected then framed with ZOOM Object.
         let d = s.doc().unwrap();
-        let bounds = |e: &cadcraft_engine::doc::Entity| cadcraft_engine::doc::entity_bounds(d, e, 0);
+        let bounds = |e: &forja_engine::doc::Entity| forja_engine::doc::entity_bounds(d, e, 0);
         let e = d
             .model
             .iter()

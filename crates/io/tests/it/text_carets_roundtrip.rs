@@ -1,9 +1,9 @@
 //! Carets in TEXT, ATTDEF, ATTRIB and DIMENSION strings are written as `^ ` and read back: AutoCAD
 //! reads a bare `^2` in `10^2` as a control character. A tab is `^I`, as AutoCAD writes it.
 
-use cadcraft_doc::{Attrib, Common, DimKind, Dimension, Drawing, EntityKind, HAlign, Space, Text, VAlign};
-use cadcraft_geom::Vec3;
-use cadcraft_io::{read_dxf, write_dxf};
+use forja_doc::{Attrib, Common, DimKind, Dimension, Drawing, EntityKind, HAlign, Space, Text, VAlign};
+use forja_geom::Vec3;
+use forja_io::{read_dxf, write_dxf};
 
 fn text(value: &str) -> Text {
     Text {
@@ -91,8 +91,8 @@ fn carets_are_written_escaped_and_read_back() {
     assert_eq!(all_strings(&tab)[0], "A\tB");
     assert!(write_dxf(&tab).contains("A^IB"));
     // Through a DWG.
-    let dwg = cadcraft_io::write(&drawing(), "t.dwg").unwrap();
-    assert_eq!(all_strings(&cadcraft_io::read(&dwg, "t.dwg").unwrap()), all_strings(&drawing()));
+    let dwg = forja_io::write(&drawing(), "t.dwg").unwrap();
+    assert_eq!(all_strings(&forja_io::read(&dwg, "t.dwg").unwrap()), all_strings(&drawing()));
 }
 
 #[test]
@@ -109,18 +109,18 @@ fn entget_shows_plain_carets_and_entmake_takes_them() {
     let mut d = Drawing::new_metric();
     d.add(&Space::Model, Common::default(), EntityKind::Text(text("x^ y 10^2"))).unwrap();
     let e = d.model.iter().next().unwrap();
-    let (kind, groups) = cadcraft_io::entity_groups(&d, e);
+    let (kind, groups) = forja_io::entity_groups(&d, e);
     assert!(groups.iter().any(|t| t.code == 1 && t.str() == "x^ y 10^2"), "{groups:?}");
     // entmod of entget changes nothing; entmake takes a plain string.
-    let (_, back) = cadcraft_io::entity_from_groups(&kind, &groups).unwrap();
+    let (_, back) = forja_io::entity_from_groups(&kind, &groups).unwrap();
     assert_eq!(strings(&back), ["x^ y 10^2"]);
-    let made = [cadcraft_dxf::Tag::s(1, "p^ q")];
-    assert_eq!(strings(&cadcraft_io::entity_from_groups("TEXT", &made).unwrap().1), ["p^ q"]);
+    let made = [forja_dxf::Tag::s(1, "p^ q")];
+    assert_eq!(strings(&forja_io::entity_from_groups("TEXT", &made).unwrap().1), ["p^ q"]);
     // Every kind, and a DIMENSION's style name (also group 3) as it is.
     let d = drawing();
     for e in d.model.iter() {
-        let (kind, groups) = cadcraft_io::entity_groups(&d, e);
-        let (_, back) = cadcraft_io::entity_from_groups(&kind, &groups).unwrap();
+        let (kind, groups) = forja_io::entity_groups(&d, e);
+        let (_, back) = forja_io::entity_from_groups(&kind, &groups).unwrap();
         assert_eq!(strings(&back), strings(&e.kind), "{kind}");
     }
 }

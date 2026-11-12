@@ -1,11 +1,11 @@
 //! Double-clicking text with no command running edits it, as in AutoCAD (#842).
 
-use cadcraft_engine::doc::EntityKind;
-use cadcraft_engine::geom::Vec2;
-use cadcraft_engine::{Input, Session};
-use cadcraft_ui_egui::{CadApp, Services};
 use egui::{Event, ImeEvent, Key, Modifiers, PointerButton, Pos2, vec2};
 use egui_kittest::Harness;
+use forja_engine::doc::EntityKind;
+use forja_engine::geom::Vec2;
+use forja_engine::{Input, Session};
+use forja_ui_egui::{CadApp, Services};
 use serde_json::json;
 
 fn harness() -> Harness<'static, CadApp> {

@@ -1,11 +1,11 @@
 //! QuickCalc's menu and platform shortcut toggle only its panel, preserving drafting and calculator
 //! state. Explicit opens remain idempotent and programmatic calculations do not open the palette.
 
-use cadcraft_engine::Session;
-use cadcraft_ui_egui::{CadApp, Services, docking::Panel, menus};
 use egui::{Key, Modifiers, accesskit::Role, vec2};
 use egui_kittest::Harness;
 use egui_kittest::kittest::{NodeT, Queryable, by};
+use forja_engine::Session;
+use forja_ui_egui::{CadApp, Services, docking::Panel, menus};
 use serde_json::{Value, json};
 
 fn harness() -> Harness<'static, CadApp> {
@@ -36,7 +36,7 @@ fn restarting_restores_calculator_data_and_ui_edits_are_saved_when_hidden() {
         "history": [["2+3", "5"]], "vars": [["width", 5]], "ans": 5
     }})
     .to_string();
-    let screenshot = std::env::var_os("CADCRAFT_QUICKCALC_SHOT");
+    let screenshot = std::env::var_os("FORJA_QUICKCALC_SHOT");
     let mut h = harness_from_prefs(&prefs, screenshot.is_some());
     h.state_mut().run("ui.panel.quickcalc", Value::Null).unwrap();
     h.run_steps(5);
@@ -176,7 +176,7 @@ fn explicit_opens_still_reveal_and_calculations_do_not_open_the_palette() {
     app.run("ui.dock", json!({"operation":"activate", "panel":"toolSets"})).unwrap();
     app.run("ui.panel.quickcalc", Value::Null).unwrap();
     let mut workspace = app.ui.docking.clone();
-    cadcraft_ui_egui::docking::reveal_panel(&mut workspace, Panel::QuickCalc).unwrap();
+    forja_ui_egui::docking::reveal_panel(&mut workspace, Panel::QuickCalc).unwrap();
     assert_eq!(app.ui.docking.layout, workspace.layout, "explicit open must activate an inactive tab");
 }
 

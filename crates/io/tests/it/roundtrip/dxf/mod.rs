@@ -4,7 +4,7 @@
 //! twice, at every representable save version; expectations never come from writer output.
 //! WIPEOUT's explicit closing marker is an authored format expectation, not a new corner.
 //!
-//! Run: `cargo test -p cadcraft-io --test it roundtrip::dxf`.
+//! Run: `cargo test -p forja-io --test it roundtrip::dxf`.
 //! Add `-- --ignored` to reproduce the pending preservation cases. Those tests
 //! assert desired preservation, not today's wrong result; remove `ignore` when fixing them.
 //! Independent fixtures cover the core entity groups; deep compound-entity interoperability
@@ -19,8 +19,8 @@ mod geometry_groups;
 mod table_flags;
 
 use super::compare;
-use cadcraft_doc::Drawing;
-use cadcraft_io::{SaveOptions, Version, read, save_version, write_with};
+use forja_doc::Drawing;
+use forja_io::{SaveOptions, Version, read, save_version, write_with};
 
 fn check(case: &str, original: &Drawing) {
     for version in Version::ALL {
@@ -39,7 +39,7 @@ fn check_version_with(case: &str, original: &Drawing, expected: &Drawing, versio
         for pass in 1..=2 {
             let context = format!("{case} · {version} · binary={binary} · pass={pass}");
             let bytes = write_with(&current, "memory.dxf", &options).unwrap_or_else(|e| panic!("{context}: write: {e}"));
-            assert_eq!(cadcraft_dxf::is_binary(&bytes), binary, "{context}: encoding");
+            assert_eq!(forja_dxf::is_binary(&bytes), binary, "{context}: encoding");
             let back = read(&bytes, "memory.dxf").unwrap_or_else(|e| panic!("{context}: read: {e}"));
             assert_eq!(save_version(&back), version, "{context}: version");
             assert!(back.read_notes.is_empty(), "{context}: read notes: {:?}", back.read_notes);

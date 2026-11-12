@@ -3,9 +3,9 @@
 //! its mOde option says; a block by name, `=` (the block named as the file) or `*` (the whole
 //! drawing); asks before replacing a file; and writes nothing when nothing is selected.
 
-use cadcraft_engine::Session;
-use cadcraft_engine::cmd::file::{IoHooks, set_io};
-use cadcraft_engine::doc::{Drawing, EntityKind, Handle};
+use forja_engine::Session;
+use forja_engine::cmd::file::{IoHooks, set_io};
+use forja_engine::doc::{Drawing, EntityKind, Handle};
 use serde_json::json;
 
 #[path = "support/temp_dir.rs"]

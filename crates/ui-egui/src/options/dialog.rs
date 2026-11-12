@@ -281,8 +281,8 @@ fn units_row(ui: &mut egui::Ui, app: &CadApp, changes: &mut Map<String, Value>) 
 
 fn autosave_row(ui: &mut egui::Ui, changes: &mut Map<String, Value>) {
     let minutes_caption = ui.label(crate::tl!("Automatic save every"));
-    let mut minutes = cadcraft_engine::autosave::savetime();
-    let max = cadcraft_engine::autosave::MAX_SAVETIME;
+    let mut minutes = forja_engine::autosave::savetime();
+    let max = forja_engine::autosave::MAX_SAVETIME;
     if ui.add(egui::DragValue::new(&mut minutes).range(0..=max).suffix(format!(" {}", crate::tl!("min")))).labelled_by(minutes_caption.id).changed() {
         changes.insert("SAVETIME".into(), json!(minutes));
     }
@@ -291,7 +291,7 @@ fn autosave_row(ui: &mut egui::Ui, changes: &mut Map<String, Value>) {
 /// ISAVEBAK: keep the previous file as `<name>.bak` when saving over a drawing.
 fn backup_row(ui: &mut egui::Ui, changes: &mut Map<String, Value>) {
     ui.label(crate::tl!("Backup copy"));
-    let mut bak = cadcraft_engine::autosave::isavebak();
+    let mut bak = forja_engine::autosave::isavebak();
     if ui.check(&mut bak, crate::tl!("Create backup copy with each save")).changed() {
         changes.insert("ISAVEBAK".into(), json!(i32::from(bak)));
     }
@@ -301,7 +301,7 @@ fn savefile_row(ui: &mut egui::Ui, changes: &mut Map<String, Value>) {
     let savefile_label = ui.label(crate::tl!("Automatic save file location"));
     // Edited as text; the folder changes when the field loses focus.
     let id = egui::Id::unique("cc_options_savefilepath");
-    let current = cadcraft_engine::autosave::savefilepath();
+    let current = forja_engine::autosave::savefilepath();
     let mut path = ui.data(|d| d.get_temp::<String>(id)).unwrap_or_else(|| current.clone());
     let r = ui.add(egui::TextEdit::singleline(&mut path).desired_width(330.0)).labelled_by(savefile_label.id);
     if r.changed() {
@@ -462,7 +462,7 @@ fn heading(ui: &mut egui::Ui, text: &str) -> egui::Response {
 
 /// Visual Effect Settings: the selection area (window and crossing fills) and the objects the
 /// cursor never highlights (PREVIEWFILTER). Changes apply at once, as on the Options tabs.
-fn visual_effects(ctx: &egui::Context, st: &cadcraft_engine::Settings, open: &mut bool, changes: &mut Map<String, Value>) {
+fn visual_effects(ctx: &egui::Context, st: &forja_engine::Settings, open: &mut bool, changes: &mut Map<String, Value>) {
     let mut close = false;
     crate::ndl_window::Window::new(crate::tl!("Visual Effect Settings"))
         .id(egui::Id::unique("cc_visual_effects"))
@@ -528,7 +528,7 @@ fn visual_effects(ctx: &egui::Context, st: &cadcraft_engine::Settings, open: &mu
 /// A colour by its index (ACI 1-255): a swatch and the number; a change goes into `changes`.
 fn aci_row(ui: &mut egui::Ui, current: u8, key: &str, changes: &mut Map<String, Value>, label: egui::Id) {
     ui.horizontal(|ui| {
-        let c = cadcraft_color::aci_rgb(current);
+        let c = forja_color::aci_rgb(current);
         let (r, _) = ui.allocate_exact_size(vec2(16.0, 16.0), egui::Sense::hover());
         ui.painter().rect_filled(r, 2.0, Color32::from_rgb(c.0, c.1, c.2));
         let mut v = current;

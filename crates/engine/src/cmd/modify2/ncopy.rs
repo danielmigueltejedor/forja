@@ -8,7 +8,7 @@ use super::{
 // =====================================================================================
 
 /// The leaf objects of a block reference in world coordinates (nested references expanded).
-fn nested_leaves(d: &cadcraft_doc::Drawing, ins: &cadcraft_doc::Insert, m: &Mat3, depth: usize, out: &mut Vec<(Common, EntityKind)>) {
+fn nested_leaves(d: &forja_doc::Drawing, ins: &forja_doc::Insert, m: &Mat3, depth: usize, out: &mut Vec<(Common, EntityKind)>) {
     if depth >= MAX_BLOCK_DEPTH || out.len() >= MAX_GEN {
         return;
     }

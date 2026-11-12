@@ -6,7 +6,7 @@ fn color32(c: Rgb) -> Color32 {
 }
 
 /// A primitive's colour on `bg`, with its transparency.
-fn prim_color32(prim: &cadcraft_render::DPrim, bg: Rgb) -> Color32 {
+fn prim_color32(prim: &forja_render::DPrim, bg: Rgb) -> Color32 {
     let c = prim.display_rgb(bg);
     Color32::from_rgba_unmultiplied(c.0, c.1, c.2, prim.alpha())
 }
@@ -34,7 +34,7 @@ fn visible_runs(xf: &Xf, pts: &[Vec2]) -> Vec<(Vec<Pos2>, f64)> {
     let (mut along, mut open) = (0.0, false);
     for w in pts.windows(2) {
         let (Some(&a), Some(&b)) = (w.first(), w.get(1)) else { continue };
-        match cadcraft_render::clip::clip_segment(a, b, &vis) {
+        match forja_render::clip::clip_segment(a, b, &vis) {
             Some((p, q)) => {
                 match runs.last_mut() {
                     Some((run, _)) if open && p == a => run.push(xf.to_screen(q)),
@@ -74,7 +74,7 @@ pub(super) fn dashed_polygon(clip: Rect, corners: &[Pos2], stroke: Stroke, dash:
     let mut out = Vec::new();
     let edges = corners.iter().copied().zip(corners.iter().copied().cycle().skip(1));
     for (a, b) in edges {
-        if let Some((p, q)) = cadcraft_render::clip::clip_segment(v(a), v(b), &c) {
+        if let Some((p, q)) = forja_render::clip::clip_segment(v(a), v(b), &c) {
             let pos = |w: Vec2| Pos2::new(w.x as f32, w.y as f32);
             dashes(&[pos(p), pos(q)], v(a).dist(p), stroke, dash, gap, &mut out);
         }
@@ -215,9 +215,9 @@ pub(super) fn draw_drag_gpu(
     c: &mut CanvasState,
     p: &egui::Painter,
     xf: &Xf,
-    doc: &cadcraft_doc::Drawing,
-    drag: &cadcraft_engine::Drag,
-    clipboard: (&[cadcraft_doc::Entity], u64),
+    doc: &forja_doc::Drawing,
+    drag: &forja_engine::Drag,
+    clipboard: (&[forja_doc::Entity], u64),
     bg: Rgb,
     transparency: bool,
 ) {
@@ -234,11 +234,11 @@ pub(super) fn draw_drag_gpu(
     };
     if c.drag_key != Some(key) {
         let band_scale = 2f64.powi(band);
-        let opts = cadcraft_render::Options { transparency, ..preview_options(band_scale) };
+        let opts = forja_render::Options { transparency, ..preview_options(band_scale) };
         let list = if drag.clipboard {
-            cadcraft_render::build_entities(doc, clipboard.0.iter(), &opts)
+            forja_render::build_entities(doc, clipboard.0.iter(), &opts)
         } else {
-            cadcraft_render::build_entities(doc, drag.handles.iter().filter_map(|h| doc.entity(*h)).map(|e| e.as_ref()), &opts)
+            forja_render::build_entities(doc, drag.handles.iter().filter_map(|h| doc.entity(*h)).map(|e| e.as_ref()), &opts)
         };
         let origin = if list.bounds.is_empty() { Vec2::ZERO } else { list.bounds.center() };
         let mesh = crate::gpu::build_mesh(&list, origin, bg, false);
@@ -330,11 +330,11 @@ pub(crate) struct Look {
 
 impl Look {
     /// Selected objects (HIGHLIGHT, SELECTIONEFFECT); `None`: not highlighted.
-    pub(crate) fn selection(s: &cadcraft_engine::Settings) -> Option<Look> {
+    pub(crate) fn selection(s: &forja_engine::Settings) -> Option<Look> {
         s.highlight.then_some(Look { width: 1.5, dashed: s.selectioneffect == 0 })
     }
     /// The object under the cursor (PREVIEWEFFECT: 0 dashed, 1 thicker, 2 both).
-    pub(crate) fn preview(s: &cadcraft_engine::Settings) -> Look {
+    pub(crate) fn preview(s: &forja_engine::Settings) -> Look {
         Look { width: if s.previeweffect == 0 { 1.0 } else { 2.0 }, dashed: s.previeweffect != 1 }
     }
 }
@@ -399,9 +399,9 @@ pub(crate) fn draw_highlight(p: &egui::Painter, xf: &Xf, list: &DisplayList, pri
 
 /// The fill of a selection window or crossing area (SELECTIONAREA, WINDOWAREACOLOR,
 /// CROSSINGAREACOLOR, SELECTIONAREAOPACITY); `None` when areas aren't filled.
-pub(super) fn selection_area_fill(s: &cadcraft_engine::Settings, crossing: bool) -> Option<Color32> {
+pub(super) fn selection_area_fill(s: &forja_engine::Settings, crossing: bool) -> Option<Color32> {
     let aci = if crossing { s.crossingareacolor } else { s.windowareacolor };
-    let c = cadcraft_color::aci_rgb(aci);
+    let c = forja_color::aci_rgb(aci);
     s.selectionarea.then(|| Color32::from_rgb(c.0, c.1, c.2).gamma_multiply(f32::from(s.selectionareaopacity.min(100)) / 100.0))
 }
 
@@ -442,7 +442,7 @@ mod highlight_stability_tests {
     fn moving_the_pointer_does_not_move_cpu_fill_highlight_dashes() {
         let p = |x, y| Vec2::new(x, y);
         let mut list = DisplayList { tris: vec![p(0.0, 0.0), p(7.0, 0.0), p(7.0, 3.0), p(0.0, 0.0), p(7.0, 3.0), p(0.0, 3.0)], ..Default::default() };
-        list.prims.push(cadcraft_render::DPrim {
+        list.prims.push(forja_render::DPrim {
             handle: Handle(256),
             color: Rgb(255, 255, 255),
             aci7: true,
@@ -468,7 +468,7 @@ mod highlight_stability_tests {
                 }
             }
         }
-        if let Some(dir) = std::env::var_os("CADCRAFT_HIGHLIGHT_SHOTS") {
+        if let Some(dir) = std::env::var_os("FORJA_HIGHLIGHT_SHOTS") {
             let dir = std::path::PathBuf::from(dir);
             std::fs::create_dir_all(&dir).unwrap();
             let mut h = egui_kittest::Harness::builder().with_size(vec2(600.0, 400.0)).build_ui(|ui| {
@@ -503,7 +503,7 @@ mod zoomed_highlight_tests {
     /// A one-segment polyline from `a` to `b`.
     fn line(a: Vec2, b: Vec2) -> DisplayList {
         let mut list = DisplayList { verts: vec![a, b], ..Default::default() };
-        list.prims.push(cadcraft_render::DPrim {
+        list.prims.push(forja_render::DPrim {
             handle: Handle(256),
             color: Rgb(255, 255, 255),
             aci7: true,

@@ -929,7 +929,7 @@
 	Specify insertion point	삽입점 지정
 	A drawing opened from a file keeps that file's format.	파일에서 연 도면은 해당 파일의 형식을 유지합니다.
 	An array that would create more objects than this is refused.	이 제한보다 많은 객체를 만드는 배열은 허용하지 않습니다.
-	Forja keeps these preferences, object snap modes and drafting toggles for your user account and restores them when it starts.	CADCraft는 이 환경설정, 객체 스냅 모드 및 제도 기능의 켜기/끄기 상태를 사용자 계정에 저장하고 시작할 때 복원합니다.
+	Forja keeps these preferences, object snap modes and drafting toggles for your user account and restores them when it starts.	Forja는 이 환경설정, 객체 스냅 모드 및 제도 기능의 켜기/끄기 상태를 사용자 계정에 저장하고 시작할 때 복원합니다.
 	Changes apply at once and are kept for next time.	변경 사항은 즉시 적용되며 다음 실행에도 유지됩니다.
 	Command line history	명령행 기록
 	Copy as JSON	JSON으로 복사
@@ -1242,7 +1242,7 @@ menu	Draw	그리기
 menu	Dimension	치수
 menu	Modify	수정
 	Check for Updates…	업데이트 확인…
-	Forja is up to date.	CADCraft가 최신 버전입니다.
+	Forja is up to date.	Forja가 최신 버전입니다.
 	Could not check for updates.	업데이트를 확인하지 못했습니다.
 	Find All	Find All
 	Find what:	Find what:

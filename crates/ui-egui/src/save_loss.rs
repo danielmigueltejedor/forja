@@ -1,6 +1,6 @@
 //! Asking before a save throws content away. DWG can't yet hold everything a drawing read from
-//! another program keeps (`cadcraft_engine::cmd::file::not_saved`), a DXF of 2013 or later can't
-//! hold a solid's SAT text (`cadcraft_doc::foreign::sat_text_dropped`), and QSAVE replaces the file
+//! another program keeps (`forja_engine::cmd::file::not_saved`), a DXF of 2013 or later can't
+//! hold a solid's SAT text (`forja_doc::foreign::sat_text_dropped`), and QSAVE replaces the file
 //! that still has it, so File ▸ Save, its shortcut or typing QSAVE says what would go first:
 //! Save Anyway / Save As... / Cancel. Agreeing lasts for that same loss on that same file, so
 //! later saves in the session don't ask again; the file no longer holds what was agreed to.
@@ -13,8 +13,8 @@ use std::collections::BTreeMap;
 use egui::{RichText, vec2};
 use serde_json::{Value, json};
 
-use cadcraft_engine::autosave::isavebak;
-use cadcraft_engine::cmd::file::{backup_path, loss_on_save, save_keeps_current};
+use forja_engine::autosave::isavebak;
+use forja_engine::cmd::file::{backup_path, loss_on_save, save_keeps_current};
 
 use crate::CadApp;
 use crate::theme::Tokens;

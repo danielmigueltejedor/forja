@@ -104,16 +104,16 @@ fn dsettings(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
             tracking_options(ui, s);
             ui.separator();
             ui.heading(crate::tl!("Object Snap"));
-            let mut on = s.osmode & cadcraft_engine::snap::mode::OFF == 0;
+            let mut on = s.osmode & forja_engine::snap::mode::OFF == 0;
             if ui.check(&mut on, crate::tl!("Object Snap On (F3)")).changed() {
                 if on {
-                    s.osmode &= !cadcraft_engine::snap::mode::OFF;
+                    s.osmode &= !forja_engine::snap::mode::OFF;
                 } else {
-                    s.osmode |= cadcraft_engine::snap::mode::OFF;
+                    s.osmode |= forja_engine::snap::mode::OFF;
                 }
             }
             egui::Grid::new("osnap_grid").num_columns(2).show(ui, |ui| {
-                for (i, (bit, name)) in cadcraft_engine::snap::mode::ALL.iter().enumerate() {
+                for (i, (bit, name)) in forja_engine::snap::mode::ALL.iter().enumerate() {
                     let mut v = s.osmode & bit != 0;
                     if ui.check(&mut v, crate::i18n::t(name)).changed() {
                         if v {
@@ -159,8 +159,8 @@ fn dsettings(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
 /// The polar and object snap tracking options of Drafting Settings: additional angles
 /// (POLARMODE bit 4, POLARADDANG), tracking on every polar angle (bit 2) and angles relative to
 /// the last segment (bit 1).
-fn tracking_options(ui: &mut egui::Ui, s: &mut cadcraft_engine::Settings) {
-    use cadcraft_engine::snap::tracking::polarmode;
+fn tracking_options(ui: &mut egui::Ui, s: &mut forja_engine::Settings) {
+    use forja_engine::snap::tracking::polarmode;
     /// A radio button for POLARMODE `bit` being `on`.
     fn flag(ui: &mut egui::Ui, flags: &mut u32, bit: u32, on: bool, label: &str) {
         if ui.choice((*flags & bit != 0) == on, label).clicked() {
@@ -175,11 +175,11 @@ fn tracking_options(ui: &mut egui::Ui, s: &mut cadcraft_engine::Settings) {
         }
         // The list as typed (degrees separated by `;`), kept while it doesn't parse yet.
         let id = ui.scope_id().with("polaraddang");
-        let shown = cadcraft_engine::sysvars::format_angle_list(&s.polaraddang);
+        let shown = forja_engine::sysvars::format_angle_list(&s.polaraddang);
         let mut text = ui.data_mut(|d| d.get_temp::<String>(id)).unwrap_or_else(|| shown.clone());
         let resp = ui.add_enabled(additional, egui::TextEdit::singleline(&mut text).desired_width(140.0)).labelled_by(additional_label.id);
         if resp.changed()
-            && let Some(angles) = cadcraft_engine::sysvars::parse_angle_list(&text)
+            && let Some(angles) = forja_engine::sysvars::parse_angle_list(&text)
         {
             s.polaraddang = angles;
         }
@@ -247,7 +247,7 @@ fn pick(ui: &mut egui::Ui, salt: &str, value: &mut i64, options: &[(i64, String)
 /// Length precision choices for a LUNITS format. Architectural (4) and Fractional (5) step through
 /// binary fractions of an inch (LUPREC n is 1/2^n, 0 is whole inches); the other formats show a decimal sample.
 fn length_precisions(lunits: i64) -> Vec<(i64, String)> {
-    use cadcraft_engine::units::format_distance;
+    use forja_engine::units::format_distance;
     if matches!(lunits, 4 | 5) {
         (0..=8).map(|p| (p, if p == 0 { "1\"".to_string() } else { format!("1/{}\"", 1i64 << p) })).collect()
     } else {
@@ -258,7 +258,7 @@ fn length_precisions(lunits: i64) -> Vec<(i64, String)> {
 /// Drawing Units (UNITS): edits a copy of LUNITS/LUPREC/AUNITS/AUPREC/INSUNITS and applies it
 /// through the `units` command on OK.
 fn units(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
-    use cadcraft_engine::units::{format_angle, format_distance};
+    use forja_engine::units::{format_angle, format_distance};
     let id = egui::Id::unique("units_dialog_values");
     let mut v = ctx.data_mut(|d| d.get_temp::<[i64; 5]>(id)).unwrap_or_else(|| {
         app.session
@@ -341,7 +341,7 @@ fn commands(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
             let f = filter.to_lowercase();
             egui::ScrollArea::vertical().show(ui, |ui| {
                 egui::Grid::new("cmdref").striped(true).num_columns(3).show(ui, |ui| {
-                    for c in cadcraft_engine::command_specs() {
+                    for c in forja_engine::command_specs() {
                         if !f.is_empty()
                             && !c.id.contains(&f)
                             && !c.label.to_ascii_lowercase().contains(&f)
@@ -392,7 +392,7 @@ fn insert_block(app: &mut CadApp, name: &str) {
     if app.session.running.as_ref().is_none_or(|r| r.id != "insert") {
         return;
     }
-    if let Err(e) = app.session.input(cadcraft_engine::Input::Text(name.to_string())) {
+    if let Err(e) = app.session.input(forja_engine::Input::Text(name.to_string())) {
         app.session.echo(e.to_string());
     }
 }
@@ -416,9 +416,9 @@ fn language(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
 
 #[cfg(test)]
 mod tests {
-    use cadcraft_engine::doc::EntityKind;
-    use cadcraft_engine::geom::Vec2;
-    use cadcraft_engine::{Input, Session};
+    use forja_engine::doc::EntityKind;
+    use forja_engine::geom::Vec2;
+    use forja_engine::{Input, Session};
     use serde_json::json;
 
     use crate::{CadApp, Services};

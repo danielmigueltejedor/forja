@@ -4,8 +4,8 @@ use acadrust::classes::DxfClass;
 use acadrust::entities::{EntityCommon, EntityType, ExtendedEntity, ExtendedEntityData, Line, RegisteredClassEntityData};
 use acadrust::objects::{ProxyObjectReference, ProxyPayload, ProxyReferenceKind};
 use acadrust::types::{DxfVersion, Vector3};
-use cadcraft_doc::EntityKind;
-use cadcraft_io::{SaveOptions, Version};
+use forja_doc::EntityKind;
+use forja_io::{SaveOptions, Version};
 use std::io::Cursor;
 
 fn source(version: DxfVersion) -> Vec<u8> {
@@ -32,8 +32,8 @@ fn source_payload(version: DxfVersion, payload: ProxyPayload) -> Vec<u8> {
     acadrust::DwgWriter::write_to_vec(&document).unwrap()
 }
 
-fn check(bytes: &[u8], name: &str) -> cadcraft_doc::Drawing {
-    let drawing = cadcraft_io::read(bytes, name).unwrap();
+fn check(bytes: &[u8], name: &str) -> forja_doc::Drawing {
+    let drawing = forja_io::read(bytes, name).unwrap();
     assert_eq!(drawing.entity_count(), 2);
     let line = drawing.model.iter().find(|e| matches!(e.kind, EntityKind::Line(_))).unwrap().handle;
     let unknown = drawing
@@ -45,11 +45,11 @@ fn check(bytes: &[u8], name: &str) -> cadcraft_doc::Drawing {
         })
         .unwrap();
     assert!(unknown.tags.iter().any(|t| t.code == 340 && t.value == line.hex()));
-    let dxf = if name.ends_with(".dwg") { cadcraft_dwg::dwg_to_dxf(bytes).unwrap() } else { bytes.to_vec() };
-    let tags = cadcraft_dxf::parse(&dxf).unwrap();
-    let sections = cadcraft_dxf::sections(&tags);
+    let dxf = if name.ends_with(".dwg") { forja_dwg::dwg_to_dxf(bytes).unwrap() } else { bytes.to_vec() };
+    let tags = forja_dxf::parse(&dxf).unwrap();
+    let sections = forja_dxf::sections(&tags);
     let classes = sections.iter().find(|s| s.name == "CLASSES").unwrap();
-    let classes = cadcraft_dxf::records(&classes.tags);
+    let classes = forja_dxf::records(&classes.tags);
     let decoded = acadrust::DxfReader::from_reader(Cursor::new(dxf)).unwrap().read().unwrap();
     let proxy = decoded
         .entities()
@@ -79,7 +79,7 @@ fn opaque_registered_entities_survive_repeated_saves_with_their_original_class()
             for name in ["copy.dxf", "copy.dwg"] {
                 let mut drawing = initial.clone();
                 for _ in 0..3 {
-                    let bytes = cadcraft_io::write_with(&drawing, name, &SaveOptions { version: Some(target), ..Default::default() }).unwrap();
+                    let bytes = forja_io::write_with(&drawing, name, &SaveOptions { version: Some(target), ..Default::default() }).unwrap();
                     drawing = check(&bytes, name);
                 }
             }
@@ -93,11 +93,11 @@ fn legacy_dwg_leaves_proxies_out_while_legacy_dxf_retains_the_data() {
     for target in [Version::R2000, Version::R2004, Version::R2007, Version::R2010] {
         let options = SaveOptions { version: Some(target), ..Default::default() };
         // A DWG before 2013 can't name the proxy's class: it is left out, and the rest is saved.
-        let bytes = cadcraft_io::write_with(&drawing, "old.dwg", &options).unwrap();
-        let reread = cadcraft_io::read(&bytes, "old.dwg").unwrap();
+        let bytes = forja_io::write_with(&drawing, "old.dwg", &options).unwrap();
+        let reread = forja_io::read(&bytes, "old.dwg").unwrap();
         assert_eq!(reread.entity_count(), 1, "{target:?}");
         assert!(reread.model.iter().all(|e| matches!(e.kind, EntityKind::Line(_))), "{target:?}");
-        let bytes = cadcraft_io::write_with(&drawing, "old.dxf", &options).unwrap();
+        let bytes = forja_io::write_with(&drawing, "old.dxf", &options).unwrap();
         check(&bytes, "old.dxf");
     }
 }
@@ -119,15 +119,15 @@ fn duplicate_class_dxf() -> Vec<u8> {
 fn duplicate_names_keep_distinct_classes_for_entities_and_dictionary_objects() {
     let source = duplicate_class_dxf();
     for binary in [false, true] {
-        let input = if binary { cadcraft_dxf::write_binary(&cadcraft_dxf::parse(&source).unwrap(), true) } else { source.clone() };
-        let mut drawing = cadcraft_io::read(&input, "source.dxf").unwrap();
+        let input = if binary { forja_dxf::write_binary(&forja_dxf::parse(&source).unwrap(), true) } else { source.clone() };
+        let mut drawing = forja_io::read(&input, "source.dxf").unwrap();
         for _ in 0..3 {
             for name in ["copy.dxf", "copy.dwg"] {
-                let bytes = cadcraft_io::write_with(&drawing, name, &SaveOptions { version: Some(Version::R2018), ..Default::default() }).unwrap();
-                let dxf = if name.ends_with(".dwg") { cadcraft_dwg::dwg_to_dxf(&bytes).unwrap() } else { bytes.clone() };
-                let tags = cadcraft_dxf::parse(&dxf).unwrap();
-                let sections = cadcraft_dxf::sections(&tags);
-                let classes = cadcraft_dxf::records(&sections.iter().find(|s| s.name == "CLASSES").unwrap().tags);
+                let bytes = forja_io::write_with(&drawing, name, &SaveOptions { version: Some(Version::R2018), ..Default::default() }).unwrap();
+                let dxf = if name.ends_with(".dwg") { forja_dwg::dwg_to_dxf(&bytes).unwrap() } else { bytes.clone() };
+                let tags = forja_dxf::parse(&dxf).unwrap();
+                let sections = forja_dxf::sections(&tags);
+                let classes = forja_dxf::records(&sections.iter().find(|s| s.name == "CLASSES").unwrap().tags);
                 let custom: Vec<_> = classes.iter().filter(|(_, t)| t.iter().any(|t| t.code == 1 && t.str() == "CUSTOM")).collect();
                 assert_eq!(custom.len(), 3);
                 for (class, (cpp, flags)) in custom.iter().zip([("First", 1025), ("Second", 128), ("Object", 17)]) {
@@ -137,7 +137,7 @@ fn duplicate_names_keep_distinct_classes_for_entities_and_dictionary_objects() {
                     assert!(class.1.iter().any(|t| t.code == 280 && t.i64() == 1));
                 }
                 let records: Vec<_> =
-                    sections.iter().flat_map(|s| cadcraft_dxf::records(&s.tags)).filter(|(kind, _)| kind.starts_with("ACAD_PROXY_")).collect();
+                    sections.iter().flat_map(|s| forja_dxf::records(&s.tags)).filter(|(kind, _)| kind.starts_with("ACAD_PROXY_")).collect();
                 assert_eq!(records.len(), 3);
                 let mut identities = Vec::new();
                 for (_, tags) in &records {
@@ -148,7 +148,7 @@ fn duplicate_names_keep_distinct_classes_for_entities_and_dictionary_objects() {
                 }
                 identities.sort();
                 assert_eq!(identities, ["First", "Object", "Second"]);
-                drawing = cadcraft_io::read(&bytes, name).unwrap();
+                drawing = forja_io::read(&bytes, name).unwrap();
                 assert_eq!(drawing.entity_count(), 3);
                 let line = drawing.model.iter().find(|e| matches!(e.kind, EntityKind::Line(_))).unwrap().handle.hex();
                 for entity in drawing.model.iter().filter_map(|e| if let EntityKind::Unknown(u) = &e.kind { Some(u) } else { None }) {
@@ -164,10 +164,10 @@ fn duplicate_names_keep_distinct_classes_for_entities_and_dictionary_objects() {
 #[test]
 fn zero_bit_opaque_entities_are_still_retained() {
     let source = source_payload(DxfVersion::AC1032, ProxyPayload::default());
-    let mut drawing = cadcraft_io::read(&source, "source.dwg").unwrap();
+    let mut drawing = forja_io::read(&source, "source.dwg").unwrap();
     for name in ["copy.dxf", "copy.dwg", "again.dwg"] {
-        let bytes = cadcraft_io::write_with(&drawing, name, &SaveOptions { version: Some(Version::R2018), ..Default::default() }).unwrap();
-        drawing = cadcraft_io::read(&bytes, name).unwrap();
+        let bytes = forja_io::write_with(&drawing, name, &SaveOptions { version: Some(Version::R2018), ..Default::default() }).unwrap();
+        drawing = forja_io::read(&bytes, name).unwrap();
         assert_eq!(drawing.entity_count(), 2);
         assert!(drawing.model.iter().any(|e| matches!(e.kind, EntityKind::Unknown(_))));
     }
@@ -175,7 +175,7 @@ fn zero_bit_opaque_entities_are_still_retained() {
 
 #[test]
 fn proxies_inside_block_definitions_survive_repeated_saves() {
-    use cadcraft_doc::{Block, Common, Entity};
+    use forja_doc::{Block, Common, Entity};
     let mut drawing = check(&source(DxfVersion::AC1032), "source.dwg");
     let kind = drawing.model.iter().find(|e| matches!(e.kind, EntityKind::Unknown(_))).unwrap().kind.clone();
     let handle = drawing.new_handle();
@@ -183,7 +183,7 @@ fn proxies_inside_block_definitions_survive_repeated_saves() {
     block.entities.push(Entity { handle, common: Common::default(), kind });
     drawing.blocks.insert("CUSTOM_BLOCK".into(), std::sync::Arc::new(block));
     for name in ["copy.dxf", "copy.dwg", "again.dwg"] {
-        let bytes = cadcraft_io::write_with(&drawing, name, &SaveOptions { version: Some(Version::R2018), ..Default::default() }).unwrap();
+        let bytes = forja_io::write_with(&drawing, name, &SaveOptions { version: Some(Version::R2018), ..Default::default() }).unwrap();
         drawing = check(&bytes, name);
         let block = drawing.blocks.get("CUSTOM_BLOCK").unwrap();
         assert_eq!(block.entities.len(), 1);
@@ -197,8 +197,8 @@ fn unused_malformed_classes_do_not_block_plain_geometry() {
         let dxf = format!(
             "0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1032\n0\nENDSEC\n0\nSECTION\n2\nCLASSES\n0\nCLASS\n1\n{name}\n2\n{cpp}\n3\nSynthetic\n90\n{flags}\n91\n{count}\n281\n1\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n0\nLINE\n5\n10\n100\nAcDbEntity\n8\n0\n100\nAcDbLine\n10\n2\n20\n3\n11\n12\n21\n13\n0\nENDSEC\n0\nEOF\n"
         );
-        let bytes = cadcraft_dwg::dxf_to_dwg_as(dxf.as_bytes(), "AC1032").unwrap();
-        let drawing = cadcraft_io::read(&bytes, "plain.dwg").unwrap();
+        let bytes = forja_dwg::dxf_to_dwg_as(dxf.as_bytes(), "AC1032").unwrap();
+        let drawing = forja_io::read(&bytes, "plain.dwg").unwrap();
         let lines: Vec<_> = drawing.model.iter().filter_map(|e| if let EntityKind::Line(l) = &e.kind { Some(l) } else { None }).collect();
         assert_eq!(lines.len(), 1);
         assert_eq!(lines[0].a.x, 2.0);
@@ -213,25 +213,22 @@ fn proxy_spelling_is_preserved_in_dxf_and_normalized_only_for_dwg() {
     let source = String::from_utf8(duplicate_class_dxf()).unwrap();
     for (entity, object) in [("acad_proxy_entity", "acad_proxy_object"), ("AcAd_PrOxY_EnTiTy", "AcAd_PrOxY_ObJeCt")] {
         let dxf = source.replace("ACAD_PROXY_ENTITY", entity).replace("ACAD_PROXY_OBJECT", object);
-        let drawing = cadcraft_io::read(dxf.as_bytes(), "source.dxf").unwrap();
+        let drawing = forja_io::read(dxf.as_bytes(), "source.dxf").unwrap();
         assert_eq!(drawing.entity_count(), 3);
-        let out = cadcraft_io::write_with(&drawing, "copy.dxf", &SaveOptions { version: Some(Version::R2018), ..Default::default() }).unwrap();
-        let tags = cadcraft_dxf::parse(&out).unwrap();
+        let out = forja_io::write_with(&drawing, "copy.dxf", &SaveOptions { version: Some(Version::R2018), ..Default::default() }).unwrap();
+        let tags = forja_dxf::parse(&out).unwrap();
         assert!(tags.iter().any(|t| t.code == 0 && t.str() == entity));
-        let bytes = cadcraft_io::write_with(&drawing, "copy.dwg", &SaveOptions { version: Some(Version::R2018), ..Default::default() }).unwrap();
-        let decoded = cadcraft_dwg::dwg_to_dxf(&bytes).unwrap();
-        let tags = cadcraft_dxf::parse(&decoded).unwrap();
-        let proxies: Vec<_> = cadcraft_dxf::sections(&tags)
-            .iter()
-            .flat_map(|s| cadcraft_dxf::records(&s.tags))
-            .filter(|(kind, _)| kind.starts_with("ACAD_PROXY_"))
-            .collect();
+        let bytes = forja_io::write_with(&drawing, "copy.dwg", &SaveOptions { version: Some(Version::R2018), ..Default::default() }).unwrap();
+        let decoded = forja_dwg::dwg_to_dxf(&bytes).unwrap();
+        let tags = forja_dxf::parse(&decoded).unwrap();
+        let proxies: Vec<_> =
+            forja_dxf::sections(&tags).iter().flat_map(|s| forja_dxf::records(&s.tags)).filter(|(kind, _)| kind.starts_with("ACAD_PROXY_")).collect();
         assert_eq!(proxies.len(), 3);
         for (_, tags) in proxies {
             assert!(tags.iter().any(|t| t.code == 310 && t.str() == "A580"));
             assert!(tags.iter().any(|t| matches!(t.code, 93 | 161) && t.i64() == 9));
         }
-        let recovered = cadcraft_io::read(&bytes, "copy.dwg").unwrap();
+        let recovered = forja_io::read(&bytes, "copy.dwg").unwrap();
         assert_eq!(recovered.entity_count(), 3);
     }
 }
@@ -239,7 +236,7 @@ fn proxy_spelling_is_preserved_in_dxf_and_normalized_only_for_dwg() {
 /// Exercise the actual ASCII bridge, which writes Unicode as CIF escapes.
 #[test]
 fn unicode_class_identity_survives_the_ascii_bridge() {
-    let mut tags = cadcraft_dxf::parse(&duplicate_class_dxf()).unwrap();
+    let mut tags = forja_dxf::parse(&duplicate_class_dxf()).unwrap();
     for tag in &mut tags {
         let text = tag.str();
         let replacement = match (tag.code, text.as_str()) {
@@ -251,14 +248,14 @@ fn unicode_class_identity_survives_the_ascii_bridge() {
             _ => None,
         };
         if let Some(text) = replacement {
-            *tag = cadcraft_dxf::Tag::s(tag.code, text);
+            *tag = forja_dxf::Tag::s(tag.code, text);
         }
     }
-    let text = cadcraft_dxf::write_ascii(&tags);
+    let text = forja_dxf::write_ascii(&tags);
     assert!(text.contains("\\U+"));
-    let mut drawing = cadcraft_io::read(text.as_bytes(), "unicode.dxf").unwrap();
+    let mut drawing = forja_io::read(text.as_bytes(), "unicode.dxf").unwrap();
     for _ in 0..2 {
-        let bytes = cadcraft_io::write_with(&drawing, "copy.dwg", &SaveOptions { version: Some(Version::R2018), ..Default::default() }).unwrap();
+        let bytes = forja_io::write_with(&drawing, "copy.dwg", &SaveOptions { version: Some(Version::R2018), ..Default::default() }).unwrap();
         let decoded = acadrust::DwgReader::from_stream(std::io::Cursor::new(&bytes)).read().unwrap();
         let classes: Vec<_> = decoded.classes.iter().filter(|c| c.dxf_name == "Объект").collect();
         assert_eq!(classes.len(), 3);
@@ -266,7 +263,7 @@ fn unicode_class_identity_survives_the_ascii_bridge() {
             assert_eq!(class.cpp_class_name, cpp);
             assert_eq!(class.application_name, "Café🙂");
         }
-        drawing = cadcraft_io::read(&bytes, "copy.dwg").unwrap();
+        drawing = forja_io::read(&bytes, "copy.dwg").unwrap();
         assert_eq!(drawing.entity_count(), 3);
     }
 }
@@ -286,10 +283,10 @@ fn ambiguous_fallback_classes_are_reported_without_losing_plain_geometry() {
             source = source.replace("1\nCUSTOM\n2\nSecond", "1\n\\U+0043USTOM\n2\nSecond");
             source = source.replace("1\nCUSTOM\n2\nObject", "1\nOTHER\n2\nObject");
         }
-        let (bytes, unwritten) = cadcraft_dwg::dxf_to_dwg_noted(source.as_bytes(), "AC1032").unwrap();
+        let (bytes, unwritten) = forja_dwg::dxf_to_dwg_noted(source.as_bytes(), "AC1032").unwrap();
         assert_eq!(unwritten.get("ACAD_PROXY_ENTITY"), Some(&2));
         assert_eq!(unwritten.get("ACAD_PROXY_OBJECT"), if escaped { None } else { Some(&1) });
-        let drawing = cadcraft_io::read(&bytes, "copy.dwg").unwrap();
+        let drawing = forja_io::read(&bytes, "copy.dwg").unwrap();
         assert_eq!(drawing.entity_count(), 1);
         assert!(drawing.model.iter().all(|e| matches!(e.kind, EntityKind::Line(_))));
     }

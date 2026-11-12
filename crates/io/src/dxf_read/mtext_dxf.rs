@@ -5,8 +5,8 @@
 //! ATTRIB and DIMENSION strings use the same encoding ([`encode_line`]): AutoCAD reads a bare
 //! `^2` in `10^2` as a control character.
 
-use cadcraft_doc::{MText, MTextColumnType, MTextColumns};
-use cadcraft_dxf::Tag;
+use forja_doc::{MText, MTextColumnType, MTextColumns};
+use forja_dxf::Tag;
 
 /// Upper bound on column heights read from a file.
 const MAX_COLUMNS: usize = 1_000;
@@ -119,7 +119,7 @@ pub(crate) fn read_columns(tags: &[Tag]) -> Option<(MTextColumns, f64)> {
     let cols = tags.get(start..).unwrap_or_default();
     let first = |code: i32| cols.iter().find(|t| t.code == code).copied();
     // The first 50 is the number of heights that follow, unless the file predates the count
-    // (CADCraft up to f536bf4 wrote the n heights of group 76 alone).
+    // (Forja up to f536bf4 wrote the n heights of group 76 alone).
     let fifties = cols.iter().filter(|t| t.code == 50);
     let counted = first(76).is_some_and(|t| fifties.clone().count() as i64 - 1 == t.i64());
     let heights: Vec<f64> = fifties.skip(usize::from(counted)).take(MAX_COLUMNS).map(|t| finite(t.f64()).max(0.0)).collect();

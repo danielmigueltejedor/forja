@@ -1,6 +1,6 @@
-//! The CADCraft egui front end.
+//! The Forja egui front end.
 //!
-//! A thin shell over [`cadcraft_engine::Session`]: panels read engine state and act through
+//! A thin shell over [`forja_engine::Session`]: panels read engine state and act through
 //! commands (`app.run(id, params)`) or the command line (`app.cmdline(text)`). Nothing here owns
 //! drawing data. The layout follows the familiar CAD desktop: title and tool bar, file tabs,
 //! Tool Sets on the left, the drawing area with its command line, Layers and Properties on the
@@ -10,10 +10,10 @@
 
 /// Forja as craft-update knows it, with its 128 px icon and accent colour: the update prompt
 /// shows both, and an AppImage's menu entry gets the icon. Updates come only from Forja's own
-/// releases, never from upstream CADCraft's.
+/// releases.
 #[cfg(not(target_arch = "wasm32"))]
 pub const UPDATE_APP: craft_update::app::App = craft_update::app::App {
-    icon_png: Some(include_bytes!("../../../assets/app-icon/hicolor/128x128/apps/ai.storyteller.forja.png")),
+    icon_png: Some(include_bytes!("../../../assets/app-icon/hicolor/128x128/apps/dev.danielmiguelt.Forja.png")),
     accent: Some([0xbe, 0x7c, 0x4c]),
     developer: "Nodalia",
     ..craft_update::app::App::new("forja", "Forja", "2D drafting and DWG/DXF", "danielmigueltejedor/forja")
@@ -81,14 +81,14 @@ pub mod exchange;
 use std::path::Path;
 use std::sync::mpsc::Receiver;
 
-use cadcraft_engine::Session;
+use forja_engine::Session;
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
 pub use control::{ControlRequest, ControlResponse, PendingReply};
 
 /// The host storage key for [`CadApp::prefs_json`].
-pub const PREFS_KEY: &str = "cadcraft.prefs";
+pub const PREFS_KEY: &str = "forja.prefs";
 
 /// How many recently opened drawings are kept (AutoCAD's default for its file history).
 pub const RECENT_FILES: usize = 9;
@@ -147,14 +147,14 @@ pub struct UiState {
 }
 
 /// A DXF/DWG file version (2000 … 2018).
-pub use cadcraft_engine::cmd::file::Version as SaveVersion;
+pub use forja_engine::cmd::file::Version as SaveVersion;
 
 /// The default save format, like AutoCAD's Options > Open and Save > "Save as": the format Save As
 /// suggests for every drawing, an opened DWG or DXF too. Save (QSAVE) of an opened file keeps its file.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum SaveFormat {
-    /// CADCraft's native format, and the default.
+    /// Forja's native format, and the default.
     #[default]
     Dxf,
     Dwg,
@@ -318,7 +318,7 @@ pub struct CadApp {
     /// The loss the user last agreed to, so saving again doesn't ask again ([`save_loss`]).
     pub save_loss_accepted: Option<save_loss::Accepted>,
     /// Autosave (desktop; `None` until [`Self::enable_autosave`]).
-    pub autosave: Option<cadcraft_engine::autosave::Autosaver>,
+    pub autosave: Option<forja_engine::autosave::Autosaver>,
     /// Drawing Recovery: autosave files a crashed app left behind.
     pub recovery: autosave::Recovery,
     /// GPU errors and device loss reported by wgpu ([`gpu::GpuFaults`]).
@@ -468,7 +468,7 @@ impl CadApp {
         }
         let e = match (self.session.cmdline(text), fallback) {
             (Ok(()), _) => return None,
-            (Err(cadcraft_engine::EngineError::UnknownCommand(_)), Some(f)) => return self.cmdline(f),
+            (Err(forja_engine::EngineError::UnknownCommand(_)), Some(f)) => return self.cmdline(f),
             (Err(e), _) => e.to_string(),
         };
         self.session.echo(e.clone());
@@ -576,7 +576,7 @@ impl CadApp {
     pub fn open_path(&mut self, path: &Path) {
         // A LISP file (dropped on the window): loaded as APPLOAD loads it.
         if is_lisp_file(path) {
-            match cadcraft_engine::lisp::builtins::read_text_file(path) {
+            match forja_engine::lisp::builtins::read_text_file(path) {
                 Some(text) => self.load_lisp(&path.to_string_lossy(), &text),
                 None => self.open_failed(format!("APPLOAD: can't read {}", path.display())),
             }
@@ -647,7 +647,7 @@ impl CadApp {
         if is_lisp_file(name) {
             return self.load_lisp(name, &String::from_utf8_lossy(bytes));
         }
-        let data = cadcraft_engine::cmd::file::base64_encode(bytes);
+        let data = forja_engine::cmd::file::base64_encode(bytes);
         let r = self.run("open", json!({ "data": data, "name": name }));
         self.opened(r);
     }
@@ -677,7 +677,7 @@ impl CadApp {
                     self.set_status(w.to_string());
                 }
                 // A dynamic block's own drawing: ask whether to open it in the Block Editor.
-                if self.session.state().is_ok_and(|st| cadcraft_engine::blockedit::has_authoring_elements(&st.doc)) {
+                if self.session.state().is_ok_and(|st| forja_engine::blockedit::has_authoring_elements(&st.doc)) {
                     self.ui.dialog = Some("authoring".into());
                 }
             }
@@ -1033,7 +1033,7 @@ mod tests {
     /// AutoLISP slice) belongs to the frame, not to a pass.
     #[test]
     fn a_two_pass_frame_runs_frame_logic_once() {
-        use cadcraft_engine::lisp::value::Value;
+        use forja_engine::lisp::value::Value;
 
         let routine = "(setq cc-two 0) (while (< cc-two 400000) (setq cc-two (1+ cc-two)))";
         let start = |app: &mut CadApp| {
@@ -1070,7 +1070,7 @@ mod tests {
         tx.send(request).expect("the request is queued");
         let ctx = egui::Context::default();
         two_pass_frame(&mut app, &ctx);
-        let entities = app.session.doc().map(cadcraft_doc::Drawing::entity_count).unwrap_or_default();
+        let entities = app.session.doc().map(forja_doc::Drawing::entity_count).unwrap_or_default();
         assert_eq!(entities, 1, "one command ran once, in the first pass");
         let reply = reply.wait(Duration::from_secs(1));
         assert_eq!(reply["ok"], true, "{reply}");
@@ -1093,7 +1093,7 @@ mod tests {
     /// Repeated hidden logic-only ticks finish a long Lisp routine (`CC-HIDDEN` reaches 400000) while `ui_frames` stays 0.
     #[test]
     fn hidden_logic_advances_a_long_lisp_routine_without_a_ui_pass() {
-        use cadcraft_engine::lisp::value::Value;
+        use forja_engine::lisp::value::Value;
 
         let mut a = CadApp::new(Session::new(), Services::default());
         let ctx = egui::Context::default();

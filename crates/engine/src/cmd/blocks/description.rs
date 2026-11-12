@@ -4,7 +4,7 @@
 
 use std::sync::Arc;
 
-use cadcraft_doc::Block;
+use forja_doc::Block;
 use serde_json::{Value, json};
 
 use super::bedit::selected_reference;

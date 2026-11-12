@@ -1,8 +1,8 @@
 //! The "Default" lineweight is the width LWDEFAULT names (issue #292).
 
-use cadcraft_doc::{Common, Drawing, EntityKind, Line, Lineweight, Space};
-use cadcraft_geom::Vec3;
-use cadcraft_render::{Kind, Options, build};
+use forja_doc::{Common, Drawing, EntityKind, Line, Lineweight, Space};
+use forja_geom::Vec3;
+use forja_render::{Kind, Options, build};
 
 /// Lineweights (mm) of a ByLayer line on layer 0 (lineweight Default) and an explicit 0.50 mm line.
 fn widths(lwdefault: Option<i64>) -> Vec<f32> {

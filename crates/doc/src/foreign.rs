@@ -1,4 +1,4 @@
-//! Data from a drawing file that CADCraft does not model, kept so that saving the drawing writes
+//! Data from a drawing file that Forja does not model, kept so that saving the drawing writes
 //! it back: other programs' objects, extension dictionaries, xdata and properties (#528).
 //!
 //! It is kept as the file's own DXF groups, with the file's handles. The file reader fills it and
@@ -10,13 +10,13 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::{Handle, RawTag};
 
-/// What a file handle stood for when the object it named is one CADCraft writes itself (under a
+/// What a file handle stood for when the object it named is one Forja writes itself (under a
 /// new handle on save): a kind and an upper-case name, e.g. `("LAYER", "WALLS")`,
 /// `("TABLE", "LAYER")`, `("BLOCK", "DOOR")`, `("NOD", "")` for the named object dictionary and
 /// `("NOD", "ACAD_GROUP")` for one of its entries.
 pub type ForeignKey = (String, String);
 
-/// A non-graphical object of a type or role CADCraft does not model.
+/// A non-graphical object of a type or role Forja does not model.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct ForeignObject {
     /// Its handle in the file it came from (kept on save).
@@ -27,7 +27,7 @@ pub struct ForeignObject {
     pub tags: Vec<RawTag>,
 }
 
-/// What an entity, table record or block carries beyond what CADCraft models.
+/// What an entity, table record or block carries beyond what Forja models.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct ForeignExtra {
     /// Its extension dictionary (one of [`Foreign::objects`]).
@@ -50,7 +50,7 @@ impl ForeignExtra {
     }
 }
 
-/// Everything of a file CADCraft keeps without modelling it.
+/// Everything of a file Forja keeps without modelling it.
 #[derive(Clone, Debug, Default, PartialEq)]
 pub struct Foreign {
     /// CLASS records (groups after `0 CLASS`) of the kept objects' and entities' types.
@@ -59,14 +59,14 @@ pub struct Foreign {
     pub complete_class_table: bool,
     /// Kept objects, in file order.
     pub objects: Vec<ForeignObject>,
-    /// Entries of the named object dictionary that CADCraft doesn't write itself: (key, object).
+    /// Entries of the named object dictionary that Forja doesn't write itself: (key, object).
     pub dictionary: Vec<(String, Handle)>,
     /// Extras of entities, by handle.
     pub entities: BTreeMap<Handle, ForeignExtra>,
     /// Extras of table records (`("LAYER", "WALLS")`), tables (`("TABLE", "LAYER")`) and blocks
     /// (`("BLOCK", "DOOR")`), by [`ForeignKey`].
     pub records: BTreeMap<ForeignKey, ForeignExtra>,
-    /// The roles of the file handles the kept data refers to, for objects CADCraft rewrites.
+    /// The roles of the file handles the kept data refers to, for objects Forja rewrites.
     pub targets: BTreeMap<Handle, ForeignKey>,
     /// The upper-case names of the file's classes in its CLASSES order, kept when the file has
     /// proxy objects or entities: a proxy's class number (group 91) is 500 plus its class's place

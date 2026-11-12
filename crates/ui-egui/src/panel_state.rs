@@ -1,11 +1,11 @@
 //! Additive migration of persisted panel sizes from the 0.36 root-id key to 0.37's
 //! `parent_ui.scope_id().with_salt(name)` key.
 //!
-//! CADCraft disables egui memory persistence today, but the app's own saved workspace or a host
+//! Forja disables egui memory persistence today, but the app's own saved workspace or a host
 //! that enables persistence must not lose a resized panel once. The old key is retained for
 //! rollback; a value already stored under the new key always wins.
 
-/// The top-level panel id salts used by CADCraft. Keep these strings stable: they are names in
+/// The top-level panel id salts used by Forja. Keep these strings stable: they are names in
 /// saved test fixtures and in `ui.elements` expectations, not disposable implementation details.
 pub(crate) const PANEL_IDS: &[&str] = &["cc_title_toolbar", "cc_menubar", "cc_status", "cc_file_tabs", "cc_toolsets_strip", "cc_palettes"];
 

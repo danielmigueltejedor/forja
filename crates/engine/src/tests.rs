@@ -1,5 +1,5 @@
-use cadcraft_doc::EntityKind;
-use cadcraft_geom::Vec2;
+use forja_doc::EntityKind;
+use forja_geom::Vec2;
 use serde_json::json;
 
 use crate::*;
@@ -185,10 +185,10 @@ fn json_execute_and_errors() {
 /// (#1602). The extents are still the fallback for a drawing that stores no view.
 #[test]
 fn a_drawing_opens_on_the_view_it_was_saved_at() {
-    let mut d = cadcraft_doc::Drawing::new_metric();
+    let mut d = forja_doc::Drawing::new_metric();
     for (a, b) in [([0.0, 0.0], [100.0, 60.0]), ([5e6, 5e6], [5e6 + 100.0, 5e6 + 60.0])] {
-        let line = cadcraft_doc::Line { a: cadcraft_geom::Vec3::new(a[0], a[1], 0.0), b: cadcraft_geom::Vec3::new(b[0], b[1], 0.0) };
-        d.add(&Space::Model, cadcraft_doc::Common::default(), EntityKind::Line(line)).unwrap();
+        let line = forja_doc::Line { a: forja_geom::Vec3::new(a[0], a[1], 0.0), b: forja_geom::Vec3::new(b[0], b[1], 0.0) };
+        d.add(&Space::Model, forja_doc::Common::default(), EntityKind::Line(line)).unwrap();
     }
     d.header.set_saved_view(Vec2::new(50.0, 50.0), 20.0);
 
@@ -207,7 +207,7 @@ fn a_drawing_opens_on_the_view_it_was_saved_at() {
 
     // A stored view that cannot be shown is no view at all.
     let mut broken = d;
-    broken.header.set("VIEWSIZE", cadcraft_doc::HVal::Real(0.0));
+    broken.header.set("VIEWSIZE", forja_doc::HVal::Real(0.0));
     let mut s = Session::new();
     s.open_drawing(broken, "broken-view.dxf", None);
     assert!(s.state().unwrap().view().height > 5e6, "{:?}", s.state().unwrap().view());
@@ -217,10 +217,10 @@ fn a_drawing_opens_on_the_view_it_was_saved_at() {
 /// one saved at a view keeps it, xref or not (#1626 review).
 #[test]
 fn a_drawing_with_an_xref_keeps_the_view_it_was_saved_at() {
-    let mut d = cadcraft_doc::Drawing::new_metric();
-    let line = cadcraft_doc::Line { a: cadcraft_geom::Vec3::ZERO, b: cadcraft_geom::Vec3::new(5e6, 5e6, 0.0) };
-    d.add(&Space::Model, cadcraft_doc::Common::default(), EntityKind::Line(line)).unwrap();
-    let mut xref = cadcraft_doc::Block::new("XR");
+    let mut d = forja_doc::Drawing::new_metric();
+    let line = forja_doc::Line { a: forja_geom::Vec3::ZERO, b: forja_geom::Vec3::new(5e6, 5e6, 0.0) };
+    d.add(&Space::Model, forja_doc::Common::default(), EntityKind::Line(line)).unwrap();
+    let mut xref = forja_doc::Block::new("XR");
     xref.xref_path = Some("missing-xref.dxf".into());
     d.blocks.insert("XR".into(), std::sync::Arc::new(xref));
     let mut plain = d.clone();
@@ -425,7 +425,7 @@ fn offset_circle_and_polyline() {
     let last = d.model.last().unwrap();
     match &last.kind {
         EntityKind::LwPolyline(p) => {
-            let b = cadcraft_geom::Bounds2::from_points(p.vertices.iter().map(|v| v.p));
+            let b = forja_geom::Bounds2::from_points(p.vertices.iter().map(|v| v.p));
             assert!(b.min.near(Vec2::new(1.0, 1.0), 1e-9), "{b:?}");
             assert!(b.max.near(Vec2::new(9.0, 9.0), 1e-9));
         }
@@ -442,7 +442,7 @@ fn copy_rotate_scale_mirror() {
     assert_eq!(s.doc().unwrap().model.len(), 4);
     s.execute("rotate", &json!({"handles": [h], "base": [0, 0], "angle": 90})).unwrap();
     s.execute("scale", &json!({"handles": [h], "base": [0, 0], "factor": 3})).unwrap();
-    let hh = cadcraft_doc::Handle::parse_hex(h.as_str().unwrap()).unwrap();
+    let hh = forja_doc::Handle::parse_hex(h.as_str().unwrap()).unwrap();
     let g = s.doc().unwrap().entity(hh).unwrap().kind.grips();
     assert!(g[2].near(Vec2::new(0.0, 3.0), 1e-9));
     s.execute("mirror", &json!({"handles": [h], "p1": [-1, 0], "p2": [-1, 1]})).unwrap();
@@ -537,24 +537,24 @@ fn layers_and_properties() {
     let mut s = Session::new();
     s.execute("layer.new", &json!({"name": "Walls", "color": "red", "current": true})).unwrap();
     let c = s.execute("circle", &json!({"center": [0, 0], "radius": 1})).unwrap();
-    let h = cadcraft_doc::Handle::parse_hex(c["handle"].as_str().unwrap()).unwrap();
+    let h = forja_doc::Handle::parse_hex(c["handle"].as_str().unwrap()).unwrap();
     assert_eq!(s.doc().unwrap().entity(h).unwrap().common.layer, "Walls");
     assert!(s.execute("layer.set", &json!({"name": "Walls", "frozen": true})).is_err());
     s.execute("properties.set", &json!({"handles": [h.hex()], "color": 3, "radius": 4})).unwrap();
     let e = s.doc().unwrap().entity(h).unwrap();
-    assert_eq!(e.common.color, cadcraft_color::Color::Index(3));
+    assert_eq!(e.common.color, forja_color::Color::Index(3));
     assert!(matches!(&e.kind, EntityKind::Circle(c) if c.radius == 4.0));
     assert!(s.execute("layer.new", &json!({"name": "bad/name"})).is_err());
 }
 
 #[test]
 fn properties_set_transparency() {
-    use cadcraft_doc::Transparency;
+    use forja_doc::Transparency;
     // Issue #132: `properties.set` used to ignore `transparency`.
     let mut s = Session::new();
     let r = s.execute("line", &json!({"points": [[0, 0], [10, 0]]})).unwrap();
     let h = r["handles"][0].as_str().unwrap().to_string();
-    let hh = cadcraft_doc::Handle::parse_hex(&h).unwrap();
+    let hh = forja_doc::Handle::parse_hex(&h).unwrap();
     let tr = |s: &Session| s.doc().unwrap().entity(hh).unwrap().common.transparency;
     for (v, want) in [
         (json!(50), Transparency::Percent(50)),
@@ -586,7 +586,7 @@ fn properties_set_thickness() {
     let mut s = Session::new();
     let r = s.execute("circle", &json!({"center": [0, 0], "radius": 5})).unwrap();
     let h = r["handle"].as_str().unwrap().to_string();
-    let hh = cadcraft_doc::Handle::parse_hex(&h).unwrap();
+    let hh = forja_doc::Handle::parse_hex(&h).unwrap();
     let th = |s: &Session| s.doc().unwrap().entity(hh).unwrap().common.thickness;
     s.execute("properties.set", &json!({"handles": [h], "thickness": 8})).unwrap();
     assert_eq!(th(&s), 8.0);
@@ -645,7 +645,7 @@ fn setvar_clayer_keeps_numeric_layer_name() {
     s.execute("setvar", &json!({"name": "CLAYER", "value": "10"})).unwrap();
     assert_eq!(sysvars::get(&s, "CLAYER"), Some(json!("10")));
     let c = s.execute("circle", &json!({"center": [0, 0], "radius": 1})).unwrap();
-    let h = cadcraft_doc::Handle::parse_hex(c["handle"].as_str().unwrap()).unwrap();
+    let h = forja_doc::Handle::parse_hex(c["handle"].as_str().unwrap()).unwrap();
     assert_eq!(s.doc().unwrap().entity(h).unwrap().common.layer, "10");
     s.execute("setvar", &json!({"name": "CLAYER", "value": "0"})).unwrap();
     assert_eq!(sysvars::get(&s, "CLAYER"), Some(json!("0")));
@@ -698,7 +698,7 @@ fn setvar_keeps_header_types() {
     assert!(s.execute("setvar", &json!({"name": "LUNITS", "value": "x"})).is_err());
     assert!(s.execute("setvar", &json!({"name": "LUNITS", "value": 2.5})).is_err());
     s.execute("setvar", &json!({"name": "LUNITS", "value": 3.0})).unwrap();
-    assert_eq!(s.doc().unwrap().header.get("LUNITS"), Some(&cadcraft_doc::HVal::Int(3)));
+    assert_eq!(s.doc().unwrap().header.get("LUNITS"), Some(&forja_doc::HVal::Int(3)));
     assert!(s.execute("setvar", &json!({"name": "LTSCALE", "value": "big"})).is_err());
     assert_eq!(s.doc().unwrap().header.f64("LTSCALE", 0.0), 1.0);
 }
@@ -796,7 +796,7 @@ fn every_interactive_command_starts_and_cancels() {
 fn sample_drawing_builds() {
     let d = sample::bracket();
     assert!(d.model.len() > 30);
-    let l = cadcraft_render::build(&d, &cadcraft_doc::Space::Model, &cadcraft_render::Options::default());
+    let l = forja_render::build(&d, &forja_doc::Space::Model, &forja_render::Options::default());
     assert!(l.prims.len() > 100);
 }
 
@@ -850,8 +850,8 @@ fn dim_auto_vertical_and_radius() {
     s.execute("dimradius", &json!({"handle": c["handle"], "at": [23, 1]})).unwrap();
     let d = s.doc().unwrap();
     let kinds: Vec<_> = d.model.iter().filter_map(|e| if let EntityKind::Dimension(d) = &e.kind { Some(d.kind) } else { None }).collect();
-    assert!(matches!(kinds[0], cadcraft_doc::DimKind::Linear { rotation } if (rotation - std::f64::consts::FRAC_PI_2).abs() < 1e-12));
-    assert!(matches!(kinds[1], cadcraft_doc::DimKind::Radius));
+    assert!(matches!(kinds[0], forja_doc::DimKind::Linear { rotation } if (rotation - std::f64::consts::FRAC_PI_2).abs() < 1e-12));
+    assert!(matches!(kinds[1], forja_doc::DimKind::Radius));
 }
 
 #[test]
@@ -921,19 +921,19 @@ fn square_hole_fixture(lines: bool) -> Session {
     s
 }
 
-fn only_hatch(s: &Session) -> std::sync::Arc<cadcraft_doc::Entity> {
+fn only_hatch(s: &Session) -> std::sync::Arc<forja_doc::Entity> {
     let hs: Vec<_> = s.doc().unwrap().model.iter().filter(|e| matches!(e.kind, EntityKind::Hatch(_))).cloned().collect();
     assert_eq!(hs.len(), 1);
     hs[0].clone()
 }
 
 /// The hatch stores the outer rectangle plus the square island.
-fn assert_outer_and_square_island(h: &cadcraft_doc::Hatch) {
+fn assert_outer_and_square_island(h: &forja_doc::Hatch) {
     assert_eq!(h.loops.len(), 2, "outer boundary plus the square island");
     assert!(h.loops[0].outer && !h.loops[1].outer);
     let island: Vec<Vec2> = h.loops[1].vertices.iter().map(|v| v.p).collect();
-    assert!((cadcraft_geom::shoelace(&island).abs() - 25.0).abs() < 1e-9);
-    let b = cadcraft_geom::Bounds2::from_points(island.iter().copied());
+    assert!((forja_geom::shoelace(&island).abs() - 25.0).abs() < 1e-9);
+    let b = forja_geom::Bounds2::from_points(island.iter().copied());
     assert!(b.min.near(Vec2::new(5.0, 5.0), 1e-9) && b.max.near(Vec2::new(10.0, 10.0), 1e-9));
 }
 
@@ -951,7 +951,7 @@ fn hatch_pick_point_keeps_island_of_separate_lines() {
         assert_outer_and_square_island(h);
         // The rendered pattern never enters the hole.
         let d = s.doc().unwrap();
-        let list = cadcraft_render::build_entities(d, std::iter::once(e.as_ref()), &cadcraft_render::Options::default());
+        let list = forja_render::build_entities(d, std::iter::once(e.as_ref()), &forja_render::Options::default());
         assert!(list.segment_count() > 0);
         for p in &list.prims {
             for w in list.points(p).windows(2) {
@@ -980,11 +980,11 @@ fn gradient_pick_point_keeps_island_of_separate_lines() {
         let EntityKind::Hatch(h) = &e.kind else { panic!("not a hatch") };
         assert_outer_and_square_island(h);
         let loops: Vec<Vec<Vec2>> = h.loops.iter().map(|l| l.vertices.iter().map(|v| v.p).collect()).collect();
-        let tris = cadcraft_render::triangulate_evenodd(&loops);
-        let area: f64 = tris.chunks(3).map(|t| cadcraft_geom::shoelace(t).abs()).sum();
+        let tris = forja_render::triangulate_evenodd(&loops);
+        let area: f64 = tris.chunks(3).map(|t| forja_geom::shoelace(t).abs()).sum();
         assert!((area - 375.0).abs() < 1e-6, "filled area {area} (lines: {lines})");
         let sample = Vec2::new(7.25, 7.75);
-        assert!(!tris.chunks(3).any(|t| cadcraft_geom::point_in_polygon(t, sample)), "hole filled (lines: {lines})");
+        assert!(!tris.chunks(3).any(|t| forja_geom::point_in_polygon(t, sample)), "hole filled (lines: {lines})");
     }
 }
 
@@ -1074,7 +1074,7 @@ fn mleader_and_qdim() {
 /// Click at `at` the way the canvas does: object snap for the current prompt, then the input.
 fn snap_click(s: &mut Session, at: Vec2) {
     let prompt = s.current_prompt().unwrap();
-    let hit = snap::osnap(s.doc().unwrap(), &cadcraft_doc::Space::Model, at, 0.5, s.settings.osmode, prompt.base, prompt.deferred);
+    let hit = snap::osnap(s.doc().unwrap(), &forja_doc::Space::Model, at, 0.5, s.settings.osmode, prompt.base, prompt.deferred);
     s.input(hit.map_or(Input::Point(at), |h| h.input())).unwrap();
 }
 
@@ -1156,7 +1156,7 @@ fn line_belt_tangent_to_tangent() {
     s.cmdline("line").unwrap();
     snap_click(&mut s, Vec2::new(-1.0, 10.1));
     // Hovering the small circle previews the line the click will draw.
-    let hover = snap::osnap(s.doc().unwrap(), &cadcraft_doc::Space::Model, Vec2::new(31.0, 4.1), 0.5, s.settings.osmode, None, true).unwrap();
+    let hover = snap::osnap(s.doc().unwrap(), &forja_doc::Space::Model, Vec2::new(31.0, 4.1), 0.5, s.settings.osmode, None, true).unwrap();
     s.cursor_deferred = hover.deferred;
     let pv = s.preview(hover.point);
     s.cursor_deferred = None;
@@ -1247,7 +1247,7 @@ fn arc_refuses_zero_radius() {
 }
 
 /// The single polyline in a fresh drawing after typing `script`, then pressing Enter.
-fn typed_pline(script: &str) -> cadcraft_doc::LwPolyline {
+fn typed_pline(script: &str) -> forja_doc::LwPolyline {
     let mut s = Session::new();
     for line in script.split('\n') {
         s.cmdline(line).unwrap();
@@ -1264,7 +1264,7 @@ fn typed_pline(script: &str) -> cadcraft_doc::LwPolyline {
 }
 
 /// (const_width, [(start_width, end_width) per vertex]).
-fn widths(p: &cadcraft_doc::LwPolyline) -> (f64, Vec<(f64, f64)>) {
+fn widths(p: &forja_doc::LwPolyline) -> (f64, Vec<(f64, f64)>) {
     (p.const_width, p.vertices.iter().map(|v| (v.start_width, v.end_width)).collect())
 }
 

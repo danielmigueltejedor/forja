@@ -1,8 +1,8 @@
-# CADCraft — egui 0.37 migration plan
+# Forja — egui 0.37 migration plan
 
 Current reconciliation (2026-10-25): the local tree now incorporates main `e86d895ba1086a7efc2a83048348f89098282d08`. Managed run `egui037-cad-maine86-ci-20261025-0825` passed all seven CI stages: 2,515 passing test executions, zero failures and one ignored across 103 summaries. Independent review verified preservation of both parents and dependency pins; the compare-export regression now verifies document-epoch advancement. Earlier validation counts below describe prior candidates. Native/browser GUI, platform and paired performance checks remain open. Publication requires explicit approval; human review and human merge are required.
 
-**Status (2026-10-25):** reconciled main `b90165666917ec3ac6c308c2ea1c55bb6ea8317d` and passed all 7 mandatory CI stages. Managed job `egui037-cadcraft-main-refresh-ci-20261025-0615` recorded 2,451 passing test executions, zero failures and 1 ignored. The shared-docking adoption uses the reviewed craft-ui revision `650b1c0b058017c4eb3af06d5b39586d6732e07b`; the lock changed only that package and its dependency list. This revision is reachable from the published craft-libs migration branch. Native/platform GUI and IME workflows, final packages and paired app performance remain open. Earlier source identities and counts below are historical.
+**Status (2026-10-25):** reconciled main `b90165666917ec3ac6c308c2ea1c55bb6ea8317d` and passed all 7 mandatory CI stages. Managed job `egui037-forja-main-refresh-ci-20261025-0615` recorded 2,451 passing test executions, zero failures and 1 ignored. The shared-docking adoption uses the reviewed craft-ui revision `650b1c0b058017c4eb3af06d5b39586d6732e07b`; the lock changed only that package and its dependency list. This revision is reachable from the published craft-libs migration branch. Native/platform GUI and IME workflows, final packages and paired app performance remain open. Earlier source identities and counts below are historical.
 
 Current landing status, 2026-10-25: the implementation integrates main `fcfdf33001cf2462bdafb6e1237becd8ef0ea1cb` and selects egui `6d518fc799681571963842f95b55a6b68431b15a`, winit `a517b3846ee8457d84ee4975110bfda6797c44dc`, shared UI `25da1314d443171b4adeaad2cd9454b273f35c6f` and independent PDF/document-path revisions in the lockfile. Full managed CI0300 passed all seven stages, with 2,448 passing tests, no failures and one ignored across 103 summaries. Fresh review0320 verified the tested source, all seven latest-main paths and all 13 new source files.
 
@@ -18,7 +18,7 @@ Every future host build/test and owned-VM command goes through
 `maintenance/task.py run/status/finish` with its own task, source and evidence.
 
 Scope: the `storytold/cadcraft` checkout at
-`/home/codex/work/CraftApps/egui037-migration-20261022/cadcraft` only. The shared
+`/home/codex/work/CraftApps/egui037-migration-20261022/forja` only. The shared
 `storytold/egui` fork, `storytold/winit`, `storytold/craft-libs` and the sibling apps
 are dependencies and hand-off points, not repositories changed by this plan.
 
@@ -31,13 +31,13 @@ screenshot command forces paint itself. Callback arrival has no implicit wake, s
 live request owns the viewport waker. Record known issuance UI bounds and a geometry
 epoch, reject/retry any intervening resize/DPI/zoom/surface change even if it changes
 back, and derive pixel scale from returned dimensions only under an unchanged epoch.
-Default limits are 4 requests, 128 MiB/image and 256 MiB aggregate; CADCraft's explicit
+Default limits are 4 requests, 128 MiB/image and 256 MiB aggregate; Forja's explicit
 64 MiB limits remain stricter. Count reserved in-flight and completed images together.
 
 
 ## 1. Decision in one page
 
-CADCraft's committed dependency state does not currently build as written:
+Forja's committed dependency state does not currently build as written:
 `Cargo.toml:52-57` asks for egui/eframe/egui-wgpu/egui_kittest 0.37 while `craft-ui`
 is pinned to `5c874d51…`, whose egui dependency is 0.36.2. The lock therefore resolves
 two incompatible egui families, and `DockArea::show` receives a 0.37 `Ui` from a
@@ -58,12 +58,12 @@ Target state:
    revision** that is current `main` (`49190884…`) plus only the egui-API hunks ported
    from PR #199's `8614e4a…`. The PR head `b68de8c…` and audit tree `ec8840a…` are
    stale unsafe trees and are never merged or checked out as the target.
-4. CADCraft source changes limited to: the real compile-error classes
+4. Forja source changes limited to: the real compile-error classes
    (`UserData`/`Event::Screenshot`, `MouseWheel.source`, private `FontsView.fonts`), the
    deprecations `clippy -D warnings` rejects, panel-id/`PanelState` migration, the strict
    kittest names/glyphs needed for a green first compatibility PR, and the deliberate
    lifecycle/screenshot/PRIMARY/IME changes below. There is no `update`→`ui` rewrite:
-   `eframe::App::ui` and a root `Ui` are already used (`apps/cadcraft/src/main.rs:91`,
+   `eframe::App::ui` and a root `Ui` are already used (`apps/forja/src/main.rs:91`,
    `crates/ui-egui/src/lib.rs:627`).
 5. A lifecycle split that is correct under the **actual pinned integration**: both native
    and web call `App::logic` and `App::ui` inside every `Context::run_ui` pass. A
@@ -88,8 +88,8 @@ Target state:
 
 | Role | Revision | Notes |
 |---|---|---|
-| Assigned CADCraft checkout | `1977a493c7d8340249185126744c5143f096dc86` | `HEAD`; branch `codex/egui-037-plan-20261022`; tracked tree clean; this plan is currently untracked |
-| Last coherent 0.36.2 CADCraft | `a08fd7c1d1d7c16f40dc31c25f815370c136a1d4` | Parent of the Dependabot bump that moved direct UI deps to 0.37 |
+| Assigned Forja checkout | `1977a493c7d8340249185126744c5143f096dc86` | `HEAD`; branch `codex/egui-037-plan-20261022`; tracked tree clean; this plan is currently untracked |
+| Last coherent 0.36.2 Forja | `a08fd7c1d1d7c16f40dc31c25f815370c136a1d4` | Parent of the Dependabot bump that moved direct UI deps to 0.37 |
 | craft-libs `main` inspected | `49190884278f16c9a9f5823d7698a8ffb5deb062` | Baseline for the S1 rebase |
 | craft-libs PR #199 API commit | `8614e4a04fae516fba16c22b31ff1008cb6be10b` | Source of the port hunks only |
 | craft-libs PR #199 head | `b68de8c5f4f1c060904d211a7b1320aa0f7bce78` | Stale tree; never a target |
@@ -123,7 +123,7 @@ lacks the chrono rule and the contributor-credit section. `AGENTS.md` governs.
   from crates.io.
 * `arboard` 3.7.0 is present in the lockfile, but `cargo tree -i arboard --locked`
   on the native graph prints nothing: the 0.37 `eframe` feature list
-  (`apps/cadcraft/Cargo.toml:19`) does not enable `eframe/clipboard`, which forwards
+  (`apps/forja/Cargo.toml:19`) does not enable `eframe/clipboard`, which forwards
   to `egui-winit/clipboard` (0.36's eframe enabled it unconditionally). **Without
   adding `clipboard`, copy/paste silently stops reaching the OS clipboard**;
   `crates/ui-egui/src/clipboard.rs:29-60` depends on `ctx.copy_text` and
@@ -131,7 +131,7 @@ lacks the chrono rule and the contributor-credit section. `AGENTS.md` governs.
 * No root `[patch.crates-io]`, no `vendor/` and no **external/local path patch** in
   this repository. Internal workspace members are path dependencies by design.
 * Read-only `cargo tree -d --locked --offline` shows the 0.36 family reachable only
-  through `craft-ui`, and the 0.37 family through CADCraft/eframe/egui-wgpu/kittest.
+  through `craft-ui`, and the 0.37 family through Forja/eframe/egui-wgpu/kittest.
   This is graph evidence, not a build.
 * The candidate fork's own `a4f9a17f/Cargo.toml:178-179` still has
   `[patch.crates-io] winit = { …, branch = "craft/0.30.13-lang" }`. Consumers' patches
@@ -140,7 +140,7 @@ lacks the chrono rule and the contributor-credit section. `AGENTS.md` governs.
 
 ### 2.3 Historical compiler clues (not acceptance)
 
-`/home/codex/work/ssd2/task-evidence/egui037-audit-20261022/fork/cadcraft.log` was
+`/home/codex/work/ssd2/task-evidence/egui037-audit-20261022/fork/forja.log` was
 produced by a path-patched trial, not by the committed manifests. It reports:
 
 * 3 error classes (16 diagnostics in the `stock` run): `lib.rs:696` (`egui::UserData`),
@@ -166,10 +166,10 @@ These are clues to re-check on the migration tip, not a fixed work list.
 | `Cargo.toml:52-59` | `craft-ui` git rev `5c874d51…`; `egui`, `egui_kittest`, `eframe`, `egui-wgpu` set to `0.37`; unused `arboard` workspace entry |
 | `crates/ui-egui/Cargo.toml:7` | UI crate already declares `rust-version = "1.95"` |
 | `crates/ui-egui/Cargo.toml:20-32` | `egui`, `egui-wgpu`; dev `egui_kittest` with `wgpu,snapshot`; dev `naga 30` |
-| `apps/cadcraft/Cargo.toml:19` | `eframe` features: `default_fonts,wgpu,accesskit,wayland,x11,links,persistence` — **missing `clipboard`** |
-| `apps/cadcraft/Cargo.toml:29` | direct `winit 0.30` (x11) for the XWayland event-loop choice |
-| `apps/cadcraft-web/Cargo.toml:29` | `eframe` web features: `persistence,default_fonts,wgpu,accesskit` |
-| `apps/cadcraft-web/Cargo.toml:26-32` | `web-sys` for file input; `upload.rs` uses `DroppedFile::web_file` |
+| `apps/forja/Cargo.toml:19` | `eframe` features: `default_fonts,wgpu,accesskit,wayland,x11,links,persistence` — **missing `clipboard`** |
+| `apps/forja/Cargo.toml:29` | direct `winit 0.30` (x11) for the XWayland event-loop choice |
+| `apps/forja-web/Cargo.toml:29` | `eframe` web features: `persistence,default_fonts,wgpu,accesskit` |
+| `apps/forja-web/Cargo.toml:26-32` | `web-sys` for file input; `upload.rs` uses `DroppedFile::web_file` |
 | `crates/render/Cargo.toml` | rayon only off wasm; not UI |
 | `xtask/Cargo.toml` | no egui dependency |
 
@@ -177,9 +177,9 @@ Platform cfgs that must keep compiling:
 
 | Cfgs | Where | What they gate |
 |---|---|---|
-| `cfg(target_arch = "wasm32")` | `ui-egui/lib.rs` (`now_ms`, `FrameCap`, autosave, dropped files), `ui-egui/theme.rs` (system-font probes), `render`, `dwg`, `apps/cadcraft-web` | no threads/system fonts/files on web; `now_ms` is 0 on wasm; `web_file` is wasm-only |
-| `cfg(not(target_arch = "wasm32"))` | `apps/cadcraft` `rfd`, `sys-locale`; `ui-egui` autosave and frame cap | native-only dialogs/locale/autosave |
-| `cfg(unix)` / `cfg(all(unix, not(macos)))` | `apps/cadcraft` `winit` x11, `zbus`; `desktop_theme.rs` | XWayland choice, portal theme |
+| `cfg(target_arch = "wasm32")` | `ui-egui/lib.rs` (`now_ms`, `FrameCap`, autosave, dropped files), `ui-egui/theme.rs` (system-font probes), `render`, `dwg`, `apps/forja-web` | no threads/system fonts/files on web; `now_ms` is 0 on wasm; `web_file` is wasm-only |
+| `cfg(not(target_arch = "wasm32"))` | `apps/forja` `rfd`, `sys-locale`; `ui-egui` autosave and frame cap | native-only dialogs/locale/autosave |
+| `cfg(unix)` / `cfg(all(unix, not(macos)))` | `apps/forja` `winit` x11, `zbus`; `desktop_theme.rs` | XWayland choice, portal theme |
 | `cfg(target_os = "macos")` | `muda`, `objc2-app-kit`, `native_menu.rs`, `system_animations.rs`, integrated titlebar | native menu, reduce-motion, traffic-light layout |
 | `cfg(target_os = "windows")` | `hidapi` windows-native, `windows` `UI_ViewManagement`, `graphics.rs`, `windows_subsystem` | DX12/FXC startup, animation settings |
 | `cfg(target_os = "linux")` | `hidapi` linux-native-basic-udev | spacemouse HID |
@@ -187,25 +187,25 @@ Platform cfgs that must keep compiling:
 `crates/fonts/build.rs` (`CRAFT_FONTS_DIR`) and `crates/ui-egui/build.rs`
 (`contributors/*`) are build inputs unrelated to egui; do not change their contracts.
 
-Packages/binaries: `cadcraft` (desktop, eframe), `cadcraft-web` (wasm, eframe web
-runner), `cadcraft-cli` (headless, no egui), `cadcraft-ui-egui` (library, kittest),
+Packages/binaries: `forja` (desktop, eframe), `forja-web` (wasm, eframe web
+runner), `forja-cli` (headless, no egui), `forja-ui-egui` (library, kittest),
 `xtask` (layers/wasm/parity). There are no examples besides `examples/apartment.dxf`
 (48,769 bytes, tracked), no benches, no committed screenshot fixtures.
 
 ### 3.2 Entry points
 
-* Native: `apps/cadcraft/src/main.rs:228` `main`; `NativeOptions` at `:262-283`;
+* Native: `apps/forja/src/main.rs:228` `main`; `NativeOptions` at `:262-283`;
   Windows DX12/FXC at `:285` via `graphics::configure`; wgpu buffer-limit workaround
   at `:289-297`; XWayland event loop at `:301-306`; `run_native` at `:307`;
   `set_wgpu(rs, depth_format_from_bits(0, 8))` at `:347`.
-* `eframe::App` at `apps/cadcraft/src/main.rs:67-110`: `logic`, `raw_input_hook`,
+* `eframe::App` at `apps/forja/src/main.rs:67-110`: `logic`, `raw_input_hook`,
   `ui`, `on_exit`, `save`, `persist_egui_memory = false`.
-* Web: `apps/cadcraft-web/src/main.rs:31-58` `Shell` (same `logic`/`ui` split);
+* Web: `apps/forja-web/src/main.rs:31-58` `Shell` (same `logic`/`ui` split);
   `WebRunner::start` at `:114`; `?cpu`/`?webgl` at `:108-113`;
   `CadApp::set_wgpu(rs, None)` for web (no stencil).
-* Headless: `cadcraft-cli` and `cadcraft-mcp` never construct egui; `ui.render`
+* Headless: `forja-cli` and `forja-mcp` never construct egui; `ui.render`
   is the CPU raster path in `crates/ui-egui/src/control.rs:470-545`.
-* Control channel: `apps/cadcraft/src/control_server.rs`; methods in
+* Control channel: `apps/forja/src/control_server.rs`; methods in
   `crates/ui-egui/src/control.rs:195-215` and `docs/control-protocol.md`, enforced
   by `tests/control_methods.rs`.
 
@@ -241,7 +241,7 @@ Verified against native `crates/eframe/src/native/epi_integration.rs:338-365` an
   branch on web (`app_runner.rs:284`). It must not assume that a UI pass follows.
 * `Context::run_ui` re-runs its closure for each pass requested by
   `Context::request_discard` (default `max_passes = 2`). `Context::root_ui` panics while
-  the root `Ui` is borrowed (#8535); CADCraft keeps the handed-in `&mut Ui`.
+  the root `Ui` is borrowed (#8535); Forja keeps the handed-in `&mut Ui`.
 * Screenshots are callback based: `ViewportCommand::Screenshot(ScreenshotCallback)` /
   `Context::request_screenshot` (#8489); the callback receives only
   `Arc<ColorImage>`, runs at most once, and does **not** request a repaint.
@@ -253,15 +253,15 @@ Verified against native `crates/eframe/src/native/epi_integration.rs:338-365` an
 ### 3.4 UI state, commands, undo and persistence
 
 * UI state is `UiState` (`lib.rs:70-112`) and is persisted by the desktop
-  `apps/cadcraft/src/workspace.rs` as JSON (`docking`, panel visibility, theme, language,
+  `apps/forja/src/workspace.rs` as JSON (`docking`, panel visibility, theme, language,
   recent files), version 1, bounded at 64 KiB.
-* `persist_egui_memory` is false (`apps/cadcraft/src/main.rs:107`), so eframe does not
+* `persist_egui_memory` is false (`apps/forja/src/main.rs:107`), so eframe does not
   save egui `Memory`. The app's own `Workspace` JSON does not store egui ids or
   `PanelState`.
 * All user-visible edits go through `CadApp::run` / `start` / `cmdline`
   (`lib.rs:315-359`) or menus; engine undo is the single transaction owner.
 * Docking is `craft_ui::docking::Layout<Panel>` (`docking.rs:1-130`), serialized
-  without egui ids; the surface is created with `egui::Id::new("cadcraft-docking")`
+  without egui ids; the surface is created with `egui::Id::new("forja-docking")`
   and `cancel_drag` with the same id (`docking.rs:339,375`).
 * Top-level panels are `exact_size(...)` and non-resizable: `chrome.rs:69,180,300`,
   `menus.rs:573`, `palettes.rs:330,346`.
@@ -305,7 +305,7 @@ Verified against native `crates/eframe/src/native/epi_integration.rs:338-365` an
 * Accessibility metadata is built with `egui::WidgetInfo` in `icons.rs:965-989`,
   `craft_ui` buttons, `egui::accesskit_node_builder` for tab roles, and control-channel
   role strings (`control.rs:113-180`). There is no explicit UI language in AccessKit.
-* There are 27 `TextEdit`, 18 `DragValue`, 32 `ComboBox` and 8 `Slider` sites. CADCraft
+* There are 27 `TextEdit`, 18 `DragValue`, 32 `ComboBox` and 8 `Slider` sites. Forja
   currently has no password field and no custom `IMEOutput` producer: its editors use
   the built-in `egui::TextEdit` (27 sites), including the MTEXT editor and dialog/layer
   rename fields.
@@ -314,8 +314,8 @@ Verified against native `crates/eframe/src/native/epi_integration.rs:338-365` an
 
 * `cargo xtask ci` = fmt, clippy `-D warnings`, workspace tests, assets, layers, wasm
   (`xtask/src/main.rs:151-205`). The wasm step covers L0-L4 plus `ui-egui`, **not**
-  `cadcraft-web`.
-* `apps/cadcraft` and `apps/cadcraft-web` are app packages; the web runner needs its
+  `forja-web`.
+* `apps/forja` and `apps/forja-web` are app packages; the web runner needs its
   own `cargo check --target wasm32-unknown-unknown` and `trunk build --release`.
 * `crates/ui-egui/tests` has **43** `*.rs` files. The affected inventory includes
   `alias_dialog.rs` (an unnamed filter `TextEdit`, §8.3), `animation_effects.rs`
@@ -340,7 +340,7 @@ the craft-ui type mismatches dominate. Re-count on the migration tip.
 
 | # | Anchor | Symptom | Replacement and semantics |
 |---|---|---|---|
-| C1 | `lib.rs:688-706` (`issue_screenshots`), `:707-740` (`collect_screenshots`) | `egui::UserData` gone; `Event::Screenshot` gone | Use `ctx.request_screenshot(move |image: Arc<ColorImage>| …)` (or `ViewportCommand::Screenshot(ScreenshotCallback::new(...))`). Keep the token, path, reply and deadline in CADCraft; the callback hands `(token, image)` to the request's completion slot. Call `ctx.request_repaint()` from the frame tick after completion, not from a callback holding a strong `Context` (§6.5). |
+| C1 | `lib.rs:688-706` (`issue_screenshots`), `:707-740` (`collect_screenshots`) | `egui::UserData` gone; `Event::Screenshot` gone | Use `ctx.request_screenshot(move |image: Arc<ColorImage>| …)` (or `ViewportCommand::Screenshot(ScreenshotCallback::new(...))`). Keep the token, path, reply and deadline in Forja; the callback hands `(token, image)` to the request's completion slot. Call `ctx.request_repaint()` from the frame tick after completion, not from a callback holding a strong `Context` (§6.5). |
 | C2 | `animation.rs:78` pattern; `animation.rs:145,197`, `canvas.rs:2806`, **and tests `animation_effects.rs:102,133`** initializers | `MouseWheel` gained `source: MouseWheelSource` | Add `source: _` to the pattern (or `..`); construct test events with `MouseWheelSource::Unknown` (the platform value on X11/Wayland/Windows/web) or `Wheel`/`Trackpad` where the test is about macOS momentum. Prefer a local test helper so a future field does not break every constructor. |
 | C3 | `i18n/tests.rs:407,423,442,557,607,803,912,1017,1125,1168` | `FontsView.fonts` is private | Replace `view.fonts.font(&family).characters()` with the public `view.characters(&family)` or `view.has_glyph(&FontId, c)`. Keep the test intent: the family's actual character map, not a fallback glyph. |
 | C4 | `icons.rs:965-989` (`describe_control`), all `WidgetType::Button` | `WidgetType` is a deprecated alias of `accesskit::Role` | Use `egui::Role::Button`; `craft-ui` uses `Role::CheckBox`. Assert the role in a semantic test. |
@@ -350,26 +350,26 @@ the craft-ui type mismatches dominate. Re-count on the migration tip.
 | C8 | `egui::Panel::top/left/right/bottom("…")` (`chrome.rs:69,180,300`, `palettes.rs:330,346`, `menus.rs:573`) | 0.37 panel constructors take `impl AsIdSalt`; `From<&str> for Id` is gone; the panel id becomes `parent_ui.scope_id().with_salt(...)` (`panel.rs:974-976`) instead of 0.36's `Id::new("…")` | Keep the literal names `cc_title_toolbar`, `cc_menubar`, `cc_status`, `cc_file_tabs`, `cc_toolsets_strip`, `cc_palettes`; do not hard-code ids in tests. The first compatibility PR includes the additive `PanelState` key migration in §7. |
 | C9 | `UiBuilder::id` inside `craft-ui` | Deprecated | `scope_id`; handled in craft-libs S1, not here. |
 
-No other 0.37 removals appear in CADCraft source: no `AsId` removal, no
+No other 0.37 removals appear in Forja source: no `AsId` removal, no
 `WidgetType::TextEdit`, no `global_theme_preference_switch`, no `show_inside`,
 no `ImeEvent` matching, no `ScrollArea::id_source`.
 
-## 5. Runtime and semantic changes CADCraft must decide
+## 5. Runtime and semantic changes Forja must decide
 
-| Area | 0.37 change (primary source) | CADCraft decision |
+| Area | 0.37 change (primary source) | Forja decision |
 |---|---|---|
 | Layout/frame | `Context::run_ui` multi-pass; **native and web call `App::logic` per pass**; hidden root runs `run_logic` only; completed `run_ui` reports pass index 0 | Use `current_pass_index() == 0` for frame-once work; move input to `App::ui`; never use `visible()` as a phase (§6). |
 | Screenshot | callback-based (#8489) | Bounded, cancelable per-request completion slot; weak callback; capture-time binding; deadline; one file/reply (§6.5). |
 | Clipboard | `eframe` gains optional `clipboard` (#8392) | Add `"clipboard"` to the desktop `eframe` features. On web, use the browser path; verify paste/copy in a real browser. |
 | Fonts | `default_fonts` no longer default (#8583); eframe `system_fonts` default (#8512) | Enable `default_fonts` and `monochrome_emoji_fonts` in **S2**; keep `system_fonts` off and set `NativeOptions::system_font_fallback = false`. |
 | Glyphs | kittest panics on a missing glyph by default (#8601); U+22EE absent from both 0.36.2 and 0.37 bundled fonts | Enable the monochrome emoji face; run a strict glyph sweep in **S2**; replace uncovered UI symbols with code-drawn art/text; never set a global `MissingGlyphPolicy::Tofu` for the suite. |
-| TextEdit | clicking another widget collapses the selection before the button runs (#8763; unmerged #8764) | Assert the **exact selected range** is formatted by the MTEXT Bold/Italic/Underline/Overline toolbar and any dialog action; pointer and keyboard paths. CADCraft's MTEXT toolbar is drawn before the `TextEdit` and uses its own `st.sel`, which may make it immune; prove it, do not assume it. If a regression is real, preserve the range in CadCraft or adopt the fork fix; do not patch by disabling selection. |
+| TextEdit | clicking another widget collapses the selection before the button runs (#8763; unmerged #8764) | Assert the **exact selected range** is formatted by the MTEXT Bold/Italic/Underline/Overline toolbar and any dialog action; pointer and keyboard paths. Forja's MTEXT toolbar is drawn before the `TextEdit` and uses its own `st.sel`, which may make it immune; prove it, do not assume it. If a regression is real, preserve the range in Forja or adopt the fork fix; do not patch by disabling selection. |
 | Menus | arrow-key navigation within open menus (#8548), popup sizing passes | Re-run `menubar_hover`/`context_menu(s)`; add keyboard traversal. |
 | Accessibility | `WidgetType`→`Role`, unnamed inputs fail kittest (#8555/#8589/#8611), `label_inputs_by`/`name_inputs`/`accessible_language` | Name every input reached by tests in S2; add the systematic unnamed-widget audit; put the UI language on the AccessKit root via fork E17 in S4. |
 | Clipboard/PRIMARY | 0.37 supports X11/Wayland PRIMARY (#8428); Wayland clipboard #8657/E4; **W15P is new** | Require winit W15P + egui E4/P2b in the final pins; test the native matrix; do not default to a PRIMARY-only fallback (§9). |
-| Web | `DroppedFile::web_file` opt-in (#8669) | eframe enables it on wasm; assert the feature is in the **wasm** graph and add `cargo check -p cadcraft-web`. |
+| Web | `DroppedFile::web_file` opt-in (#8669) | eframe enables it on wasm; assert the feature is in the **wasm** graph and add `cargo check -p forja-web`. |
 | Scroll/animations | kinetic scrolling (#8662/#8663), repaint-burst fix (#8595), style sizing (#8617/#8445) | Re-run animation on/off tests; apply wheel/zoom once and reuse the resulting view for later passes (§6); measure idle frames; keep explicit spacing overrides. |
-| Hidden window | pinned eframe runs `PassMode::LogicOnly` for an overdue root; **#8748 is closed and unmerged**; no deferred viewports in CADCraft | Keep control/LISP/autosave/screenshot deadlines alive on logic ticks; handle input only in a known UI pass. Do not claim #8748 behavior. A fork that later adopts an overdue full pass must pin that exact revision and re-run the hidden tests. |
+| Hidden window | pinned eframe runs `PassMode::LogicOnly` for an overdue root; **#8748 is closed and unmerged**; no deferred viewports in Forja | Keep control/LISP/autosave/screenshot deadlines alive on logic ticks; handle input only in a known UI pass. Do not claim #8748 behavior. A fork that later adopts an overdue full pass must pin that exact revision and re-run the hidden tests. |
 
 ## 6. Root `Ui`, multi-pass and logic-only semantics
 
@@ -481,7 +481,7 @@ tick followed by a shown frame.
 | Spacemouse poll (host) | `main.rs:80`, `spacemouse.rs:61-80` | frame tick | `poll` copies `shared.motion` and re-applies it per call; one poll per frame. Test with a counter. |
 | Native menu poll (macOS) | `main.rs:74-76` | frame tick | Rebuilds enablement a few times per second; not per pass. |
 | Workspace persistence (host) | `main.rs:81,93` | frame tick (logic only) | `save_if_changed` is idempotent but must not run per pass; `save_on_exit` stays in `on_exit`. Remove the duplicate call from `App::ui`. |
-| Web inbox drain / dirty bridge | `apps/cadcraft-web/src/main.rs:33-44` | drain every call; dropped files in `ui`; dirty report frame tick | DOM reporting is idempotent; dropped files are input and must be read once. |
+| Web inbox drain / dirty bridge | `apps/forja-web/src/main.rs:33-44` | drain every call; dropped files in `ui`; dirty report frame tick | DOM reporting is idempotent; dropped files are input and must be read once. |
 | `raw_input_hook` frame cap/synthetics | `lib.rs:601-625` | per logic callback | Runs in `update` and `update_logic_only`; move the frame-cap wait to `ui` pass 1; synthetic injection is drain-based and preserved in pending input. |
 
 ### 6.3.1 Host and web frame token
@@ -489,14 +489,14 @@ tick followed by a shown frame.
 The host `eframe::App::logic` implementations are outside `CadApp`, so they use the
 same public token rather than a new scheduler:
 
-* native `apps/cadcraft/src/main.rs:68-84`: call `self.cad.logic(ctx)` on every
+* native `apps/forja/src/main.rs:68-84`: call `self.cad.logic(ctx)` on every
   `App::logic` invocation; wrap `native_menu.poll`, `spacemouse.poll`,
   `persist_workspace(false)` and the `quit_requested` check in
   `if ctx.current_pass_index() == 0`. Remove `persist_workspace` from `App::ui`
   (`main.rs:91-94`), which currently runs it a second time. `spacemouse.poll` copies
   `shared.motion` rather than taking it (`spacemouse.rs:61-80`), so without the guard a
   second pass applies the same motion twice.
-* web `apps/cadcraft-web/src/main.rs:31-44`: `Inbox::drain` (background results) runs
+* web `apps/forja-web/src/main.rs:31-44`: `Inbox::drain` (background results) runs
   on every logic call; `Bridge::report_dirty` runs on `frame_tick`; `take_dropped`
   moves to `Shell::ui` and clears `raw.dropped_files` after reading them. Remove the
   duplicate `report_dirty` from `Shell::ui`. `Inbox::take_dropped` currently clones
@@ -544,7 +544,7 @@ not encode PNGs, write files, run commands, or hold a lock while waking.
 `collect_screenshots` drains the slot results on every logic call, checks the token
 and request/session binding, and replies with `save_screenshot(&image, path)`. Binding:
 
-* CADCraft has ROOT only: bind to an explicit CadApp session/document generation.
+* Forja has ROOT only: bind to an explicit CadApp session/document generation.
   The callback supplies pixels only; viewport identity is request-owned, not callback
   metadata. Reject generation changes/close and never reuse an old result for a new document;
 * At issuance refresh expected geometry from the target UI content rect and ppp,
@@ -566,10 +566,10 @@ and request/session binding, and replies with `save_screenshot(&image, path)`. B
   `web_time::Instant` on web, never stale InputState::time; do not leave an infinite
   web deadline.
 
-CADCraft adopts the shared craft-ui CL-2 completion-slot API (the eleven existing craft-ui creative consumers'
+Forja adopts the shared craft-ui CL-2 completion-slot API (the eleven existing craft-ui creative consumers'
 approach; DeckCraft, FigCraft and ArtCraft Native keep local adapters).
 Request records, paths, PNG serialization, timeouts and the reply schema stay in
-CADCraft. If the provisional CL-2 API is unavailable, S3 is blocked rather than
+Forja. If the provisional CL-2 API is unavailable, S3 is blocked rather than
 growing a second divergent helper.
 
 Regression assertions:
@@ -614,7 +614,7 @@ real window.
   no `Area` is created from `logic`.
 * `spacemouse_one_poll_per_frame` and `web_drop_once`: counters across a multi-pass
   frame and a hidden tick.
-* `hidden_child_only_if_adopted`: CADCraft has no deferred viewports, so assert that
+* `hidden_child_only_if_adopted`: Forja has no deferred viewports, so assert that
   (no `show_viewport_deferred` call) and record #8748 as not applicable. If a later
   fork pin adopts an overdue full pass, add a hidden-parent/deferred-child
   open/update/close test with overdue redraw and unknown visibility before claiming it.
@@ -635,7 +635,7 @@ real window.
   `AsIdSalt` move; tests and `ui.elements` refer to behaviour around them.
 * **Panel `PanelState` migration (first compatibility PR).** 0.36 keyed a panel's
   `PanelState` by `Id::new("cc_x")`; 0.37 keys it by
-  `parent_ui.scope_id().with_salt(IdSalt::new("cc_x"))` (`panel.rs:974-976`). CADCraft
+  `parent_ui.scope_id().with_salt(IdSalt::new("cc_x"))` (`panel.rs:974-976`). Forja
   currently sets `persist_egui_memory=false` and its top-level panels are
   `exact_size(...)`/non-resizable, so no `PanelState` is currently file-persisted. The
   first compatibility PR nevertheless owns the saved-key migration and performs it
@@ -645,12 +645,12 @@ real window.
   `Context` with an old-key `PanelState` in a test and assert the new key sees it.
   This prevents a one-time width reset if eframe memory persistence is enabled or a
   panel becomes resizable, and covers saved test fixtures/other consumers.
-* `DockArea::new(egui::Id::new("cadcraft-docking"))` and
-  `cancel_drag::<Panel>(ctx, egui::Id::new("cadcraft-docking"))` must migrate together
+* `DockArea::new(egui::Id::new("forja-docking"))` and
+  `cancel_drag::<Panel>(ctx, egui::Id::new("forja-docking"))` must migrate together
   to `Id::unique` with the same string. A mismatch leaves a drag active after a
   workspace replacement; `docking_workflows.rs` already tests host cancel.
 * `DockArea::direction` is an **explicit opt-in visual policy** from craft-libs
-  §7.7/CL-3. CADCraft passes `DockDirection::LeftToRight` by default and
+  §7.7/CL-3. Forja passes `DockDirection::LeftToRight` by default and
   `RightToLeft` only in S5b if chrome mirroring is implemented. Never reverse saved
   tab order to simulate RTL. Preserve serialized split first/second, axes, ratios,
   floating rectangles and logical tab order; painting, hit tests, drag insertion,
@@ -665,7 +665,7 @@ real window.
 * Narrow-window behavior remains: toolbar overflow (`chrome.rs:96-120`) keeps every
   command reachable; `chrome_geometry.rs` must keep passing at 1×/2×.
 * There are no secondary native viewports (`show_viewport_deferred`/immediate viewport
-  use), so fork E1 (`ViewportHooks`) is unused. “Viewport” in CADCraft code
+  use), so fork E1 (`ViewportHooks`) is unused. “Viewport” in Forja code
   (`canvas.rs`, `vpscale.rs`, `render/lib.rs`) means a paper-space layout viewport.
 
 ## 8. Fonts, glyphs, language, RTL and accessibility
@@ -677,7 +677,7 @@ real window.
   `emoji-icon-font`, previously unconditional). This is a visible glyph change and
   therefore part of the compatibility PR, not a later “no behaviour change” stage.
 * `⇧` (U+21E7) is only in Hack (Monospace), while `Button::shortcut_text` uses the
-  Button text style (Proportional body in CADCraft). Decide in S2: draw the macOS
+  Button text style (Proportional body in Forja). Decide in S2: draw the macOS
   modifier symbols in code (the WCS chevron already is, `canvas.rs:2558`), keep `⇧`
   only in monospaced contexts, or use text on macOS. Do not silently enable tofu.
 * Split the coverage test by source, because bundled fonts cannot cover every catalog:
@@ -692,7 +692,7 @@ real window.
 * Keep `theme::install_fonts`' caps (`MAX_UI_FONT_BYTES`) and file reads unchanged.
   Do not adopt the 0.37 `GlyphRasterizer`/`FontProvider` APIs; set
   `NativeOptions::system_font_fallback = false` explicitly and do not enable eframe's
-  `system_fonts` feature. This keeps CADCraft's capped app-controlled chain
+  `system_fonts` feature. This keeps Forja's capped app-controlled chain
   authoritative and avoids the #8512 system-font discovery cost.
 * Keep `FontsView` access test-only through `view.characters(...)`/`view.has_glyph`.
 
@@ -702,10 +702,10 @@ real window.
   `ctx.set_language(Some(language.to_owned()))` when the resolved language changes
   (fork E17). This places the BCP 47 tag on the AccessKit root; the web runner's
   speech/hidden-input language uses it through E18.
-* Do not adopt `craft-i18n`; CADCraft owns its TSV catalog and `with_language`.
+* Do not adopt `craft-i18n`; Forja owns its TSV catalog and `with_language`.
 * Arabic: keep Arabic **text** rendering (bidi + shaping, E5/E12/E13) and verify
   `ar.tsv` screens. `Style::right_to_left` (E9) mirrors egui menus, scroll bars,
-  checkboxes, combo boxes and popups, but not CADCraft's custom chrome or docking.
+  checkboxes, combo boxes and popups, but not Forja's custom chrome or docking.
   S4 keeps `right_to_left = false` (Arabic UI stays LTR with correctly shaped text,
   documented in `docs/localization-parity.md`). S5b may enable it only with app-owned
   chrome mirroring and craft-ui `DockArea::direction`; until then do not claim an RTL UI.
@@ -729,7 +729,7 @@ real window.
   `ui.text_edit_singleline(&mut st.filter)` (`aliasdlg.rs:164-165`) after a separate
   `ui.label("Filter")` with no `labelled_by`/placeholder. Name it in S2.
 * Use `Response::labelled_by(label_response.id)` or
-  `ui.label_inputs_by(label.id, |ui| …)` for rows whose label CADCraft draws;
+  `ui.label_inputs_by(label.id, |ui| …)` for rows whose label Forja draws;
   `hint_text` is acceptable for placeholder-labelled search fields, not numeric entry.
 * Keep `icons::describe_control` labels/tab roles; migrate `WidgetType` to
   `Role::Button` and assert `get_by_role`/`get_by_label` for a toolbar button, a toolset
@@ -739,14 +739,14 @@ real window.
   If a third-party widget cannot be named, name it at the call site and record why; a
   per-test `with_accessibility_check(false)` requires an explicit enumerated exception,
   a linked issue and a removal condition, not a suite-wide switch.
-* S2 runs the full `cargo xtask ci` plus `cargo test -p cadcraft-ui-egui --all-targets`
+* S2 runs the full `cargo xtask ci` plus `cargo test -p forja-ui-egui --all-targets`
   and keeps `MissingGlyphPolicy::Panic`; S4 adds broader language/AccessKit-language
   coverage, not the first green gate.
 
 ### 8.4 Pinned licensed font fixtures
 
 Use the fixtures pinned by the egui plan §10.6; fetch them into the task evidence
-directory, never commit them into CADCraft, and retain adjacent licences. CADCraft’s
+directory, never commit them into Forja, and retain adjacent licences. Forja’s
 own policy remains: optional central `craft-fonts` via `CRAFT_FONTS_DIR`, no font
 binaries in this repository, no new `ATTRIBUTION.md` row for test-only external files.
 
@@ -770,8 +770,8 @@ licences enter the evidence manifest; no script may silently skip for a missing 
 ## 9. Clipboard, PRIMARY, IME and keyboard
 
 * Add `"clipboard"` to the desktop `eframe` features and assert
-  `cargo tree -i arboard` reaches `egui-winit`. Regression: Copy in CADCraft, paste
-  into another app; copy text elsewhere, paste into CADCraft (the DXF-text mirror
+  `cargo tree -i arboard` reaches `egui-winit`. Regression: Copy in Forja, paste
+  into another app; copy text elsewhere, paste into Forja (the DXF-text mirror
   remains in `clipboard.rs`). The feature-graph assertion is the detector; a kittest
   copy/paste assertion cannot prove the OS clipboard because kittest does not run
   eframe's OS clipboard.
@@ -785,11 +785,11 @@ licences enter the evidence manifest; no script may silently skip for a missing 
 * PRIMARY acceptance (native, on wlroots/Hyprland, KWin, Mutter, plus X11):
   pointer- and keyboard-triggered ownership (including keyboard-only focus), serial freshness, owner/seat changes, empty/absent offers,
   self-paste (marker MIME, no deadlock), canceled/slow transfers, unchanged selection
-  not reclaimed, password selection never offered. CADCraft defaults to XWayland when
-  `DISPLAY` is set (`main.rs:301-306`); `CADCRAFT_WAYLAND=1` is the native Wayland
+  not reclaimed, password selection never offered. Forja defaults to XWayland when
+  `DISPLAY` is set (`main.rs:301-306`); `FORJA_WAYLAND=1` is the native Wayland
   exposure. A PRIMARY-only fallback is allowed only as a **measured** fallback with
   explicit owner acceptance, not as the default limitation.
-* Middle-click: `Event::MiddleClickPaste { pos, text }` exists in 0.37. CADCraft's
+* Middle-click: `Event::MiddleClickPaste { pos, text }` exists in 0.37. Forja's
   command line is custom-painted, not a `TextEdit`, so decide in S5a: handle it only
   when the pointer is in the command-line bar rect (stored state), insert at the buffer
   end, and never start a command or duplicate a `Paste`; otherwise document the gap.
@@ -802,11 +802,11 @@ licences enter the evidence manifest; no script may silently skip for a missing 
   a Wayland adapter sending it on text/selection/IME-owner change; clear on password,
   focus loss, no IME, unavailable context and reset. Keep the final IME descriptor and
   payload together across passes. It is transient and excluded from serialized debug/
-  persistence output. CADCraft has no custom `IMEOutput` producer (all editors use
+  persistence output. Forja has no custom `IMEOutput` producer (all editors use
   built-in `TextEdit`; the MTEXT editor and rename fields inherit it), so no app
   model adapter is required unless one is added later. The suite inventory's custom
   producers (DesignCraft/FigCraft/WordCraft/VectorCraft/EffectCraft/FilmCraft/
-  DeckCraft/PhotoCraft) do not apply here: CADCraft's custom-painted command line
+  DeckCraft/PhotoCraft) do not apply here: Forja's custom-painted command line
   receives IME commits as `Event::Text` and produces no `IMEOutput`. If a custom
   producer is added,
   it must supply logical model text and convert its own cursor coordinates to UTF-8
@@ -829,26 +829,26 @@ licences enter the evidence manifest; no script may silently skip for a missing 
 
 ## 10. GPU, wgpu, stencil and Windows
 
-* CADCraft uses `egui-wgpu` paint callbacks, not a custom renderer; the callback trait
+* Forja uses `egui-wgpu` paint callbacks, not a custom renderer; the callback trait
   is unchanged. Keep `gpu::install` error/device-lost handlers and the stencil check.
 * The canvas draws at `info.screen_size_px` and relies on egui's scissor for clipping
   (`gpu.rs:731-780`). Fork E2+E3 fits an oversized surface to
   `max_texture_dimension_2d` and returns configure/render errors instead of panicking;
-  CADCraft consumes it through eframe. Add a fork `surface_fit` unit test; a real
+  Forja consumes it through eframe. Add a fork `surface_fit` unit test; a real
   oversized window cannot be produced in the available environment, so record it as
   an unresolved hardware gate.
 * Windows: `graphics::configure` forces DX12 + FXC and excludes GL. Upstream #8736
   reports FXC compile cost for 0.37's predictable-filter shader (~57 ms vs 14 ms,
-  about +40 ms startup). Measure CADCraft start-to-first-`ping` on the Windows VM
+  about +40 ms startup). Measure Forja start-to-first-`ping` on the Windows VM
   (fresh processes) and compare 0.36/stock 0.37/fork; report renderer construction
-  separately from first frame. Do not hide a regression by changing CADCraft's FXC
+  separately from first frame. Do not hide a regression by changing Forja's FXC
   choice, and do not report compile duration as UI performance.
 * Keep `NativeOptions.stencil_buffer = 8` (`main.rs:188,277`). The fork's surface fit
   must preserve the matching stencil texture size. `gpu_viewport_stencil.rs` stays.
 * Keep `WgpuConfiguration::default().with_surface_config(surface_config(...))`
   (`gpu.rs:53-65`) and the `max_buffer_size` adapter workaround (`main.rs:289-297`).
 * Web: `?cpu` bypasses the GPU canvas; `?webgl` forces GL; the web runner passes
-  `None` for stencil (`apps/cadcraft-web/src/main.rs:133-137`). Do not change that
+  `None` for stencil (`apps/forja-web/src/main.rs:133-137`). Do not change that
   assumption without a WebGL2/browser test.
 * Environment wording: this server has **no inherited display session and no running
   compositor**. The parent can access an i915 PCI `8086:3E96` render node
@@ -893,13 +893,13 @@ winit = { git = "https://github.com/storytold/winit", rev = "<storytold/winit fi
 
 Trim any crate not in the graph; an unused `[patch]` entry is a Cargo **warning**, not
 a build error, but it is still removed. `egui_extras` is only a dev-dependency of
-`craft-ui` and is not in CADCraft's graph. No `branch` and no `path` may appear for a
+`craft-ui` and is not in Forja's graph. No `branch` and no `path` may appear for a
 published pin; the audit's local path patches are evidence only. The final fork/tag
 must also replace the fork's own root `[patch] winit = { branch = ... }` with the
 reviewed winit rev, or document an immutable equivalent.
 
 `rust-version`: keep the workspace at `1.90` for engine crates and add
-`rust-version = "1.95"` to `apps/cadcraft` and `apps/cadcraft-web`, matching
+`rust-version = "1.95"` to `apps/forja` and `apps/forja-web`, matching
 `crates/ui-egui/Cargo.toml:7` and `README.md:126-127`.
 
 ### 11.2 craft-libs PR #199: port hunks, never the tree
@@ -922,33 +922,33 @@ hunks from `8614e4a` (plus the relevant README change from `1764bca`):
 
 Preserve the current docking-permission and print-name hardening. Run
 `cargo test -p craft-ui --all-features`, the workspace tests, strict clippy and the
-all-feature wasm check; merge; publish an immutable commit; then pin CADCraft to it.
-`craft-docpath` is unchanged between `82a24b0` and `49190884`, so both CADCraft
+all-feature wasm check; merge; publish an immutable commit; then pin Forja to it.
+`craft-docpath` is unchanged between `82a24b0` and `49190884`, so both Forja
 craft-libs dependencies can use the same new revision.
 
 ### 11.3 Language work #198
 
 Consume #198 through the final fork/winit pins (E5/E12-E21, W17-W27, plus E21b/W27);
-do not add a `craft-i18n` dependency or adopt its UI model. CADCraft keeps its TSV
+do not add a `craft-i18n` dependency or adopt its UI model. Forja keeps its TSV
 catalog and `with_language`, and uses only `Context::set_language` and
 `Style::right_to_left` from the fork. Any app-side #198 adoption is separate.
 
-### 11.4 Fork patch disposition for CADCraft
+### 11.4 Fork patch disposition for Forja
 
 Provenance: `egui/PATCHES.md` on the candidate and commits `0.37.0..a4f9a17f`. The
-final pin must carry the whole reviewed series; the table records what CADCraft
+final pin must carry the whole reviewed series; the table records what Forja
 exercises and what would catch removal.
 
-| Patch | What it does | CADCraft use | Keep / remove condition | Test |
+| Patch | What it does | Forja use | Keep / remove condition | Test |
 |---|---|---|---|---|
 | E1 | eframe `ViewportHooks` | Not used (no secondary windows) | Keep for craft-tablet; remove if upstream adds it | fork unit test |
-| E2+E3 | fit oversized wgpu surface; setup errors | via eframe wgpu | Keep while emilk/egui#8361 open | fork `surface_fit`; CADCraft GPU gate unresolved |
-| E4 | Wayland clipboard via winit | `CADCRAFT_WAYLAND=1` | Keep while #8657 draft; **requires W15 and W15P PRIMARY** | regular + PRIMARY native matrix |
+| E2+E3 | fit oversized wgpu surface; setup errors | via eframe wgpu | Keep while emilk/egui#8361 open | fork `surface_fit`; Forja GPU gate unresolved |
+| E4 | Wayland clipboard via winit | `FORJA_WAYLAND=1` | Keep while #8657 draft; **requires W15 and W15P PRIMARY** | regular + PRIMARY native matrix |
 | E5/E12/E13 | bidi shaping/order/marks/caret, graphemes | Arabic UI/text | Keep while #8577 open | fork text tests; Arabic UI label/MTEXT |
 | E6 | IME focus not interrupted | Text fields | Keep | kittest IME commit |
 | E7 | Windows VK letter keys | Non-Latin shortcuts | Keep; needs W25 | Windows VM |
 | E8 | TextEdit glyph overshoot | Thai/Vietnamese/Arabic input | Keep | tall-glyph TextEdit |
-| E9 | `Style::right_to_left` chrome | §8.2 decision | Keep; activation staged | fork RTL chrome; CADCraft opt-in only |
+| E9 | `Style::right_to_left` chrome | §8.2 decision | Keep; activation staged | fork RTL chrome; Forja opt-in only |
 | E10 | web key/lang | Browser keys | Keep | browser/manual |
 | E11 | vello_cpu single-thread raster | Not used | Keep | fork |
 | E14/E15/E16 | fallback baseline, line breaker, cursor affinity | CJK/Indic editing | Keep | fork; CJK screens |
@@ -965,9 +965,9 @@ verified in the same consumer graph and the table is updated.
 
 ### 11.5 winit
 
-CADCraft needs the winit fork because E4/E19/E21/E21b call APIs in W15/W15P/W25/W26/
+Forja needs the winit fork because E4/E19/E21/E21b call APIs in W15/W15P/W25/W26/
 W27 not in crates.io 0.30.13. Patch winit to the **final reviewed rev**, not a branch;
-keep `winit` 0.30.13-compatible `dpi`. `apps/cadcraft/Cargo.toml:29` keeps its direct
+keep `winit` 0.30.13-compatible `dpi`. `apps/forja/Cargo.toml:29` keeps its direct
 winit dependency for `EventLoopBuilderExtX11`; the patch makes it and eframe's winit one
 package.
 
@@ -978,21 +978,21 @@ matrix. W16 (pinch/rotation) remains outside this cut.
 
 ### 11.6 Vendors and lockfile checks (native and wasm)
 
-* CADCraft has no vendor directory and no external path patch. Nothing is deleted.
+* Forja has no vendor directory and no external path patch. Nothing is deleted.
 * craft-libs' `vendor/krilla`, `vendor/hayro*` are PDF-only and unrelated; leave them.
 * pdfcraft's vendored `egui-wgpu`/winit are another repository's responsibility; do not
-  remove them here or copy their patches into CADCraft.
+  remove them here or copy their patches into Forja.
 * After regeneration, assert on both target feature sets:
   * native: `cargo tree -d`, `cargo tree -i egui`, `cargo tree -i winit`,
     `cargo tree -i arboard`, `cargo metadata --format-version 1`;
   * wasm: `cargo tree --target wasm32-unknown-unknown -d`,
     `cargo tree -i egui --target wasm32-unknown-unknown`,
-    `cargo tree -e features --target wasm32-unknown-unknown -p cadcraft-web`,
-    and `cargo metadata` filtered/interpreted for `apps/cadcraft-web`;
+    `cargo tree -e features --target wasm32-unknown-unknown -p forja-web`,
+    and `cargo metadata` filtered/interpreted for `apps/forja-web`;
   * no duplicate egui/emath/ecolor/epaint/accesskit 0.36/0.37 pairs;
   * every egui-family source is `git+https://github.com/storytold/egui?rev=<final>`;
     winit is the storytold fork; craft-libs crates share one final rev;
-  * `harfrust` may legitimately appear at 0.12 (egui) and 0.14 (`cadcraft-fonts`);
+  * `harfrust` may legitimately appear at 0.12 (egui) and 0.14 (`forja-fonts`);
   * `arboard` is present through `egui-winit` because `clipboard` is on;
   * the wasm graph has `egui/web_file`, eframe wgpu/accesskit and no native-only
     `arboard`, X11 or Wayland packages; assert these, and test a negative fixture with
@@ -1019,7 +1019,7 @@ storytold/winit final rev (bounded W15/W15P, W17-W27 lifecycle)
         -> storytold/egui final P8 (P2b/P7/P7b/P7c included)
         -> craft-libs S1: current main + PR199 API hunks + CL-2F/CL-3
         -> published craft-libs final rev
-        -> cadcraft S2 (atomic compatibility; strict names/glyphs; clipboard/fonts;
+        -> forja S2 (atomic compatibility; strict names/glyphs; clipboard/fonts;
                          PanelState migration; native+wasm graph)
              -> S3 lifecycle/screenshot/host
              -> S4 language/AccessKit/RTL text
@@ -1031,23 +1031,23 @@ storytold/winit final rev (bounded W15/W15P, W17-W27 lifecycle)
 * **S1 craft-libs** — fresh branch from `49190884`; apply only the `8614e4a` API
   hunks; preserve docking-permission/printing hardening; add CL-2 capture slot and
   CL-3 opt-in direction API; tests/clippy/wasm; merge; publish a final rev.
-* **S2 CADCraft compatibility** — final pins; `clipboard`, `default_fonts`,
+* **S2 Forja compatibility** — final pins; `clipboard`, `default_fonts`,
   `monochrome_emoji_fonts`; app `rust-version`; C1-C8 mechanical migrations; panel
   `PanelState` migration; accessible names and glyph sweep; lockfile regeneration;
   shared CL-2F callback migration including basic drain/timeout/reply handling and
   native **and wasm** graph assertions. It is atomic and must compile and pass
-  `cargo xtask ci` (and `cargo test -p cadcraft-ui-egui --all-targets`). It is **not**
+  `cargo xtask ci` (and `cargo test -p forja-ui-egui --all-targets`). It is **not**
   a “no behaviour change” stage: the emoji font, accessible names and panel keys change.
-* **S3 CADCraft lifecycle** — `frame_tick` split, opening spinner move, host/web frame
+* **S3 Forja lifecycle** — `frame_tick` split, opening spinner move, host/web frame
   token, once-per-frame wheel application, shared capture lifecycle stress, dropped-file fix,
   bounded counters, tests and mutation probes.
-* **S4 CADCraft text/accessibility/language** — broader glyph coverage via pinned
+* **S4 Forja text/accessibility/language** — broader glyph coverage via pinned
   fixtures, `Context::set_language`, AccessKit language, Arabic shaping checks, docs
   row for RTL status.
-* **S5a CADCraft clipboard/PRIMARY (required for parity)** — middle-click decision and
+* **S5a Forja clipboard/PRIMARY (required for parity)** — middle-click decision and
   the native Wayland/X11 PRIMARY matrix against W15P/E4/P2b. A measured fallback is
   recorded only if native evidence proves the design cannot meet a required platform.
-* **S5b CADCraft RTL activation (optional)** — `DockArea::direction`,
+* **S5b Forja RTL activation (optional)** — `DockArea::direction`,
   `Style::right_to_left` and app-owned chrome mirroring; otherwise document the gap.
 * **S6 evidence and docs** — performance report, screenshots, before/after matrices,
   docs revision history, remaining gates.
@@ -1063,17 +1063,17 @@ No partial rollback to 0.36 is promised after S2 until the stack is reverted as 
 
 * `cargo xtask ci` (fmt, clippy -D warnings, workspace tests, assets, layers, wasm).
 * `cargo check --workspace --all-targets --locked`.
-* `cargo test -p cadcraft-ui-egui --all-targets` **alone** (UI crate dev/test font
+* `cargo test -p forja-ui-egui --all-targets` **alone** (UI crate dev/test font
   features self-sufficient).
-* `cargo check -p cadcraft-web --target wasm32-unknown-unknown` and
-  `trunk build --release` from `apps/cadcraft-web`; the wasm32 target is installed,
+* `cargo check -p forja-web --target wasm32-unknown-unknown` and
+  `trunk build --release` from `apps/forja-web`; the wasm32 target is installed,
   but `trunk`/`wasm-bindgen` and a browser are not, so the bundle/browser run remain
   blocking unknowns.
 * Native **and** wasm graph checks from §11.6.
-* Optional features: `cargo test -p cadcraft-ui-egui --features …` where the crate has
+* Optional features: `cargo test -p forja-ui-egui --features …` where the crate has
   features (currently none); craft-libs all-features/craft-ui all-features in S1.
 * Windows: a task-specific craft-windows clone, separate target/evidence, native
-  `cargo test --workspace --locked`, `cargo build --release -p cadcraft`, then the GUI
+  `cargo test --workspace --locked`, `cargo build --release -p forja`, then the GUI
   workflow in §13.5. Do not reuse the baseline executable as new-source evidence.
 
 ### 13.2 Behavioural regressions
@@ -1083,10 +1083,10 @@ No partial rollback to 0.36 is promised after S2 until the stack is reverted as 
 | Multi-pass frame side effects | one non-idempotent counter/LISP slice/control execution per frame with a popup open | §6.5 |
 | Hidden logic | control replies, autosave deadlines and screenshot timeouts while minimized/unknown visibility; dropped file opens once | §6.5 |
 | Fresh queues | a control request queued between passes is answered without waiting for the next frame | §6.5 |
-| Hidden child (conditional) | if a later fork pin adopts an overdue full pass, parent occluded/overdue plus child open/update/close; CADCraft currently has no child viewports, so record N/A rather than claim #8748 | §6.5, §14.5 |
+| Hidden child (conditional) | if a later fork pin adopts an overdue full pass, parent occluded/overdue plus child open/update/close; Forja currently has no child viewports, so record N/A rather than claim #8748 | §6.5, §14.5 |
 | Screenshot correlation | two tokens/two paths; timeout/cancel/admission/geometry mismatch | §6.4 |
 | Command/undo | create → undo → redo → entity count | engine + UI control test |
-| Save/reopen | `examples/apartment.dxf` opened, edited, saved to temp, reopened; entity count and file bytes | `apps/cadcraft`/CLI |
+| Save/reopen | `examples/apartment.dxf` opened, edited, saved to temp, reopened; entity count and file bytes | `apps/forja`/CLI |
 | Theme/language | light/dark/System, `en`/`de`/`zh`/`ar`, no text loss; AccessKit language | `lib.rs`/`i18n` tests |
 | Panels/docking | canvas rect, tab order, floating group move, workspace reload, unchanged direction JSON | `docking_workflows`, `chrome_geometry` |
 | Keyboard/focus | Tab/Shift-Tab, Enter/Space activation, Escape/Enter command line, IME commit | `workspace_focus`, `hidden_command_line`, new IME |
@@ -1139,7 +1139,7 @@ A probe is not a deliverable; record the failure output in evidence.
 
 | Platform | What can be qualified here | Limits / required preparation |
 |---|---|---|
-| Linux host, headless | compile, clippy, tests, kittest, `cadcraft-cli perf`, wasm compile | no inherited `DISPLAY`/`WAYLAND_DISPLAY`, no compositor/Xvfb; not native focus/IME/picker/GPU evidence |
+| Linux host, headless | compile, clippy, tests, kittest, `forja-cli perf`, wasm compile | no inherited `DISPLAY`/`WAYLAND_DISPLAY`, no compositor/Xvfb; not native focus/IME/picker/GPU evidence |
 | Linux X11 | functional GUI and focus/clipboard after provisioning Xvfb + a window manager; record software renderer/versions | Xvfb/manager absent at inspection; must be provisioned as an isolated managed job; results labelled virtual-display/software |
 | Linux Wayland | W15/W15P/PRIMARY, W27/E21b IME after provisioning Weston/Sway/wlroots/KWin/Mutter | compositors absent; XWayland default path is separate; native capability evidence required |
 | Linux GPU | parent-visible i915 `8086:3E96` renderD128; qualify Vulkan/OpenGL/wgpu via a managed probe | worker sandbox may hide `/dev/dri`; access alone is not GPU acceptance; software and real-GPU tables separate |
@@ -1156,7 +1156,7 @@ real evidence is produced.
 
 ### 14.1 Environment and identities
 
-Record for every run: exact CADCraft SHA, `Cargo.lock` SHA256, feature set,
+Record for every run: exact Forja SHA, `Cargo.lock` SHA256, feature set,
 `CRAFT_FONTS_DIR` (or absent), fixture (`examples/apartment.dxf`, synthetic counts),
 OS/kernel, Rust version, GPU or software renderer/driver, display scale, viewport size,
 build profile (`release`), and whether the canvas is GPU or `?cpu`. On Linux record
@@ -1169,7 +1169,7 @@ and `dxdiag` Basic Render Driver. Never mix software and real-GPU tables.
 * **B0**: `a08fd7c` with the coherent 0.36.2 egui family and craft-ui `5c874d51`.
 * **B0u**: B0 in a measurement-only worktree with `frame_nr`/pass/CPU counters and
   idle-frame instrumentation backported (never committed).
-* **B0e**: `1977a493` engine/format dependency state measured with `cadcraft-cli perf`
+* **B0e**: `1977a493` engine/format dependency state measured with `forja-cli perf`
   (engine-only, no UI) to attribute tiny-skia/skrifa/harfrust/quick-xml changes.
 * **C0**: the S2 compatibility commit. It includes the clipboard/font/accessibility/
   panel-key changes, so it is not a pure dependency baseline.
@@ -1196,8 +1196,8 @@ samples, median, p95, p99 (only with ≥1,000 frames), peak RSS, allocations/tex
 uploads and idle CPU/repaint count. Exclude the first run after a cold shader/font cache;
 record cold vs warm separately.
 
-1. **Engine control**: `cadcraft-cli perf 200000` and
-   `cadcraft-cli perf examples/apartment.dxf`; repeat the single-shot command in a
+1. **Engine control**: `forja-cli perf 200000` and
+   `forja-cli perf examples/apartment.dxf`; repeat the single-shot command in a
    driver script (the CLI has no repeat flag), ≥10 warmups + ≥30 samples, parse the
    timing table.
 2. **Idle**: open the sample, no input, 60 s; frames from the measurement counter,
@@ -1214,12 +1214,12 @@ record cold vs warm separately.
 7. **Save/reopen**: open `examples/apartment.dxf`, edit, save to temp, reopen; wall
    time and `drawMs`.
 8. **#8731 text layout/tessellation**: 120 ASCII labels + 120 rounded-rect controls
-   adapted to CADCraft's chrome; measure tessellation CPU/instruction cost per frame on
+   adapted to Forja's chrome; measure tessellation CPU/instruction cost per frame on
    B0/Cs/C0; test mixed/color rows and keep color-emoji/wrap semantics.
 9. **#8736 Windows startup**: fresh process, poll the control port until `ping`
    succeeds; renderer construction separate from first frame; ≥20 fresh processes on
    B0/Cs/C0. Record the absolute +ms for FXC.
-10. **#8512 fonts**: measure CADCraft startup with `system_font_fallback=false` and
+10. **#8512 fonts**: measure Forja startup with `system_font_fallback=false` and
     record that no system-font discovery is performed; compare a stock-eframe default
     only as a separate row. Do not enable `system_fonts` to “fix” a number.
 
@@ -1231,7 +1231,7 @@ Predefine and freeze before candidate measurement:
 * investigate **>5% peak-memory** increase and any new idle busy-loop/audio underrun;
 * for sub-millisecond measurements require the relative increase to exceed **0.05 ms**
   or corroborate with stable instruction/allocation counts;
-* app-specific gates may be stricter, never looser. CADCraft engine operations
+* app-specific gates may be stricter, never looser. Forja engine operations
   ≤ +5% median and UI `frameMs`/`cpuMs` p95 ≤ +10% are the floor. Startup uses the same
   median/p95 rule; **no “+100 ms” allowance** hides the ~+40 ms FXC cost. If +40 ms is
   accepted, it is a documented tradeoff with owner review, not a threshold change.
@@ -1245,14 +1245,14 @@ Predefine and freeze before candidate measurement:
 
 * #8731: plain-text tessellation ≈+60% in 0.37, color-glyph branch in
   `Tessellator::tessellate_text`; measure operation 8 on B0/Cs/C0; a row-level fast path
-  is a fork decision, not a CADCraft workaround.
+  is a fork decision, not a Forja workaround.
 * #8736: `egui-wgpu` 0.37 `wrap_texel_coord` makes the DX12/FXC pipeline ~4× slower to
-  compile, ~+40 ms startup; CADCraft defaults to FXC. Measure operation 9; do not
+  compile, ~+40 ms startup; Forja defaults to FXC. Measure operation 9; do not
   change the FXC choice to hide it. Clamp-only is not a valid Repeat/MirroredRepeat fix.
-* #8512: system-font startup cost; CADCraft disables the provider, so record absence of
+* #8512: system-font startup cost; Forja disables the provider, so record absence of
   that cost rather than adding it.
 * #8595: repaint-burst fix may reduce idle CPU; measure operation 2.
-* #8528: cross-viewport galley cache; CADCraft has one viewport, not applicable.
+* #8528: cross-viewport galley cache; Forja has one viewport, not applicable.
 * #8763/unmerged #8764: selection loss before a clicked widget. Test the MTEXT toolbar
   and dialog actions with pointer and keyboard; the fork owns any selected fix, and an
   app workaround must preserve the range and undo semantics with a removal condition.
@@ -1293,13 +1293,13 @@ Blocking before calling the migration complete:
 6. **Display/renderer**: no inherited display; parent-visible i915 renderD128 is
    unqualified and may be hidden from a worker; Windows is software D3D12. Native focus,
    IME, picker and real-GPU performance remain unresolved until managed evidence.
-7. **Web**: `cargo check -p cadcraft-web` and a wasm graph gate are required; `trunk`
+7. **Web**: `cargo check -p forja-web` and a wasm graph gate are required; `trunk`
    build and a real browser run are blocking unknowns.
 8. **Windows/macOS native**: Basic Render Driver only; focus/IME/picker/traffic-light
    layout and real-GPU behavior unqualified; macOS hardware unavailable.
 9. **Fonts**: monochrome emoji changes `⌘`; the `⇧` decision may change macOS labels;
    pinned fixtures are external and must keep their licences. `can_show` gating remains.
-10. **RTL**: `Style::right_to_left` alone does not mirror CADCraft chrome; use craft-ui
+10. **RTL**: `Style::right_to_left` alone does not mirror Forja chrome; use craft-ui
     `DockArea::direction` only with app-owned mirroring; do not claim an RTL UI earlier.
 11. **Screenshot on web**: `now_ms` is 0 on wasm; the new slot deadline must use a web
     clock, and a browser screenshot remains a separate gate.
@@ -1337,13 +1337,13 @@ unverified behaviors.
 ## Appendix A — source anchors
 
 Manifests: `Cargo.toml:6-11,52-59`; `crates/ui-egui/Cargo.toml:7,20-32`;
-`apps/cadcraft/Cargo.toml:19,29`; `apps/cadcraft-web/Cargo.toml:20,26-32`.
+`apps/forja/Cargo.toml:19,29`; `apps/forja-web/Cargo.toml:20,26-32`.
 
-App shell: `apps/cadcraft/src/main.rs:67-110` (App impl), `:185,188` (app id/stencil),
+App shell: `apps/forja/src/main.rs:67-110` (App impl), `:185,188` (app id/stencil),
 `:228-307` (options/run), `:343-348` (set_wgpu), `:301-306` (XWayland).
-`apps/cadcraft-web/src/main.rs:31-58` (Shell), `:108-130` (web renderer/stencil),
-`apps/cadcraft-web/src/upload.rs:70-77` (`take_dropped`).
-`apps/cadcraft/src/workspace.rs:149-170` (save_if_changed/save_on_exit).
+`apps/forja-web/src/main.rs:31-58` (Shell), `:108-130` (web renderer/stencil),
+`apps/forja-web/src/upload.rs:70-77` (`take_dropped`).
+`apps/forja/src/workspace.rs:149-170` (save_if_changed/save_on_exit).
 
 UI lifecycle: `crates/ui-egui/src/lib.rs:195-267` (CadApp fields), `:444-455`
 (finish_opening), `:536-598` (logic), `:601-625` (raw_input_hook), `:627-662`
@@ -1371,9 +1371,9 @@ unique task and evidence path, e.g.:
 
 ```sh
 python3 /home/codex/work/maintenance/task.py run \
-  --job-id egui037-cadcraft-ci-01 --kind build --task egui037-cadcraft \
-  --source /home/codex/work/CraftApps/egui037-migration-20261022/cadcraft \
-  --evidence /home/codex/work/ssd2/task-evidence/egui037-migration-20261022/cadcraft \
+  --job-id egui037-forja-ci-01 --kind build --task egui037-forja \
+  --source /home/codex/work/CraftApps/egui037-migration-20261022/forja \
+  --evidence /home/codex/work/ssd2/task-evidence/egui037-migration-20261022/forja \
   -- bash -c 'cargo xtask ci'
 ```
 
@@ -1381,21 +1381,21 @@ and equivalents for:
 
 ```sh
 cargo check --workspace --all-targets --locked
-cargo test -p cadcraft-ui-egui --all-targets
-cargo check -p cadcraft-web --target wasm32-unknown-unknown
-(cd apps/cadcraft-web && trunk build --release)
+cargo test -p forja-ui-egui --all-targets
+cargo check -p forja-web --target wasm32-unknown-unknown
+(cd apps/forja-web && trunk build --release)
 cargo tree -d
 cargo tree -i egui
 cargo tree --target wasm32-unknown-unknown -d
 cargo tree -i egui --target wasm32-unknown-unknown
-cargo tree -e features --target wasm32-unknown-unknown -p cadcraft-web
+cargo tree -e features --target wasm32-unknown-unknown -p forja-web
 cargo metadata --format-version 1
-cargo run -p cadcraft-cli -- perf 200000
-cargo run -p cadcraft-cli -- perf examples/apartment.dxf
+cargo run -p forja-cli -- perf 200000
+cargo run -p forja-cli -- perf examples/apartment.dxf
 ```
 
 Use the craft-windows clone helper for the Windows stage, a fresh target/evidence
-directory, `guest-exec.py`/build equivalents appropriate to CADCraft, and the existing
+directory, `guest-exec.py`/build equivalents appropriate to Forja, and the existing
 `task.py`/`vm.py` sequence. Do not reuse the baseline's built binary as new-source
 evidence, and do not run these commands in this planning task.
 
@@ -1432,7 +1432,7 @@ resolved without widening the migration contract:
   previous surface survived and a later admission could bind to stale geometry.
 * **MTEXT Diameter is painted, not shaped.** U+2300 is absent from egui's bundled
   Proportional/Monospace/emoji faces and from the web font set. The toolbar button
-  now paints CADCraft's own circle-and-slash glyph and carries the semantic name
+  now paints Forja's own circle-and-slash glyph and carries the semantic name
   "Diameter"; the document text still uses U+2300, which the drafting font covers.
 * **Affected controls are named.** The MTEXT height `DragValue` gets the AccessKit
   name "Text height" (its tooltip alone is not a name), and QuickCalc's conversion

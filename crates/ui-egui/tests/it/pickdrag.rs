@@ -1,10 +1,10 @@
 //! OPTIONS checkbox and real pointer gestures share the saved PICKDRAG preference: with it on, a
 //! press-and-drag draws a lasso; click, move, click makes the rectangular window.
-use cadcraft_engine::Session;
-use cadcraft_engine::geom::Vec2;
-use cadcraft_ui_egui::{CadApp, Services};
 use egui::{Event, Modifiers, PointerButton, Pos2, vec2};
 use egui_kittest::{Harness, kittest::Queryable};
+use forja_engine::Session;
+use forja_engine::geom::Vec2;
+use forja_ui_egui::{CadApp, Services};
 use serde_json::json;
 
 fn harness() -> Harness<'static, CadApp> {
@@ -51,7 +51,7 @@ fn selection_tab_checkbox_updates_and_persists_the_preference() {
     let mut restored = CadApp::new(Session::new(), Services::default());
     restored.load_profile(&saved);
     assert!(!restored.session.settings.pickdrag);
-    if let Some(dir) = std::env::var_os("CADCRAFT_SELECTION_SHOTS") {
+    if let Some(dir) = std::env::var_os("FORJA_SELECTION_SHOTS") {
         let dir = std::path::PathBuf::from(dir);
         std::fs::create_dir_all(&dir).unwrap();
         h.render().unwrap().save(dir.join("selection-two-clicks.png")).unwrap();
@@ -187,7 +187,7 @@ fn a_lasso_at_select_objects_goes_to_the_command() {
     h.state_mut().session.start("erase").unwrap();
     h.run_steps(2);
     drag_path(&mut h, &around_the_line());
-    h.state_mut().session.input(cadcraft_engine::Input::Enter).unwrap();
+    h.state_mut().session.input(forja_engine::Input::Enter).unwrap();
     h.run_steps(2);
     assert_eq!(h.state().session.doc().unwrap().model.iter().count(), 0, "ERASE took the lassoed line");
 }

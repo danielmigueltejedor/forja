@@ -72,7 +72,7 @@ struct State {
     /// The `doc_epoch` and space the rows were found in. A row's handle is only meaningful in
     /// the drawing and the space it was found in, so when either moves the rows must go.
     epoch: u64,
-    space: cadcraft_doc::Space,
+    space: forja_doc::Space,
     rows: Vec<Row>,
     /// The row Enter and Replace act on.
     current: Option<usize>,
@@ -108,7 +108,7 @@ fn search(app: &mut CadApp, st: &mut State) {
 /// report.
 fn reveal(app: &mut CadApp, st: &State, index: usize) {
     let Some(row) = st.rows.get(index) else { return };
-    let Some(h) = cadcraft_doc::Handle::parse_hex(&row.handle) else { return };
+    let Some(h) = forja_doc::Handle::parse_hex(&row.handle) else { return };
     app.session.set_selection(vec![h]);
     let _ = app.run("zoom", json!({ "mode": "object" }));
 }
@@ -270,7 +270,7 @@ pub fn dialog(app: &mut CadApp, ctx: &egui::Context, open: &mut bool) {
         search(app, &mut st);
     }
     if do_select_all {
-        let hs: Vec<cadcraft_doc::Handle> = st.rows.iter().filter_map(|r| cadcraft_doc::Handle::parse_hex(&r.handle)).collect();
+        let hs: Vec<forja_doc::Handle> = st.rows.iter().filter_map(|r| forja_doc::Handle::parse_hex(&r.handle)).collect();
         if !hs.is_empty() {
             app.session.set_selection(hs);
             st.message = format!("{} object(s) selected", st.rows.len());

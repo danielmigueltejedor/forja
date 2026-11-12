@@ -8,13 +8,13 @@
 use std::ffi::{OsStr, OsString};
 use std::path::{Path, PathBuf};
 
-use cadcraft_engine::geom::{Bounds2, Vec2};
-use cadcraft_io::Format;
-use cadcraft_mcp::args::{blank_env_is_unset, name_env_vars};
 use clap::builder::{OsStringValueParser, PathBufValueParser, TypedValueParser};
 use clap::error::ErrorKind;
 use clap::parser::ValueSource;
 use clap::{ArgAction, ArgGroup, ArgMatches, Args, CommandFactory, FromArgMatches, Parser, Subcommand, ValueEnum};
+use forja_engine::geom::{Bounds2, Vec2};
+use forja_io::Format;
+use forja_mcp::args::{blank_env_is_unset, name_env_vars};
 use serde_json::Value;
 
 /// Help text that names the formats of `list`, built once from [`Format::READ`] or [`Format::WRITE`]
@@ -66,7 +66,7 @@ fn convert_long_about() -> &'static str {
 
 /// forja-cli: headless Forja
 #[derive(Parser)]
-#[command(name = "forja-cli", version = cadcraft_engine::build_version(), arg_required_else_help = true)]
+#[command(name = "forja-cli", version = forja_engine::build_version(), arg_required_else_help = true)]
 pub(crate) struct Cli {
     #[command(subcommand)]
     pub(crate) command: Command,
@@ -113,7 +113,7 @@ pub(crate) struct ConvertArgs {
 
 /// The settings the desktop app reads from its environment, for the subcommands that draw or run
 /// commands. A variable is the flag's fallback; an empty one counts as unset, except
-/// `CADCRAFT_CONFIG_DIR`.
+/// `FORJA_CONFIG_DIR`.
 #[derive(Args)]
 #[command(next_help_heading = "Settings")]
 pub(crate) struct Settings {
@@ -122,13 +122,13 @@ pub(crate) struct Settings {
     // Not RFC-0012 rule 1.7's "an empty variable counts as unset": an empty value is the
     // documented way to run with no settings folder (isolated runs, tests), and it predates the
     // CLI port. Keep it out of any blanket treatment of empty variables.
-    #[arg(long, value_name = "DIR", env = "CADCRAFT_CONFIG_DIR", value_parser = OsStringValueParser::new().map(PathBuf::from))]
+    #[arg(long, value_name = "DIR", env = "FORJA_CONFIG_DIR", value_parser = OsStringValueParser::new().map(PathBuf::from))]
     pub(crate) config_dir: Option<PathBuf>,
     /// The font that replaces a missing one (FONTALT)
-    #[arg(long, value_name = "FONT", env = "CADCRAFT_FONTALT")]
+    #[arg(long, value_name = "FONT", env = "FORJA_FONTALT")]
     pub(crate) fontalt: Option<String>,
     /// The fonts tried, in order, for characters a font lacks, comma-separated (FONTFALLBACK)
-    #[arg(long, value_name = "FONTS", env = "CADCRAFT_FONTFALLBACK")]
+    #[arg(long, value_name = "FONTS", env = "FORJA_FONTFALLBACK")]
     pub(crate) fontfallback: Option<String>,
 }
 
@@ -136,9 +136,9 @@ impl Settings {
     /// Install the settings for this run; an unset one is the default. An empty or blank
     /// `--config-dir` is no settings folder.
     pub(crate) fn apply(&self) {
-        cadcraft_engine::settings_dir::set(self.settings_dir());
-        cadcraft_engine::fonts::ttf::set_font_alt(self.fontalt.as_deref().unwrap_or(""));
-        cadcraft_engine::fonts::ttf::set_fallback_fonts(self.fontfallback.as_deref().unwrap_or(""));
+        forja_engine::settings_dir::set(self.settings_dir());
+        forja_engine::fonts::ttf::set_font_alt(self.fontalt.as_deref().unwrap_or(""));
+        forja_engine::fonts::ttf::set_fallback_fonts(self.fontfallback.as_deref().unwrap_or(""));
     }
 
     /// The settings folder: `--config-dir`, else the platform's; `None` when the flag is empty or
@@ -147,7 +147,7 @@ impl Settings {
         match &self.config_dir {
             Some(dir) if dir.to_str().is_some_and(|d| d.trim().is_empty()) => None,
             Some(dir) => Some(dir.clone()),
-            None => cadcraft_engine::settings_dir::platform(|k| std::env::var_os(k)),
+            None => forja_engine::settings_dir::platform(|k| std::env::var_os(k)),
         }
     }
 }
@@ -311,7 +311,7 @@ fn perf_target(p: PathBuf) -> PerfTarget {
 
 /// Open each DXF/DWG, save it as DXF and DWG, reopen and compare; writes report.md and report.json
 ///
-/// FOLDER defaults to $CADCRAFT_CORPUS_DIR. With CADCRAFT_CORPUS_STRICT=1 it fails when a file
+/// FOLDER defaults to $FORJA_CORPUS_DIR. With FORJA_CORPUS_STRICT=1 it fails when a file
 /// doesn't open, save or reopen, or loses records on save.
 #[derive(Args)]
 pub(crate) struct RoundtripArgs {
@@ -331,7 +331,7 @@ pub(crate) struct RoundtripArgs {
     #[arg(long)]
     pub(crate) no_census: bool,
     /// How far numbers may move and still count as equal
-    #[arg(long, value_name = "T", default_value_t = cadcraft_io::roundtrip::Options::default().abs_tol, value_parser = tolerance)]
+    #[arg(long, value_name = "T", default_value_t = forja_io::roundtrip::Options::default().abs_tol, value_parser = tolerance)]
     pub(crate) tolerance: f64,
 }
 
@@ -383,7 +383,7 @@ pub(crate) enum WindowError {
     #[error("need x0 < x1 and y0 < y1 (lower-left corner first)")]
     Order,
     #[error(transparent)]
-    Limits(#[from] cadcraft_io::IoError),
+    Limits(#[from] forja_io::IoError),
 }
 
 /// Why a value is refused: clap prints it after the flag and its value (exit 2).
@@ -436,7 +436,7 @@ pub(crate) fn parse_window(text: &str) -> Result<Bounds2, WindowError> {
         return Err(WindowError::Order);
     }
     let w = Bounds2 { min: Vec2::new(x0, y0), max: Vec2::new(x1, y1) };
-    cadcraft_io::check_window(&w)?;
+    forja_io::check_window(&w)?;
     Ok(w)
 }
 
@@ -482,7 +482,7 @@ fn framing_error(cli: &Cli) -> Option<UsageError> {
         _ => return None,
     };
     let (flag, out) = (framing.flag()?, out?);
-    (!cadcraft_io::is_image(out)).then(|| UsageError::FramingNeedsImage { flag, out: out.to_path_buf() })
+    (!forja_io::is_image(out)).then(|| UsageError::FramingNeedsImage { flag, out: out.to_path_buf() })
 }
 
 /// An output that is the same file as an input, without `--in-place`. An output that doesn't exist
@@ -565,7 +565,7 @@ pub(crate) fn parse(args: &[OsString]) -> Result<Cli, clap::Error> {
     parse_with(command(|k| std::env::var_os(k)), args)
 }
 
-/// The command line. An empty or blank variable counts as unset, except `CADCRAFT_CONFIG_DIR`:
+/// The command line. An empty or blank variable counts as unset, except `FORJA_CONFIG_DIR`:
 /// empty means no settings folder. `var` looks a variable up.
 fn command(var: impl Fn(&OsStr) -> Option<OsString> + Copy) -> clap::Command {
     let blank = move |a: clap::Arg| if a.get_id() == "config_dir" { a } else { blank_env_is_unset(a, var) };
@@ -803,7 +803,7 @@ mod tests {
         for sub in cmd.get_subcommands().filter(|s| s.get_arguments().any(|a| a.get_id() == "fontalt")) {
             let env = |id: &str| sub.get_arguments().find(|a| a.get_id() == id).and_then(|a| a.get_env());
             assert_eq!((env("fontalt"), env("fontfallback")), (None, None), "{}", sub.get_name());
-            assert_eq!(env("config_dir"), Some(OsStr::new("CADCRAFT_CONFIG_DIR")), "{}", sub.get_name());
+            assert_eq!(env("config_dir"), Some(OsStr::new("FORJA_CONFIG_DIR")), "{}", sub.get_name());
         }
     }
 

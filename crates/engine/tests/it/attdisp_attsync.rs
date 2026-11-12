@@ -1,7 +1,7 @@
 //! ATTDISP (ATTMODE, honoured by the display) and ATTSYNC.
 
-use cadcraft_doc::{Attrib, EntityKind, Handle, Space};
-use cadcraft_engine::Session;
+use forja_doc::{Attrib, EntityKind, Handle, Space};
+use forja_engine::Session;
 use serde_json::{Value, json};
 
 /// Make block `name` from what is in model space now (the objects are removed).
@@ -29,7 +29,7 @@ fn attribs(s: &Session, h: Handle) -> Vec<Attrib> {
 }
 
 fn segments(s: &Session) -> usize {
-    cadcraft_render::build(s.doc().unwrap(), &Space::Model, &cadcraft_render::Options::default()).segment_count()
+    forja_render::build(s.doc().unwrap(), &Space::Model, &forja_render::Options::default()).segment_count()
 }
 
 #[test]
@@ -63,7 +63,7 @@ fn attdisp_sets_attmode_and_the_display_follows_it() {
 fn view_attribute_display_menu_sets_attmode() {
     let mut s = Session::new();
     for (id, item, mode) in [("attdisp.on", "On", 2), ("attdisp.off", "Off", 0), ("attdisp.normal", "Normal", 1)] {
-        let spec = cadcraft_engine::find_command(id).unwrap_or_else(|| panic!("no command {id}"));
+        let spec = forja_engine::find_command(id).unwrap_or_else(|| panic!("no command {id}"));
         assert_eq!(spec.menu, ["View", "Attribute Display", item]);
         s.start(id).unwrap();
         assert!(s.running.is_none(), "{id}: {}", s.prompt_text());

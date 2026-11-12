@@ -14,7 +14,7 @@ pub(crate) const MAX_VIEWPORTS: usize = 256;
 /// Viewport id 1 is the paper-space view itself and is not drawn. A clipped viewport shows
 /// model space through its clip boundary's outline (the boundary entity draws itself, so the
 /// rectangle is not drawn); a viewport turned off shows only its border.
-pub(crate) fn viewport(b: &mut Builder, d: &Drawing, e: &Entity, vp: &cadcraft_doc::Viewport) {
+pub(crate) fn viewport(b: &mut Builder, d: &Drawing, e: &Entity, vp: &forja_doc::Viewport) {
     if !viewport_shown(d, e, vp) {
         return;
     }
@@ -39,12 +39,12 @@ pub(crate) fn viewport(b: &mut Builder, d: &Drawing, e: &Entity, vp: &cadcraft_d
 
 /// Whether a viewport draws anything: id 1 is the paper-space view itself, and a hidden viewport
 /// or one on a frozen layer shows neither its border nor its contents.
-fn viewport_shown(d: &Drawing, e: &Entity, vp: &cadcraft_doc::Viewport) -> bool {
+fn viewport_shown(d: &Drawing, e: &Entity, vp: &forja_doc::Viewport) -> bool {
     vp.id != 1 && e.common.visible && !d.is_hidden_object(e.handle) && !d.layer(&e.common.layer).is_some_and(|l| l.frozen)
 }
 
 /// A viewport's rectangle on paper; `None` for an unusable size or centre.
-fn viewport_rect(vp: &cadcraft_doc::Viewport) -> Option<Bounds2> {
+fn viewport_rect(vp: &forja_doc::Viewport) -> Option<Bounds2> {
     let center = vp.center.xy();
     let ok = |v: f64| v.is_finite() && v > 0.0;
     (ok(vp.width) && ok(vp.height) && center.is_finite()).then(|| {
@@ -75,7 +75,7 @@ pub fn viewport_content(d: &Drawing, space: &Space, handle: Handle, area: Bounds
 
 /// Model space seen through `vp`, in paper units, appended to `b`'s list clipped to `clip`;
 /// `area` (the clip's bounds on paper) picks the model objects to draw.
-fn contents(b: &mut Builder, d: &Drawing, vp: &cadcraft_doc::Viewport, area: Bounds2, clip: &Clip, unit_mm: f64) {
+fn contents(b: &mut Builder, d: &Drawing, vp: &forja_doc::Viewport, area: Bounds2, clip: &Clip, unit_mm: f64) {
     if b.list.expanded >= MAX_BLOCK_EXPANSION || !vp.on {
         return;
     }
@@ -105,7 +105,7 @@ fn contents(b: &mut Builder, d: &Drawing, vp: &cadcraft_doc::Viewport, area: Bou
         if matches!(me.kind, EntityKind::Ray(_) | EntityKind::XLine(_)) {
             return true;
         }
-        let eb = cadcraft_doc::entity_bounds(d, me, 0);
+        let eb = forja_doc::entity_bounds(d, me, 0);
         eb.is_empty() || eb.intersects(&win)
     };
     // One expansion budget for the whole build: seed it with what the enclosing list has already
@@ -182,7 +182,7 @@ fn contents(b: &mut Builder, d: &Drawing, vp: &cadcraft_doc::Viewport, area: Bou
 /// The clip region of a clipped viewport: the outline of its clip boundary entity, when that
 /// is a closed shape in the drawing. `None` for a rectangular viewport (or a dangling,
 /// unusable or self-referencing boundary, which falls back to the rectangle).
-pub fn viewport_clip(d: &Drawing, handle: Handle, vp: &cadcraft_doc::Viewport) -> Option<clip::PolyClip> {
+pub fn viewport_clip(d: &Drawing, handle: Handle, vp: &forja_doc::Viewport) -> Option<clip::PolyClip> {
     let h = vp.clip.filter(|h| *h != handle)?;
     let be = d.entity(h)?;
     clip::PolyClip::new(&clip::boundary_polygon(&be.kind)?)

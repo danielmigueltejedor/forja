@@ -1,11 +1,11 @@
 //! Additional entity families with authored geometry and optional fields. No serializer output
 //! is used to build an input. New failures are isolated by the format-specific test registrations.
 
-use cadcraft_doc::{
+use forja_doc::{
     Arc, Common, Ellipse, EntityKind, Face3d, Hatch, HatchLoop, Image, Leader, LwPolyline, MText, MTextColumnType, MTextColumns, Point, Polyline3d,
     RayLine, Solid, Table, TableCell, Wipeout,
 };
-use cadcraft_geom::{PolyVertex, Spline, Vec2, Vec3};
+use forja_geom::{PolyVertex, Spline, Vec2, Vec3};
 
 use super::{Case, entity_case};
 

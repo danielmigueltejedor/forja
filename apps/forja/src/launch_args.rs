@@ -2,24 +2,24 @@
 //! and its Environment section from [`crate::env::VARS`], so the help and the parsers can't disagree. Anything they don't declare is a usage error naming
 //! it (exit status 2), so a typo such as `--sampel` doesn't open the window and then fail to open
 //! the flag as a file; so is a flag without its value, a repeated flag and a bad port, from the
-//! flag or from `CADCRAFT_CONTROL_PORT`. A value never starts with `-`, and a file whose name
+//! flag or from `FORJA_CONTROL_PORT`. A value never starts with `-`, and a file whose name
 //! starts with `-` goes after `--`.
 
 use std::ffi::OsString;
 use std::path::PathBuf;
 
-use cadcraft_mcp::args::{blank_env_is_unset, name_env_vars};
 use clap::{Command, CommandFactory, FromArgMatches, Parser};
+use forja_mcp::args::{blank_env_is_unset, name_env_vars};
 
 /// Opens Forja with the given files
 #[derive(Parser)]
-#[command(name = "forja", version = cadcraft_engine::build_version(), after_help = crate::env::help())]
+#[command(name = "forja", version = forja_engine::build_version(), after_help = crate::env::help())]
 pub(crate) struct LaunchArgs {
     /// Files to open. Put `--` before a name that starts with `-`
     pub(crate) files: Vec<PathBuf>,
     /// Start the localhost JSON-lines control server on this port
     // allow_negative_numbers makes `--control -1` a bad value rather than a missing one.
-    #[arg(long, value_name = "PORT", env = "CADCRAFT_CONTROL_PORT", value_parser = control_port, allow_negative_numbers = true)]
+    #[arg(long, value_name = "PORT", env = "FORJA_CONTROL_PORT", value_parser = control_port, allow_negative_numbers = true)]
     pub(crate) control: Option<u16>,
     /// Open with the sample drawing
     #[arg(long)]
@@ -48,7 +48,7 @@ pub(crate) fn parse(mut cmd: Command, args: impl IntoIterator<Item = OsString>) 
     LaunchArgs::from_arg_matches(&matches)
 }
 
-/// A control port, for clap's `value_parser`: `--control` and `CADCRAFT_CONTROL_PORT`, which may
+/// A control port, for clap's `value_parser`: `--control` and `FORJA_CONTROL_PORT`, which may
 /// carry spaces.
 fn control_port(s: &str) -> Result<u16, NotAPort> {
     s.trim().parse().map_err(|_| NotAPort)
@@ -116,7 +116,7 @@ mod tests {
         let e = parse_args(&["-h", "--sampel", "--control"]).err().unwrap();
         assert_eq!((e.kind(), e.exit_code()), (ErrorKind::DisplayHelp, 0));
         let help = parse_args(&["--help"]).err().unwrap().to_string();
-        assert!(help.contains("--control <PORT>") && help.contains("CADCRAFT_CONFIG_DIR"), "{help}");
+        assert!(help.contains("--control <PORT>") && help.contains("FORJA_CONFIG_DIR"), "{help}");
 
         assert!(usage_error(&["--sampel", "--", "--help"]).contains("unexpected argument '--sampel'"));
         let parsed = parse_args(&["a.dxf", "--", "--help", "-x"]).unwrap();
@@ -141,7 +141,7 @@ mod tests {
         assert_eq!(parsed.files, [PathBuf::from(&latin1), PathBuf::from("b.dxf")]);
     }
 
-    /// `--control` falls back to `PATH` here instead of `CADCRAFT_CONTROL_PORT`: `PATH` is set
+    /// `--control` falls back to `PATH` here instead of `FORJA_CONTROL_PORT`: `PATH` is set
     /// wherever the tests run and is never a port, and tests can't set a variable (`set_var` is
     /// unsafe).
     #[test]

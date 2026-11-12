@@ -1,6 +1,6 @@
-# CADCraft control protocol
+# Forja control protocol
 
-Start the desktop app with `--control PORT` (or `CADCRAFT_CONTROL_PORT=PORT`). It listens on
+Start the desktop app with `--control PORT` (or `FORJA_CONTROL_PORT=PORT`). It listens on
 `127.0.0.1:PORT` for JSON lines: one request per line, one reply per line. A port given with
 `--control` wins over the variable; a bare `--control` keeps the variable's port.
 
@@ -12,10 +12,10 @@ Start the desktop app with `--control PORT` (or `CADCRAFT_CONTROL_PORT=PORT`). I
 Every request must carry the session `token`. Because loopback TCP cannot tell local operating
 system users apart, the app writes an unguessable per-session token to an owner-only file when the
 control server starts, and refuses (`unauthorized`) any request without a matching token. The file
-is `cadcraft-control-<port>.token` in the per-user runtime directory (`$XDG_RUNTIME_DIR`, else
+is `forja-control-<port>.token` in the per-user runtime directory (`$XDG_RUNTIME_DIR`, else
 `~/.cache`; `%LOCALAPPDATA%` on Windows); its path is logged at startup. A client reads the token
 from that file — which requires the desktop user's own filesystem access — and includes it on each
-line. The MCP bridge (`cadcraft-cli mcp --connect`) does this automatically.
+line. The MCP bridge (`forja-cli mcp --connect`) does this automatically.
 
 Errors come back as `{"id": …, "ok": false, "error": "message"}`. An unknown method's error points
 to `control.methods`, which lists the methods the server answers.
@@ -63,7 +63,7 @@ field. `engine.commands` returns a separate command catalog, not a list of addit
 | `ui.screenshot` | `{path?}` | PNG of the window (needs a presented frame). Bounded: at most 4 queued/in-flight/completed requests, 64 MiB per image and 64 MiB total (completed but undrained images still count), an 8 s deadline, and cancellation when the document or keyboard focus changes while the request is outstanding. A queued request adopts the settled window size when issued. After issue, a change in window size, scale, OS window focus, minimization or occlusion cancels it. Every reply carries `request`; failures include `ok:false,error`. Files are written only after the deadline and identity checks pass. Without `path`, each request gets a unique PNG in a private owner-only per-process directory under the temp dir (created exclusively; an existing symlink is never followed), so concurrent app instances cannot collide; the caller owns those files and should remove them when done. In the web build there is no file system: `path` is ignored and the PNG comes back inline (`pngBase64`, `width`, `height`, `bytes`). |
 | `ui.render` | `{path?, width?, height?, fit?, window?, background?, plot_style?}` | Headless render. `fit` (default true) frames the whole drawing; `false` uses the current view; `window` `[[x0, y0], [x1, y1]]` shows just that area (drawing units). `background`: `"dark"` (the canvas; the default without a plot style), `"white"` (the default with one, as a plot prints on paper), `"paper"` or `"#rrggbb"`; colour 7 is drawn white on a dark background and black on a light one, as on a plot. `plot_style`: a plot style table, built-in (`monochrome.ctb` prints every colour black, `grayscale.ctb` grey; `default.ctb`, `default.stb`, `monochrome.stb`) or one the drawing holds; `"none"` (or `""`) draws every object with its own properties, also in a layout whose page setup shows plot styles (without `plot_style` such a layout draws with its table, as on screen). An unknown `background` or `plot_style` is refused. Replies `{pngBase64, width, height, bytes, path?}`. |
 | `app.open` / `app.save` / `app.quit` | `{path}` | File operations. |
-| `control.methods` | | Every method this server answers: `{method, params, description}`. Headless (`cadcraft-cli mcp`) lists only the methods it serves. |
+| `control.methods` | | Every method this server answers: `{method, params, description}`. Headless (`forja-cli mcp`) lists only the methods it serves. |
 | `ping` | | Replies `"pong"`. A cheap health check. |
 
 To run a command listed by `engine.commands`, put its id in `params.command` and its arguments
@@ -107,8 +107,8 @@ The existing response is unchanged: `count` is all matches, `returned` is the pa
 `entities` contains handles, layers and geometry. This query does not change selection, drawing
 contents or undo history. `entities` is a command, not a top-level protocol method.
 
-The MCP server (`cadcraft-cli mcp --connect 127.0.0.1:PORT`) wraps this protocol; headless
-(`cadcraft-cli mcp`) it serves the same methods from an in-process session.
+The MCP server (`forja-cli mcp --connect 127.0.0.1:PORT`) wraps this protocol; headless
+(`forja-cli mcp`) it serves the same methods from an in-process session.
 MCP tool names are another interface: `execute` maps to `engine.execute`, `list_commands` to
 `engine.commands`, and the MCP `open` tool to `app.open`. See [mcp.md](mcp.md).
 
@@ -121,9 +121,9 @@ acceptance. Unregistered controls still report their actual focus ID, with a nul
 The native host restores layout choices from `workspace.json` and saves changes atomically.
 It stores palette/toolset visibility, selected toolset, collapsed groups, command-line history
 height and related chrome choices. It does not store drawings, command buffers, dialogs or the
-current Start tab. The default directory is `~/Library/Application Support/CADCraft` on macOS,
-`%APPDATA%/CADCraft` on Windows, and `$XDG_CONFIG_HOME/cadcraft` or `~/.config/cadcraft` elsewhere.
-Set `CADCRAFT_CONFIG_DIR` to a private directory for an isolated profile; an explicitly empty
+current Start tab. The default directory is `~/Library/Application Support/Forja` on macOS,
+`%APPDATA%/Forja` on Windows, and `$XDG_CONFIG_HOME/forja` or `~/.config/forja` elsewhere.
+Set `FORJA_CONFIG_DIR` to a private directory for an isolated profile; an explicitly empty
 value disables all settings reads and writes (workspace, logs, autosave, plotters). An invalid, oversized or newer-version file is
 reported and left untouched, with persistence disabled for that launch. Repair or move that
 file before restarting to resume saving workspace choices.

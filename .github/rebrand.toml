@@ -1,0 +1,98 @@
+# What `scripts/rebrand.py` renames: upstream's CADCraft becomes Forja, in file contents and in
+# paths. The weekly upstream sync applies the same rules to upstream's tree before merging it, so
+# a rule added here applies to everything upstream sends from then on.
+#
+# Replacements are literal and case-sensitive, applied in order: put the longer, more specific
+# ones first.
+
+# Left as they are wherever they appear.
+keep = [
+    # Links: upstream's issues and pull requests, other people's forks, the shared test corpus.
+    "https?://[^\\s)\\]\"'<>`]+",
+    # Upstream's repository, named without a link (the sync workflow, docs/upstream.md).
+    'storytold/cadcraft[\w.-]*',
+    # The shared test corpus repository and its checkout directory.
+    'cadcraft-corpus',
+    # craft-libs' update suite names CADCraft's release feed; Forja overrides what it uses.
+    'craft_update::suite::CADCRAFT',
+    # Credit for work done upstream.
+    'CADCraft contributors',
+]
+
+# Files left alone entirely.
+skip = [
+    ".github/rebrand.toml",
+    "scripts/rebrand.py",
+    # The licence notice keeps upstream's copyright line, which the licences require.
+    "NOTICE",
+    # The record of what came from upstream, and upstream's own README kept for reference.
+    "docs/upstream.md",
+    "docs/upstream-readme.md",
+]
+
+# Run after renaming: shorter names change how rustfmt wraps lines and sorts imports.
+after = [["cargo", "fmt", "--all"]]
+
+# Lines that keep this app's value when upstream's tree is rebranded (the sync passes --pin-from).
+[[pin]]
+file = "Cargo.toml"
+pattern = '^version = "[^"]*"'
+
+# Identity: app id, publisher, installer GUIDs (a product of its own, never CADCraft's).
+[[replace]]
+from = "ai.storyteller.cadcraft"
+to = "dev.danielmiguelt.Forja"
+
+[[replace]]
+from = "ai.storyteller.forja"
+to = "dev.danielmiguelt.Forja"
+
+[[replace]]
+from = '<developer id="ai.storyteller">'
+to = '<developer id="dev.danielmiguelt">'
+
+[[replace]]
+from = "CADCraft maintainers <cadcraft@storyteller.ai>"
+to = "Nodalia <https://github.com/danielmigueltejedor/forja/issues>"
+
+[[replace]]
+from = "Forja maintainers <forja@storyteller.ai>"
+to = "Nodalia <https://github.com/danielmigueltejedor/forja/issues>"
+
+[[replace]]
+from = "Learning Machines LLC"
+to = "Nodalia"
+
+# Windows installer: the upgrade code, then the two component GUIDs.
+[[replace]]
+from = "119D7D76-0167-4A9E-8F37-09DA0235F68E"
+to = "64FBE619-1452-4039-BF0A-A1DA04F51C1F"
+
+[[replace]]
+from = "2AC18056-48DE-4079-AB79-4FDEF4FBB075"
+to = "2A902977-0022-46D1-8ABF-DC86CF446B96"
+
+[[replace]]
+from = "76029CD7-EBDB-420F-AC34-FF0E82A99E32"
+to = "DB916386-EBD6-4C33-8881-B54ECCB3AE74"
+
+# The name, in every casing upstream uses.
+[[replace]]
+from = "CADCraft"
+to = "Forja"
+
+[[replace]]
+from = "CadCraft"
+to = "Forja"
+
+[[replace]]
+from = "Cadcraft"
+to = "Forja"
+
+[[replace]]
+from = "cadcraft"
+to = "forja"
+
+[[replace]]
+from = "CADCRAFT"
+to = "FORJA"

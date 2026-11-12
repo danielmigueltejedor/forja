@@ -1,9 +1,9 @@
 //! Groups (#417), part 2: PICKSTYLE group selection (clicks and "Select objects" prompts pick
 //! whole selectable groups; Ctrl+Shift+A toggles it) and the -GROUP options.
 
-use cadcraft_engine::doc::Handle;
-use cadcraft_engine::geom::Vec2;
-use cadcraft_engine::{Input, Session};
+use forja_engine::doc::Handle;
+use forja_engine::geom::Vec2;
+use forja_engine::{Input, Session};
 use serde_json::json;
 
 /// Four horizontal lines at y = 0, 5, 10, 15; their handles.

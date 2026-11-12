@@ -1,5 +1,5 @@
 //! What happens when the interface panics. Commands already run under their own guard
-//! (`cadcraft_engine::guard`); this one covers the rest of the frame, so a panic in a panel keeps
+//! (`forja_engine::guard`); this one covers the rest of the frame, so a panic in a panel keeps
 //! the user's work: every drawing with unsaved changes is autosaved at once and the app says so.
 //! A panic that keeps coming back leaves a plain window that only closes, with the recovery copies
 //! kept for the next start. A panic hook writes a report for each, which stays on this machine.
@@ -212,7 +212,7 @@ mod report {
         let _ = writeln!(text, "Message: {}", info.payload_as_str().unwrap_or("(not text)"));
         let _ = writeln!(text, "\n{}", std::backtrace::Backtrace::force_capture());
         let path = dir.join(format!("crash-{:012x}-{}.txt", now.as_millis(), std::process::id()));
-        cadcraft_engine::atomic_write::write_atomic(&path, text.as_bytes())?;
+        forja_engine::atomic_write::write_atomic(&path, text.as_bytes())?;
         prune(dir);
         Ok(path)
     }

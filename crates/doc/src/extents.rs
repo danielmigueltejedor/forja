@@ -2,7 +2,7 @@
 
 use std::collections::HashMap;
 
-use cadcraft_geom::{Arc, Bounds2, EPS, Polyline, Vec2, bulge_to_arc};
+use forja_geom::{Arc, Bounds2, EPS, Polyline, Vec2, bulge_to_arc};
 
 use crate::{Drawing, Entity, EntityKind, LwPolyline, Prim};
 
@@ -199,7 +199,7 @@ const CORNER_EPS: f64 = 1e-6;
 /// a rotation or mirror (see [`ole_frame_accepts`]), but internal callers such as EXPLODE, REFEDIT
 /// and paste still apply them, and must leave a consistent frame. A frame with no usable corners is
 /// left alone.
-pub fn ole_frame_transform(tags: &mut [crate::RawTag], m: &cadcraft_geom::Mat3) {
+pub fn ole_frame_transform(tags: &mut [crate::RawTag], m: &forja_geom::Mat3) {
     let Some([(ix1, x1), (iy1, y1), (ix2, x2), (iy2, y2)]) = ole_corner_groups(tags) else { return };
     let frame = [x1, y1, x2, y2];
     let t = 1e-12 * (m.a.abs() + m.b.abs() + m.c.abs() + m.d.abs());
@@ -234,7 +234,7 @@ pub fn ole_frame_transform(tags: &mut [crate::RawTag], m: &cadcraft_geom::Mat3) 
 /// Whether `m` can move an OLE2FRAME: a translation (move, copy, stretch of the whole frame) or a
 /// uniform scale with a positive factor, which keep the frame axis aligned and its upper-left corner
 /// upper-left.
-pub fn ole_frame_accepts(m: &cadcraft_geom::Mat3) -> bool {
+pub fn ole_frame_accepts(m: &forja_geom::Mat3) -> bool {
     const T: f64 = 1e-12;
     // The tolerance grows with the scale: a matrix built from two angles (ALIGN) leaves rounding noise
     // in b and c of about `scale * 1e-16`.
@@ -595,7 +595,7 @@ fn lwpolyline_bounds(p: &LwPolyline) -> Bounds2 {
 mod tests {
     use super::*;
     use crate::{HAlign, Text, VAlign};
-    use cadcraft_geom::Vec3;
+    use forja_geom::Vec3;
 
     fn text(halign: HAlign, valign: VAlign) -> Text {
         Text {
@@ -863,7 +863,7 @@ mod tests {
     fn a_half_unit_offset_at_large_coordinates_is_not_the_frame() {
         let mut tags = big_frame(0.5);
         let before = tags.last().cloned();
-        ole_frame_transform(&mut tags, &cadcraft_geom::Mat3::translate(Vec2::new(1.0, 1.0)));
+        ole_frame_transform(&mut tags, &forja_geom::Mat3::translate(Vec2::new(1.0, 1.0)));
         assert_eq!(tags.first().map(|t| t.value.as_str()), Some("1000000001"), "the frame tags move");
         assert_eq!(tags.last().map(|t| &t.value), before.as_ref().map(|t| &t.value), "the 310 bytes stay identical");
     }
@@ -871,7 +871,7 @@ mod tests {
     #[test]
     fn exact_corners_at_large_coordinates_still_move() {
         let mut tags = big_frame(0.0);
-        ole_frame_transform(&mut tags, &cadcraft_geom::Mat3::translate(Vec2::new(1.0, 1.0)));
+        ole_frame_transform(&mut tags, &forja_geom::Mat3::translate(Vec2::new(1.0, 1.0)));
         assert_eq!(data_x(&tags), 1e9 + 1.0);
     }
 
@@ -879,7 +879,7 @@ mod tests {
     /// upper-left; a rotation, a mirror, a non-uniform or non-positive scale do not.
     #[test]
     fn ole_frame_accepts_translations_and_uniform_positive_scales_only() {
-        use cadcraft_geom::Mat3;
+        use forja_geom::Mat3;
         let p = Vec2::new(3.0, -4.0);
         assert!(ole_frame_accepts(&Mat3::translate(p)));
         assert!(ole_frame_accepts(&Mat3::scale_about(p, 2.5)));
@@ -895,7 +895,7 @@ mod tests {
     /// tolerance for it grows with the scale, while a real turn is still refused (review on #2587).
     #[test]
     fn ole_frame_accepts_a_large_scale_with_rounding_noise_in_its_rotation() {
-        use cadcraft_geom::Mat3;
+        use forja_geom::Mat3;
         let p = Vec2::new(3.0, -4.0);
         let noisy = Mat3::scale_about(p, 1e6).then_before(Mat3::rotate_about(p, 2e-16));
         assert!(noisy.b.abs() > 1e-12, "the setup must exceed an absolute tolerance: {}", noisy.b);
@@ -936,7 +936,7 @@ mod tests {
     /// centre, where the corners' box would flatten it.
     #[test]
     fn a_rotated_frame_stays_axis_aligned_and_consistent() {
-        use cadcraft_geom::Mat3;
+        use forja_geom::Mat3;
         let rotate = Mat3::rotate_about(Vec2::new(1.0, 2.0), 30f64.to_radians());
         let mirror = Mat3::mirror(Vec2::new(0.0, 0.0), Vec2::new(1.0, 0.0));
         for (m, turned) in [(rotate, true), (mirror, false)] {
@@ -966,7 +966,7 @@ mod tests {
         if let Some(t) = tags.last_mut() {
             t.value = signed.clone();
         }
-        ole_frame_transform(&mut tags, &cadcraft_geom::Mat3::translate(Vec2::new(10.0, 5.0)));
+        ole_frame_transform(&mut tags, &forja_geom::Mat3::translate(Vec2::new(10.0, 5.0)));
         assert_eq!(tags.first().map(|t| t.value.as_str()), Some("40"), "the frame tags still move");
         assert_eq!(tags.last().map(|t| t.value.as_str()), Some(signed.as_str()));
     }
@@ -991,7 +991,7 @@ mod tests {
             tags.push(crate::RawTag { code: 310, value });
         }
         let rest: Vec<String> = tags.iter().skip(5).map(|t| t.value.clone()).collect();
-        ole_frame_transform(&mut tags, &cadcraft_geom::Mat3::translate(Vec2::new(10.0, 5.0)));
+        ole_frame_transform(&mut tags, &forja_geom::Mat3::translate(Vec2::new(10.0, 5.0)));
         assert_eq!(header_corners(&tags[..5]), vec![(40.0, -14.0), (45.0, -14.0), (45.0, -17.0), (40.0, -17.0)]);
         let after: Vec<String> = tags.iter().skip(5).map(|t| t.value.clone()).collect();
         assert_eq!(after, rest, "every group after the first is string-identical");
@@ -1020,7 +1020,7 @@ mod tests {
         if let Some(t) = tags.last_mut() {
             t.value = blob.iter().map(|b| format!("{b:02X}")).collect();
         }
-        ole_frame_transform(&mut tags, &cadcraft_geom::Mat3::translate(Vec2::new(1e4, 1e4)));
+        ole_frame_transform(&mut tags, &forja_geom::Mat3::translate(Vec2::new(1e4, 1e4)));
         assert_eq!(header_corners(&tags)[0].0, text_x1 + 1e4, "the header moved with the frame");
     }
 
@@ -1029,7 +1029,7 @@ mod tests {
     /// relative 1e-12 (review on #2587).
     #[test]
     fn ole_frame_refuses_a_small_turn_at_a_tiny_scale() {
-        use cadcraft_geom::Mat3;
+        use forja_geom::Mat3;
         let p = Vec2::new(3.0, -4.0);
         let turned = Mat3::scale_about(p, 1e-9).then_before(Mat3::rotate_about(p, 0.05f64.to_radians()));
         assert!(!ole_frame_accepts(&turned));
@@ -1048,7 +1048,7 @@ mod tests {
         if let Some(t) = tags.last_mut() {
             t.value = mixed.clone();
         }
-        ole_frame_transform(&mut tags, &cadcraft_geom::Mat3::translate(Vec2::new(10.0, 5.0)));
+        ole_frame_transform(&mut tags, &forja_geom::Mat3::translate(Vec2::new(10.0, 5.0)));
         let new = tags.last().map(|t| t.value.clone()).unwrap_or_default();
         assert_eq!(new.len(), mixed.len());
         let byte = |s: &str, i: usize| s.get(2 * i..2 * i + 2).and_then(|h| u8::from_str_radix(h, 16).ok());
@@ -1093,7 +1093,7 @@ mod tests {
     /// became 14.14 x 0), and the OLE header follows (#2587 review).
     #[test]
     fn a_frame_turned_off_the_axes_keeps_its_size() {
-        use cadcraft_geom::Mat3;
+        use forja_geom::Mat3;
         let close = |a: f64, b: f64| (a - b).abs() < 1e-9;
         let mut tags = frame_at(0.0, 10.0, 10.0, 0.0);
         ole_frame_transform(&mut tags, &Mat3::rotate(std::f64::consts::FRAC_PI_4));

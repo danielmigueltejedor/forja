@@ -2,8 +2,8 @@
 //! same objects as without it: scripts and routines meant for every language write them that way
 //! (#1172).
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::EntityKind;
+use forja_engine::Session;
+use forja_engine::doc::EntityKind;
 use serde_json::json;
 
 /// Three lines on the X axis: A 0–10, B 12–20, C 30–40.

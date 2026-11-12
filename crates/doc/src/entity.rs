@@ -1,7 +1,7 @@
 //! Entities: the graphical objects of a drawing.
 
-use cadcraft_color::Color;
-use cadcraft_geom::{
+use forja_color::Color;
+use forja_geom::{
     Arc as GArc, Bounds2, Circle as GCircle, Ellipse as GEllipse, Line as GLine, Mat3, PolyVertex, Polyline, Segment, Spline as GSpline, Vec2, Vec3,
 };
 use serde::{Deserialize, Serialize};
@@ -309,9 +309,9 @@ impl EntityKind {
                 t3(&mut e.center);
                 let mj = m.apply_vec(e.major.xy());
                 e.major = mj.to3(0.0);
-                let full = (cadcraft_geom::ccw_sweep(e.start, e.end) - cadcraft_geom::TAU).abs() < 1e-9;
+                let full = (forja_geom::ccw_sweep(e.start, e.end) - forja_geom::TAU).abs() < 1e-9;
                 if !full {
-                    let ge = GEllipse { center: e.center.xy(), major: mj, ratio: e.ratio, start: 0.0, end: cadcraft_geom::TAU };
+                    let ge = GEllipse { center: e.center.xy(), major: mj, ratio: e.ratio, start: 0.0, end: forja_geom::TAU };
                     let (ps, pe) = (ge.param_of(sp), ge.param_of(ep));
                     if mirror {
                         e.start = pe;
@@ -361,20 +361,20 @@ impl EntityKind {
                 if let Some(c) = &mut t.columns {
                     c.scale(s);
                 }
-                t.rotation = cadcraft_geom::norm_angle(t.rotation + rot);
+                t.rotation = forja_geom::norm_angle(t.rotation + rot);
             }
             EntityKind::Insert(i) => {
                 t3(&mut i.insert);
                 i.scale.x *= s;
                 i.scale.y *= s;
                 i.scale.z *= s;
-                i.rotation = cadcraft_geom::norm_angle(i.rotation + rot);
+                i.rotation = forja_geom::norm_angle(i.rotation + rot);
                 // Mirrored as AutoCAD 2024 mirrors a block reference: the X scale factor
                 // negated, the rotation 180 degrees plus twice the mirror line's angle less the
                 // old one, and a MINSERT grid's columns running the other way.
                 if mirror {
                     i.scale.x = -i.scale.x;
-                    i.rotation = cadcraft_geom::norm_angle(std::f64::consts::PI + rot - (i.rotation - rot));
+                    i.rotation = forja_geom::norm_angle(std::f64::consts::PI + rot - (i.rotation - rot));
                     i.col_spacing = -i.col_spacing;
                 }
                 for a in &mut i.attribs {
@@ -389,7 +389,7 @@ impl EntityKind {
                     t3(p);
                 }
                 if let DimKind::Linear { rotation } = &mut d.kind {
-                    *rotation = cadcraft_geom::norm_angle(*rotation + rot);
+                    *rotation = forja_geom::norm_angle(*rotation + rot);
                 }
                 d.marks.transform(&t3, rot, s, mirror);
                 d.block = None;
@@ -433,7 +433,7 @@ impl EntityKind {
                     }
                 }
                 h.scale *= s;
-                h.angle = cadcraft_geom::norm_angle(h.angle + rot);
+                h.angle = forja_geom::norm_angle(h.angle + rot);
                 h.origin = m.apply(h.origin);
             }
             EntityKind::Solid(so) | EntityKind::Trace(so) => so.corners.iter_mut().for_each(t3),
@@ -474,7 +474,7 @@ impl EntityKind {
                 t3(&mut t.insert);
                 // Like text with MIRRTEXT = 0: a mirrored frame keeps reading left to right.
                 let a = if mirror { t.rotation() } else { t.rotation() + rot };
-                t.dir = Vec2::from_angle(cadcraft_geom::norm_angle(a)).to3(0.0);
+                t.dir = Vec2::from_angle(forja_geom::norm_angle(a)).to3(0.0);
             }
             EntityKind::Unknown(u) if u.is_ole_frame() => crate::ole_frame_transform(&mut u.tags, m),
             EntityKind::Unknown(_) => {}
@@ -655,13 +655,13 @@ fn transform_text(t: &mut Text, m: &Mat3, s: f64, rot: f64, mirror: bool) {
     }
     t.height *= s;
     // MIRRTEXT = 0 (the default): mirrored text keeps reading left to right.
-    t.rotation = cadcraft_geom::norm_angle(t.rotation + if mirror { 0.0 } else { rot });
+    t.rotation = forja_geom::norm_angle(t.rotation + if mirror { 0.0 } else { rot });
 }
 
 #[cfg(test)]
 mod grip_tests {
     use super::*;
-    use cadcraft_geom::PolyVertex;
+    use forja_geom::PolyVertex;
 
     #[test]
     fn handle_parse_hex_accepts_only_hex_digits() {

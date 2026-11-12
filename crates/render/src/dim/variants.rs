@@ -1,7 +1,7 @@
 use super::text::{apply_override, inspected, linear_text};
 use super::{Arrowhead, DimConfig, DimGeometry, DimKind, Vec2, ext_line, readable};
 use crate::units::format_angle_with_separator;
-use cadcraft_geom::{Arc, ccw_sweep};
+use forja_geom::{Arc, ccw_sweep};
 
 pub(super) fn draw_jogged_radius(config: &DimConfig<'_>, g: &mut DimGeometry, text_angle_out: &mut f64, text_mid_out: &mut Vec2) {
     let d = config.dimension;
@@ -167,13 +167,13 @@ pub(super) fn draw_angular(config: &DimConfig<'_>, g: &mut DimGeometry, text_ang
     let (vertex, a1, a2, arc_pt) = if matches!(d.kind, DimKind::Angular3P) {
         (d.p15.xy(), d.p13.xy(), d.p14.xy(), d.defpt.xy())
     } else {
-        let v = cadcraft_geom::line_line_infinite(d.p13.xy(), d.p14.xy(), d.defpt.xy(), d.p15.xy()).map(|x| x.0).unwrap_or(d.p14.xy());
+        let v = forja_geom::line_line_infinite(d.p13.xy(), d.p14.xy(), d.defpt.xy(), d.p15.xy()).map(|x| x.0).unwrap_or(d.p14.xy());
         (v, d.p14.xy(), d.p15.xy(), d.p16.xy())
     };
     let r = vertex.dist(arc_pt).max(1e-9);
     let s = vertex.angle_to(a1);
     let e = vertex.angle_to(a2);
-    let arc = if cadcraft_geom::angle_in_sweep(vertex.angle_to(arc_pt), s, e) { Arc::new(vertex, r, s, e) } else { Arc::new(vertex, r, e, s) };
+    let arc = if forja_geom::angle_in_sweep(vertex.angle_to(arc_pt), s, e) { Arc::new(vertex, r, s, e) } else { Arc::new(vertex, r, e, s) };
     let sweep = ccw_sweep(arc.start, arc.end);
     g.measurement = sweep;
     // DIMAZIN 1 / 2 suppress leading / trailing zeros (DIMZIN's bits 4 / 8).
@@ -190,7 +190,7 @@ pub(super) fn draw_angular(config: &DimConfig<'_>, g: &mut DimGeometry, text_ang
     // the arc location is outside the leg 1 → leg 2 sweep the arc runs from leg 2 to
     // leg 1, and each leg keeps its own extension line, DIMSE1/2 and DIMBLK1/2.
     let (start, finish) = ((sp, -(sp - vertex).perp().normalized()), (ep, (ep - vertex).perp().normalized()));
-    let ((p1, dir1), (p2, dir2)) = if cadcraft_geom::angle_in_sweep(vertex.angle_to(arc_pt), s, e) { (start, finish) } else { (finish, start) };
+    let ((p1, dir1), (p2, dir2)) = if forja_geom::angle_in_sweep(vertex.angle_to(arc_pt), s, e) { (start, finish) } else { (finish, start) };
     if !st.suppress_ext1 {
         g.ext_n(ext_line(vertex + (p1 - vertex).normalized() * vertex.dist(a1).min(r), p1, st, k), false);
     }

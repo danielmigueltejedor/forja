@@ -3,15 +3,15 @@
 
 use std::f64::consts::PI;
 
-use cadcraft_geom::Vec2;
+use forja_geom::Vec2;
 
 use super::*;
 use crate::{TextFont, TextParams};
 
 /// A small dual-orientation text font: 6 units above, 2 below.
 pub(crate) const TEXT_FONT: &str = "\
-;; CADCraft test font (written for the tests)
-*0,4,cadcraft test
+;; Forja test font (written for the tests)
+*0,4,forja test
 6,2,2,0
 *32,3,SPACE
 2,060,0
@@ -35,7 +35,7 @@ pub(crate) const TEXT_FONT: &str = "\
 
 /// A Unicode font with the same letters, a subshape and the diameter sign at U+2205.
 const UNI_FONT: &str = "\
-*UNIFONT,6,cadcraft uni
+*UNIFONT,6,forja uni
 6,2,0,0,0,0
 *00041,7,uca
 1,064,040,06C,2,020,0
@@ -48,7 +48,7 @@ const UNI_FONT: &str = "\
 /// A big font with Shift-JIS lead bytes: one square character (U+3042, 0x82A0).
 const BIG_FONT: &str = "\
 *BIGFONT 2,1,081,09F
-*0,4,cadcraft big
+*0,4,forja big
 8,0,0,0
 *082A0,7,square
 1,080,084,088,08C,2,080,0
@@ -57,7 +57,7 @@ const BIG_FONT: &str = "\
 /// An extended big font: two primitives of a 16 x 16 cell drawn into one character.
 const EXT_BIG_FONT: &str = "\
 *BIGFONT 2,1,081,09F
-*0,5,cadcraft ext
+*0,5,forja ext
 16,0,0,16,0
 *08F01,10,box
 4,2,1,080,084,088,08C,3,2,0
@@ -173,7 +173,7 @@ fn bulge_arcs() {
 #[test]
 fn vertical_only_commands_and_text_font_record() {
     let f = font(TEXT_FONT);
-    assert_eq!((f.kind(), f.name(), f.above(), f.below(), f.is_dual(), f.is_font()), (ShxKind::Shapes, "cadcraft test", 6.0, 2.0, true, true));
+    assert_eq!((f.kind(), f.name(), f.above(), f.below(), f.is_dual(), f.is_font()), (ShxKind::Shapes, "forja test", 6.0, 2.0, true, true));
     let h = f.glyph(67, false).unwrap();
     assert_eq!(h.strokes, vec![vec![Vec2::ZERO, Vec2::new(0.0, 6.0)]]);
     let v = f.glyph(67, true).unwrap();
@@ -192,7 +192,7 @@ fn subshapes_shapes_unicode_and_extended_big_font() {
     let s = font("*1,4,BAR\n1,030,0\n*2,6,TWO\n7,1,7,1,0\n");
     assert!(close(s.glyph(2, false).unwrap().advance, Vec2::new(6.0, 0.0)));
     let u = font(UNI_FONT);
-    assert_eq!((u.kind(), u.name(), u.above(), u.encoding()), (ShxKind::Unifont, "cadcraft uni", 6.0, 0));
+    assert_eq!((u.kind(), u.name(), u.above(), u.encoding()), (ShxKind::Unifont, "forja uni", 6.0, 0));
     let ring = u.glyph(0xC5, false).unwrap();
     assert_eq!(ring.strokes.len(), 2, "the A and the ring's bar");
     assert!(close(ring.advance, Vec2::new(8.0, 0.0)));
@@ -316,8 +316,8 @@ fn reg(name: &str, src: &str) {
 
 #[test]
 fn text_metrics_follow_the_font() {
-    reg("cadcraft-test-metrics.shx", TEXT_FONT);
-    let f = TextFont::resolve_style("CADCRAFT-TEST-METRICS", "", false);
+    reg("forja-test-metrics.shx", TEXT_FONT);
+    let f = TextFont::resolve_style("FORJA-TEST-METRICS", "", false);
     assert!(f.is_shx() && !f.is_outline());
     let h = 3.0;
     // Advances are the pen's end positions: A 6, B 6, at h / above = 0.5.
@@ -354,8 +354,8 @@ fn text_metrics_follow_the_font() {
 
 #[test]
 fn unifont_text_and_specials() {
-    reg("cadcraft-test-uni.shx", UNI_FONT);
-    let f = TextFont::resolve("cadcraft-test-uni.shx");
+    reg("forja-test-uni.shx", UNI_FONT);
+    let f = TextFont::resolve("forja-test-uni.shx");
     assert!((crate::text_width(&f, "A\u{C5}", 6.0, 1.0) - 14.0).abs() < 1e-9);
     // %%c is the diameter sign, at U+2205 in this font.
     assert!((crate::text_width(&f, "%%c", 6.0, 1.0) - 2.0).abs() < 1e-9);
@@ -363,9 +363,9 @@ fn unifont_text_and_specials() {
 
 #[test]
 fn big_font_draws_double_byte_characters() {
-    reg("cadcraft-test-main.shx", TEXT_FONT);
-    reg("cadcraft-test-big.shx", BIG_FONT);
-    let f = TextFont::resolve_style("cadcraft-test-main.shx", "cadcraft-test-big.shx", false);
+    reg("forja-test-main.shx", TEXT_FONT);
+    reg("forja-test-big.shx", BIG_FONT);
+    let f = TextFont::resolve_style("forja-test-main.shx", "forja-test-big.shx", false);
     let TextFont::Shx(t) = &f else { panic!("SHX") };
     assert_eq!(t.big_font_encoding(), "Shift_JIS");
     let h = 2.5;
@@ -377,12 +377,12 @@ fn big_font_draws_double_byte_characters() {
     let ys = big.iter().fold((f64::MAX, f64::MIN), |(a, b), p| (a.min(p.y), b.max(p.y)));
     assert_eq!(ys, (0.0, h));
     // Only the big font found: Latin letters from the stroke font, the big font's own.
-    let f = TextFont::resolve_style("cadcraft-missing-main-font.shx", "cadcraft-test-big.shx", false);
+    let f = TextFont::resolve_style("forja-missing-main-font.shx", "forja-test-big.shx", false);
     assert!(f.is_shx());
     assert!((crate::text_width(&f, "\u{3042}", h, 1.0) - h).abs() < 1e-9);
     assert!((crate::text_width(&f, "A", h, 1.0) - crate::stroke_advance('A', h, 1.0)).abs() < 1e-9);
     // Neither found: the stroke font as before.
-    assert!(!TextFont::resolve_style("cadcraft-missing-a.shx", "cadcraft-missing-b.shx", false).is_shx());
+    assert!(!TextFont::resolve_style("forja-missing-a.shx", "forja-missing-b.shx", false).is_shx());
 }
 
 #[test]
@@ -407,16 +407,16 @@ fn big_font_code_pages() {
 
 #[test]
 fn vertical_text_runs_down() {
-    reg("cadcraft-test-vertical.shx", TEXT_FONT);
-    let v = TextFont::resolve_style("cadcraft-test-vertical.shx", "", true);
+    reg("forja-test-vertical.shx", TEXT_FONT);
+    let v = TextFont::resolve_style("forja-test-vertical.shx", "", true);
     let sh = crate::shape_line(&v, "CC", 1.0, 1.0, 0.0);
     let miny = sh.strokes.iter().flatten().map(|p| p.y).fold(f64::MAX, f64::min);
     // Two characters, each 8 units (8/6 of the height) down.
     assert!((miny + 16.0 / 6.0).abs() < 1e-9, "{miny}");
     assert!(sh.strokes.iter().flatten().all(|p| p.y <= 1e-9), "below the insertion point");
     // A font without modes 2 stays horizontal.
-    reg("cadcraft-test-horizontal.shx", "*0,4,h\n6,2,0,0\n*67,3,C\n1,064,0\n");
-    let h = TextFont::resolve_style("cadcraft-test-horizontal.shx", "", true);
+    reg("forja-test-horizontal.shx", "*0,4,h\n6,2,0,0\n*67,3,C\n1,064,0\n");
+    let h = TextFont::resolve_style("forja-test-horizontal.shx", "", true);
     assert!(crate::shape_line(&h, "CC", 1.0, 1.0, 0.0).strokes.iter().flatten().all(|p| p.y >= -1e-9));
 }
 
@@ -426,15 +426,15 @@ fn names_and_lookup() {
     assert_eq!(table::key("txt").as_deref(), Some("txt.shx"));
     assert_eq!(table::key(r"C:\Fonts\Simplex.shx").as_deref(), Some("simplex.shx"));
     assert_eq!(table::key("../x/gbcbig.shx").as_deref(), Some("gbcbig.shx"));
-    for n in ["", "arial.ttf", "CADCraft Stroke", "Times New Roman", ".shx", "a\u{0}.shx"] {
+    for n in ["", "arial.ttf", "Forja Stroke", "Times New Roman", ".shx", "a\u{0}.shx"] {
         assert_eq!(table::key(n), None, "{n:?}");
     }
     assert!(register("not-a-font.ttf", &compile(TEXT_FONT).unwrap()).is_err());
     assert!(register("broken.shx", b"AutoCAD-86 shapes 1.0\r\n\x1a").is_err());
     // A path stored in a drawing only names the file.
-    reg("cadcraft-test-path.shx", TEXT_FONT);
-    assert!(find(r"\\server\share\CADCRAFT-TEST-PATH.SHX").is_some());
-    assert!(find("cadcraft-never-registered.shx").is_none());
+    reg("forja-test-path.shx", TEXT_FONT);
+    assert!(find(r"\\server\share\FORJA-TEST-PATH.SHX").is_some());
+    assert!(find("forja-never-registered.shx").is_none());
 }
 
 #[test]

@@ -8,11 +8,11 @@ Maintainers read reports as they arrive, but there is no fixed response time yet
 
 ## Supported versions
 
-Only the latest release gets security fixes. CADCraft is pre-alpha and moves quickly, so please check that a problem still exists there before reporting it.
+Only the latest release gets security fixes. Forja is pre-alpha and moves quickly, so please check that a problem still exists there before reporting it.
 
 ## What counts
 
-CADCraft treats these as untrusted, and a way past these defences is a vulnerability:
+Forja treats these as untrusted, and a way past these defences is a vulnerability:
 
 - **Drawing files.** Opening a DXF, DWG or other file must not run code, write outside the paths the user chose, or crash the app. Panics are bugs too, but memory exhaustion or a decoder abort on a crafted file is the more serious case.
 - **AutoLISP in a drawing's folder.** A drawing must not run code that the user didn't choose to load.

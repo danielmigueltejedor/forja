@@ -6,13 +6,13 @@
     </picture>
   </a>
   <br><br>
-  <img src="https://raw.githubusercontent.com/danielmigueltejedor/forja/main/assets/app-icon/hicolor/512x512/apps/ai.storyteller.forja.png" width="160" alt="Forja">
+  <img src="https://raw.githubusercontent.com/danielmigueltejedor/forja/main/assets/app-icon/hicolor/512x512/apps/dev.danielmiguelt.Forja.png" width="160" alt="Forja">
   <h1>Forja</h1>
-  <p><strong>A CAD application for 2D drafting and DWG/DXF work for the Nodalia suite, built on the CadCraft engine.</strong></p>
+  <p><strong>A CAD application for 2D drafting and DWG/DXF work for the Nodalia suite, built on the Forja engine.</strong></p>
 
   <p>
     <img src="https://img.shields.io/badge/status-early%20stage-orange" alt="Early stage">
-    <img src="https://img.shields.io/badge/engine-CadCraft-96501F" alt="CadCraft engine">
+    <img src="https://img.shields.io/badge/engine-CadCraft-96501F" alt="Forja engine">
     <img src="https://img.shields.io/badge/Rust-native-dea584?logo=rust&logoColor=black" alt="Native Rust">
     <img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-2ea44f" alt="MIT OR Apache-2.0">
   </p>
@@ -33,7 +33,7 @@
 ## Overview
 
 **Forja** is the CAD application for 2D drafting and DWG/DXF work of [Nodalia](https://getnodalia.com). It is built on the engine of
-[CadCraft](https://github.com/danielmigueltejedor/forja), which lives in this repository and is kept up to
+[Forja](https://github.com/danielmigueltejedor/forja), which lives in this repository and is kept up to
 date with upstream.
 
 > [!IMPORTANT]
@@ -42,7 +42,7 @@ date with upstream.
 
 ## What you get today
 
-- The CadCraft engine.
+- The Forja engine.
 - The upstream desktop application. Crate and binary names are still upstream's.
 - The engine's own feature description, kept as [`docs/upstream-readme.md`](docs/upstream-readme.md).
 
@@ -71,7 +71,7 @@ The crate is still called `forja`; it will be renamed with the product.
 
 ## Changes on top of upstream
 
-Forja already carries fixes that are not in CadCraft's `main`:
+Forja already carries fixes that are not in Forja's `main`:
 
 - **DWG/DXF layouts, MTEXT and native open.** The work of upstream pull request
   [#1086](https://github.com/danielmigueltejedor/forja/pull/1086): deferred layouts and native viewport
@@ -82,8 +82,9 @@ Forja already carries fixes that are not in CadCraft's `main`:
 
 ## Keeping up with upstream
 
-[`docs/upstream.md`](docs/upstream.md) records which upstream commit is integrated. Updates are
-merges of upstream's `main`, so Forja's own changes are kept and conflicts are resolved in the open.
+[`docs/upstream.md`](docs/upstream.md) records which upstream commit is integrated. A weekly job
+renames upstream's new commits to Forja's names and opens a pull request with them, so Forja's own
+changes are kept and conflicts are resolved in the open.
 
 ## App icon
 
@@ -97,9 +98,9 @@ project developed in public by [Daniel Miguel Tejedor](https://danielmigueltejed
 
 ## License
 
-`MIT OR Apache-2.0`, as upstream. The licence files and `NOTICE` of CadCraft are kept.
+`MIT OR Apache-2.0`, as upstream. The licence files and `NOTICE` of Forja are kept.
 See [`LICENSE-MIT`](LICENSE-MIT) and [`LICENSE-APACHE`](LICENSE-APACHE).
 
 ## Credits
 
-Forja would not exist without [CadCraft](https://github.com/danielmigueltejedor/forja) and its contributors.
+Forja would not exist without [Forja](https://github.com/danielmigueltejedor/forja) and its contributors.

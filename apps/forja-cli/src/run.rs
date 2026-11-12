@@ -2,8 +2,8 @@ use super::args::{CmdStep, Drawing, RunArgs, Step};
 use super::error::Result;
 use super::open;
 use super::output::{Streams, export, export_framed, export_window, model_views};
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::Handle;
+use forja_engine::Session;
+use forja_engine::doc::Handle;
 use serde_json::Value;
 
 /// A `--cmd` parameter value of exactly `{last}` is filled in with the last object handle an
@@ -124,7 +124,7 @@ pub(crate) fn returned_handle(s: &Session, r: &Value) -> Option<Handle> {
     hs.last().copied()
 }
 
-/// The active drawing's identity ([`cadcraft_engine::DocState::uid`]): a handle is only meaningful
+/// The active drawing's identity ([`forja_engine::DocState::uid`]): a handle is only meaningful
 /// in the drawing it came from, and `new`, `open`, `document.switch` and `close` can make another
 /// drawing current.
 fn active_drawing(s: &Session) -> Option<u64> {
@@ -161,7 +161,7 @@ pub(crate) fn run_cmds(a: &RunArgs, io: &mut Streams) -> Result {
         match d {
             Drawing::File(f) => open(&mut s, f)?,
             Drawing::Sample => {
-                s.open_drawing(cadcraft_engine::sample::default_sample(), "Bracket", None);
+                s.open_drawing(forja_engine::sample::default_sample(), "Bracket", None);
             }
             Drawing::Metric => {
                 s.new_drawing(true);
@@ -216,7 +216,7 @@ pub(crate) fn run_cmds(a: &RunArgs, io: &mut Streams) -> Result {
         export(&s, p, io)?;
     }
     if let Some(p) = export_to {
-        let window = if cadcraft_io::is_image(p) { export_window(&s, framing, Some(&before))? } else { None };
+        let window = if forja_io::is_image(p) { export_window(&s, framing, Some(&before))? } else { None };
         export_framed(&s, p, window, io)?;
     }
     Ok(())

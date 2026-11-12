@@ -1,7 +1,7 @@
 //! Pre-R2007 DXF text is written in the `$DWGCODEPAGE` code page: characters it has as their
 //! bytes, the others as `\U+XXXX` escapes; every form reads back to the same text.
 
-use cadcraft_dxf::{Tag, parse, write_ascii, write_ascii_in, write_binary_in};
+use forja_dxf::{Tag, parse, write_ascii, write_ascii_in, write_binary_in};
 
 fn file(code_page: &str, text: &str) -> Vec<Tag> {
     vec![
@@ -34,7 +34,7 @@ fn text_is_written_in_the_code_page() {
         ("ANSI_932", "表図面 é", b"\x95\x5C\x90\x7D\x96\xCA \\U+00E9"),
         ("DOS850", "Größe €", b"Gr\x94\xE1e \\U+20AC"),
         ("ANSI_1252", "😀", b"\\U+D83D\\U+DE00"),
-        // A code page CADCraft doesn't know: everything non-ASCII is escaped.
+        // A code page Forja doesn't know: everything non-ASCII is escaped.
         ("ANSI_1361", "Ação", b"A\\U+00E7\\U+00E3o"),
     ];
     for (cp, text, raw) in cases {

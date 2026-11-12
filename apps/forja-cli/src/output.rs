@@ -1,8 +1,8 @@
 use super::args::Framing;
 use super::error::Result;
-use cadcraft_engine::doc::Space;
-use cadcraft_engine::geom::{Bounds2, Vec2};
-use cadcraft_engine::{Session, View};
+use forja_engine::doc::Space;
+use forja_engine::geom::{Bounds2, Vec2};
+use forja_engine::{Session, View};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
@@ -126,8 +126,8 @@ pub(crate) fn export_window(s: &Session, framing: Framing, before: Option<&[(u64
 /// are created, and the topmost one returned for the caller to report.
 pub(crate) fn write_atomic(out: &Path, bytes: &[u8]) -> Result<Option<std::path::PathBuf>, OutputError> {
     let target = std::fs::canonicalize(out).unwrap_or_else(|_| out.to_path_buf());
-    let folder = cadcraft_engine::atomic_write::missing_folder(&target);
-    cadcraft_engine::atomic_write::write_atomic_making_folders(&target, bytes)
+    let folder = forja_engine::atomic_write::missing_folder(&target);
+    forja_engine::atomic_write::write_atomic_making_folders(&target, bytes)
         .map_err(|source| OutputError::Write { path: out.to_path_buf(), source })?;
     Ok(folder)
 }
@@ -145,13 +145,13 @@ pub(crate) fn export(s: &Session, out: &Path, io: &mut Streams) -> Result {
 
 pub(crate) fn export_framed(s: &Session, out: &Path, window: Option<Bounds2>, io: &mut Streams) -> Result {
     let d = s.doc()?;
-    let bytes = cadcraft_io::write_framed(d, out, window)?;
+    let bytes = forja_io::write_framed(d, out, window)?;
     let folder = write_atomic(out, &bytes)?;
     report_new_folder(folder, io);
     io.errln(format_args!("wrote {} ({} bytes)", out.display(), bytes.len()));
-    if cadcraft_engine::cmd::file::drops_unknown(out) {
-        let lost = cadcraft_engine::cmd::file::not_saved(d);
-        if let Some(m) = cadcraft_engine::cmd::file::not_saved_message(&lost) {
+    if forja_engine::cmd::file::drops_unknown(out) {
+        let lost = forja_engine::cmd::file::not_saved(d);
+        if let Some(m) = forja_engine::cmd::file::not_saved_message(&lost) {
             io.errln(format_args!("{m}"));
         }
     }
@@ -160,14 +160,14 @@ pub(crate) fn export_framed(s: &Session, out: &Path, window: Option<Bounds2>, io
 
 /// The warning for the model-space entities of `path` an image can't show, by type (those kept
 /// as unknown objects, `Proxy` in `info`), or `None` when there are none.
-pub(crate) fn undrawn_message(d: &cadcraft_engine::doc::Drawing, path: &str) -> Option<String> {
+pub(crate) fn undrawn_message(d: &forja_engine::doc::Drawing, path: &str) -> Option<String> {
     let mut types: std::collections::BTreeMap<&str, usize> = std::collections::BTreeMap::new();
     let mut ole = 0usize;
     for e in d.model.iter() {
         // An OLE2FRAME's frame outline is drawn, so it isn't an undrawn entity; its content is
         // not, which gets a note of its own.
-        if let cadcraft_engine::doc::EntityKind::Unknown(u) = &e.kind {
-            if u.is_ole_frame() && cadcraft_engine::doc::ole_frame(&u.tags).is_some() {
+        if let forja_engine::doc::EntityKind::Unknown(u) = &e.kind {
+            if u.is_ole_frame() && forja_engine::doc::ole_frame(&u.tags).is_some() {
                 ole = ole.saturating_add(1);
                 continue;
             }
@@ -191,12 +191,12 @@ pub(crate) fn undrawn_message(d: &cadcraft_engine::doc::Drawing, path: &str) -> 
 
 /// The reader's notes on what it left out of `path` (a damaged DWG's unreadable object records,
 /// #859), one warning line each; empty for a complete read.
-pub(crate) fn read_note_messages(d: &cadcraft_engine::doc::Drawing, path: &str) -> Vec<String> {
+pub(crate) fn read_note_messages(d: &forja_engine::doc::Drawing, path: &str) -> Vec<String> {
     d.read_notes.iter().map(|note| format!("{path}: {note}")).collect()
 }
 
 /// The warning for the records of `path` the reader could not place, or `None` when there are none.
-pub(crate) fn skipped_message(d: &cadcraft_engine::doc::Drawing, path: &str) -> Option<String> {
+pub(crate) fn skipped_message(d: &forja_engine::doc::Drawing, path: &str) -> Option<String> {
     let n = d.skipped_records.values().fold(0usize, |a, n| a.saturating_add(*n));
     if n == 0 {
         return None;
@@ -212,7 +212,7 @@ mod tests {
 
     #[test]
     fn read_notes_become_one_warning_each() {
-        let mut d = cadcraft_engine::doc::Drawing::new_imperial();
+        let mut d = forja_engine::doc::Drawing::new_imperial();
         assert!(read_note_messages(&d, "a.dwg").is_empty());
         d.read_notes =
             vec!["DWG: 3 of 10 object records couldn't be read and were left out (LINE × 3); saving over the original file would lose them".into()];

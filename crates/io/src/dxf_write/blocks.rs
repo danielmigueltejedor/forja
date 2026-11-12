@@ -65,7 +65,7 @@ pub(super) fn reuse_handles(ents: &mut [Entity], old: &Block, taken: &mut std::c
 pub(super) fn dim_block_entities(d: &Drawing, dm: &Dimension, layer: &str) -> Vec<Entity> {
     // The dimension as drawn: its overrides, DIMSCALE (0 = the drawing's) and text font.
     let style = d.dim_style(&dm.style).cloned().unwrap_or_default().with_overrides(&dm.overrides);
-    let g = cadcraft_render::dimension_in(d, dm);
+    let g = forja_render::dimension_in(d, dm);
     let mut out = Vec::new();
     // Each part in its style colour (DIMCLRD, DIMCLRE, DIMCLRT), ByBlock when the style says so,
     // as AutoCAD writes them: readers that draw the block drew every part ByBlock, i.e. in the
@@ -74,7 +74,7 @@ pub(super) fn dim_block_entities(d: &Drawing, dm: &Dimension, layer: &str) -> Ve
     let (dim_c, ext_c, text_c) = (in_color(style.dim_line_color), in_color(style.ext_line_color), in_color(style.text_color));
     let line_entities = |i: usize, l: &[Vec2]| -> Vec<Entity> {
         let c = match g.line_roles.get(i) {
-            Some(cadcraft_render::LineRole::Ext) => &ext_c,
+            Some(forja_render::LineRole::Ext) => &ext_c,
             _ => &dim_c,
         };
         l.windows(2)
@@ -143,7 +143,7 @@ pub(super) fn table_size(t: &Table) -> (usize, usize) {
 /// The block is relative to its own origin: the ACAD_TABLE reference adds the insertion point.
 pub(crate) fn table_block_entities(d: &Drawing, t: &Table, layer: &str) -> Vec<Entity> {
     let at_origin = Table { insert: Vec3::ZERO, ..t.clone() };
-    let g = cadcraft_render::table_geometry(d, &at_origin);
+    let g = forja_render::table_geometry(d, &at_origin);
     let c = Common { layer: layer.into(), color: Color::ByBlock, ..Common::default() };
     let mut out = Vec::new();
     for f in &g.fills {
@@ -189,8 +189,8 @@ pub(crate) fn table_block_entities(d: &Drawing, t: &Table, layer: &str) -> Vec<E
 }
 
 /// Our own geometry for an arrowhead block: unit size, tip at the origin, pointing along +X.
-pub(super) fn arrow_block_entities(kind: cadcraft_render::Arrowhead) -> Vec<Entity> {
-    let g = cadcraft_render::arrowhead(kind, Vec2::ZERO, Vec2::X, 1.0);
+pub(super) fn arrow_block_entities(kind: forja_render::Arrowhead) -> Vec<Entity> {
+    let g = forja_render::arrowhead(kind, Vec2::ZERO, Vec2::X, 1.0);
     let c = Common { layer: "0".into(), color: Color::ByBlock, ..Common::default() };
     let mut out = Vec::new();
     for l in &g.lines {
@@ -212,10 +212,10 @@ pub(super) fn arrow_block_entities(kind: cadcraft_render::Arrowhead) -> Vec<Enti
     out
 }
 
-/// Whether the entities of the block `name` are the arrowhead block CADCraft writes for that
+/// Whether the entities of the block `name` are the arrowhead block Forja writes for that
 /// standard arrow name ([`arrow_block_entities`]): the same lines and solids with the same
 /// properties (layer 0, ByBlock). Any other content (AutoCAD's own `_Dot`, a user's
-/// redefinition, an older CADCraft's geometry) is the file's.
+/// redefinition, an older Forja's geometry) is the file's.
 pub(crate) fn is_generated_arrow(name: &str, entities: &[&Entity]) -> bool {
     let Some((_, kind)) = dxf_ext::arrow_block_name(name) else { return false };
     let ours = arrow_block_entities(kind);

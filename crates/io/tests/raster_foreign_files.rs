@@ -1,4 +1,4 @@
-//! Raster image files CADCraft did not write itself (#956): files made by another program, and
+//! Raster image files Forja did not write itself (#956): files made by another program, and
 //! files laid out by hand from the formats' public descriptions, so reading is not only checked
 //! against the library that also does the writing.
 //!
@@ -7,8 +7,8 @@
 //! command `sips` (`-s format jpeg|tiff|bmp|png`, colour profile removed). They contain nothing
 //! but those pixels and the encoder's headers.
 
-use cadcraft_doc::Raster;
-use cadcraft_io::raster::{decode, probe};
+use forja_doc::Raster;
+use forja_io::raster::{decode, probe};
 
 /// JPEG, baseline, quality 90, with JFIF and Exif headers.
 const SIPS_JPEG: &str = "ffd8ffe000104a46494600010100004800480000ffe1004c4578696600004d4d002a00000008000187690004000000010000001a000000000003a001 \

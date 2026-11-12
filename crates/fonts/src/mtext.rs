@@ -1,6 +1,6 @@
 //! MTEXT: inline-format parsing, word wrap and attachment.
 
-use cadcraft_geom::{Bounds2, Vec2};
+use forja_geom::{Bounds2, Vec2};
 
 use crate::{Shaped, TextFont, shape_line, text_width};
 
@@ -259,7 +259,7 @@ pub(crate) fn unescape_codes(s: &str) -> std::borrow::Cow<'_, str> {
                 continue;
             }
         } else if n == Some('M') && plus == Some('+') && chars.get(i + 3).is_some_and(char::is_ascii_digit) && hex4(&chars, i + 4).is_some() {
-            push_literal(&mut out, cadcraft_dxf::mif_escape_at(&chars, i).unwrap_or('\u{fffd}'));
+            push_literal(&mut out, forja_dxf::mif_escape_at(&chars, i).unwrap_or('\u{fffd}'));
             i += 8;
             continue;
         }

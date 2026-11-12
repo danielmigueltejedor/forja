@@ -9,7 +9,7 @@
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
-use cadcraft_doc::{Block, Drawing, Entity, EntityKind, Handle};
+use forja_doc::{Block, Drawing, Entity, EntityKind, Handle};
 use serde_json::{Value, json};
 
 use super::super::file::io;
@@ -236,7 +236,7 @@ mod tests {
     #[test]
     fn inserted_file_brings_its_mline_styles() {
         let mut src = Drawing::default();
-        src.mline_styles.push(cadcraft_doc::MLineStyle { name: "WALL".into(), ..Default::default() });
+        src.mline_styles.push(forja_doc::MLineStyle { name: "WALL".into(), ..Default::default() });
         let mut d = Drawing::default();
         merge_tables(&mut d, &src);
         assert!(d.mline_styles.iter().any(|m| m.name == "WALL"));

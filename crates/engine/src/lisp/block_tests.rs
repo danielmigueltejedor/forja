@@ -130,7 +130,7 @@ fn a_saved_drawing_keeps_the_block() {
         ok(&mut s, code);
     }
     s.execute("insert", &serde_json::json!({"name": "EB", "at": [100, 0]})).unwrap();
-    let read = cadcraft_io::read_dxf(cadcraft_io::write_dxf(s.doc().unwrap()).as_bytes()).unwrap();
+    let read = forja_io::read_dxf(forja_io::write_dxf(s.doc().unwrap()).as_bytes()).unwrap();
     let b = read.block("EB").unwrap();
     assert_eq!((b.entities.len(), b.base.x, b.base.y), (2, 5.0, 5.0));
     assert_eq!(read.model.len(), 1, "the insert");

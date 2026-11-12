@@ -1,7 +1,7 @@
 //! MEASUREINIT: the units of a new drawing made without a template (issue #1182). It is a profile
 //! setting, so a metric choice survives restarts; an explicit `metric` or template still wins.
 
-use cadcraft_engine::Session;
+use forja_engine::Session;
 use serde_json::json;
 
 fn var(s: &mut Session, name: &str) -> serde_json::Value {
@@ -43,9 +43,9 @@ fn only_zero_or_one() {
 fn kept_in_the_profile() {
     let mut s = Session::empty();
     s.execute("options", &json!({ "MEASUREINIT": 1 })).unwrap();
-    let saved = cadcraft_engine::cmd::options::profile(&s);
+    let saved = forja_engine::cmd::options::profile(&s);
     assert_eq!(saved["MEASUREINIT"], json!(1));
     let mut restarted = Session::empty();
-    cadcraft_engine::cmd::options::restore(&mut restarted, &saved);
+    forja_engine::cmd::options::restore(&mut restarted, &saved);
     assert_eq!(var(&mut restarted, "MEASUREINIT"), json!(1));
 }

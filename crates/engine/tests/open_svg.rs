@@ -1,15 +1,15 @@
 //! Opening a file that isn't a drawing (SVG, read into entities): the drawing gets no file name,
-//! so QSAVE asks for one instead of writing CADCraft's SVG export over the original.
+//! so QSAVE asks for one instead of writing Forja's SVG export over the original.
 
-use cadcraft_engine::Session;
-use cadcraft_engine::cmd::file::{IoHooks, set_io};
-use cadcraft_engine::doc::Drawing;
+use forja_engine::Session;
+use forja_engine::cmd::file::{IoHooks, set_io};
+use forja_engine::doc::Drawing;
 use serde_json::json;
 
 #[test]
 fn an_opened_svg_is_not_saved_over() {
     set_io(IoHooks { read: |_, _| Ok(Drawing::new_metric()), write: |_, _| Ok(b"exported".to_vec()), plot: None });
-    let dir = std::env::temp_dir().join(format!("cadcraft-open-svg-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("forja-open-svg-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let svg = dir.join("Logo.svg");
     std::fs::write(&svg, b"<svg/>").unwrap();

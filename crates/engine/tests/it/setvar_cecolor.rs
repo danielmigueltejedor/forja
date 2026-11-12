@@ -2,8 +2,8 @@
 //! index (#1999). `getvar CECOLOR` reads it back as AutoCAD does, as text: "BYLAYER", "BYBLOCK",
 //! the index ("1" for red) or "RGB:r,g,b".
 
-use cadcraft_engine::Session;
-use cadcraft_engine::doc::color::{Color, Rgb};
+use forja_engine::Session;
+use forja_engine::doc::color::{Color, Rgb};
 use serde_json::{Value, json};
 
 fn cecolor(s: &mut Session) -> Value {
@@ -65,7 +65,7 @@ fn getvar_cecolor_restores_a_true_colour() {
 fn setvar_cecolor_lists_cecolor_as_text() {
     let mut s = Session::new();
     s.execute("setvar", &json!({ "name": "CECOLOR", "value": "red" })).unwrap();
-    assert_eq!(cadcraft_engine::sysvars::list(&s)["CECOLOR"], json!("1"));
+    assert_eq!(forja_engine::sysvars::list(&s)["CECOLOR"], json!("1"));
 }
 
 #[test]

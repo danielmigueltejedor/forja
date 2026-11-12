@@ -1,8 +1,8 @@
 //! BREAK on a closed polyline removes the stretch from the first to the second point along the
 //! vertex direction and leaves one open polyline (#1173).
 
-use cadcraft_doc::{EntityKind, LwPolyline};
-use cadcraft_engine::Session;
+use forja_doc::{EntityKind, LwPolyline};
+use forja_engine::Session;
 use serde_json::{Value, json};
 
 fn polys(s: &Session) -> Vec<LwPolyline> {

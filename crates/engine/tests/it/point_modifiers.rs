@@ -1,9 +1,9 @@
 //! Point modifiers at point prompts (#392): FROM, M2P/MTP, point filters, the `*` prefix and the
 //! angle override `<a`, from the command line and in scripts.
 
-use cadcraft_doc::EntityKind;
-use cadcraft_engine::{Input, Session};
-use cadcraft_geom::Vec2;
+use forja_doc::EntityKind;
+use forja_engine::{Input, Session};
+use forja_geom::Vec2;
 
 /// The lines of model space as (start, end).
 fn lines(s: &Session) -> Vec<(Vec2, Vec2)> {

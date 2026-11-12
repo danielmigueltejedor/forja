@@ -1,8 +1,8 @@
 //! Typed ZOOM Center, Scale, Dynamic and a plain scale factor do what they say, and ZOOM All /
 //! Extents in paper space fit the sheet (#388).
 
-use cadcraft_engine::{Session, View};
-use cadcraft_geom::Vec2;
+use forja_engine::{Session, View};
+use forja_geom::Vec2;
 use serde_json::json;
 
 fn view(s: &Session) -> View {
@@ -51,7 +51,7 @@ fn zoom_center_scale_dynamic_and_paper_space_all() {
     // Paper space: All and Extents (no paper objects) fit the sheet, not the model limits.
     s.execute("layout.set", &json!({ "name": "Layout1" })).unwrap();
     let sheet = s.zoom_limits().unwrap();
-    assert_eq!(sheet, cadcraft_render::sheet(s.doc().unwrap(), "Layout1").unwrap().bounds());
+    assert_eq!(sheet, forja_render::sheet(s.doc().unwrap(), "Layout1").unwrap().bounds());
     assert!(!near(sheet.width(), 420.0), "the sheet, not the limits: {sheet:?}");
     s.cmdline("ZOOM E").unwrap();
     assert!(view(&s).center.near(sheet.center(), 1e-9), "{:?} vs {sheet:?}", view(&s));

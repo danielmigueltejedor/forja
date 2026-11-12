@@ -6,7 +6,7 @@
 //! start a selection window in the drawing). What the overlays do goes through commands:
 //! `zoom.extents` (Top face, Home), `ui.toggle.viewcube`, `ui.toggle.ucsicon`.
 //!
-//! CADCraft's model view is a 2D plan view of the World Coordinate System: there is no view
+//! Forja's model view is a 2D plan view of the World Coordinate System: there is no view
 //! twist, no 3D view direction and no user coordinate system yet, so the compass ring explains
 //! that instead of rotating, and the WCS menu lists the only coordinate system there is.
 
@@ -199,7 +199,7 @@ fn ucs_menu(app: &mut CadApp, popup: egui::Popup<'_>) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cadcraft_engine::Session;
+    use forja_engine::Session;
 
     /// The app with the sample drawing, laid out once in a 1400×900 window.
     fn app_and_ctx() -> (CadApp, egui::Context) {

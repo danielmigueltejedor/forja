@@ -29,8 +29,8 @@ pub(super) fn wheel_zoom_points(events: &[egui::Event], opts: &egui::InputOption
 /// Start TEXTEDIT on the text, mtext, attribute definition or multileader text at `p` (the objects
 /// its shortcut menu offers Edit Text for, and multileaders, #1081); false when there is none.
 pub(super) fn edit_text_at(app: &mut CadApp, p: Vec2) -> bool {
-    use cadcraft_engine::doc::EntityKind;
-    let is_text = cadcraft_engine::cmd::curves::pick_at(&app.session, p).and_then(|h| {
+    use forja_engine::doc::EntityKind;
+    let is_text = forja_engine::cmd::curves::pick_at(&app.session, p).and_then(|h| {
         app.session.doc().ok()?.entity(h).map(|e| match &e.kind {
             EntityKind::Text(_) | EntityKind::MText(_) | EntityKind::AttDef(_) => true,
             EntityKind::MLeader(m) => m.text.is_some(),
@@ -52,14 +52,14 @@ pub(super) fn edit_text_at(app: &mut CadApp, p: Vec2) -> bool {
 pub(super) fn hatch_at(app: &CadApp, w: Vec2, scale: f64) -> Option<Handle> {
     let st = app.session.state().ok()?;
     let aperture = app.session.settings.pickbox.max(1.0) * 1.5 / scale.max(1e-12);
-    let h = cadcraft_engine::select::pick(&st.doc, &st.edit_space(), w, aperture)?;
-    matches!(st.doc.entity(h)?.kind, cadcraft_doc::EntityKind::Hatch(_)).then_some(h)
+    let h = forja_engine::select::pick(&st.doc, &st.edit_space(), w, aperture)?;
+    matches!(st.doc.entity(h)?.kind, forja_doc::EntityKind::Hatch(_)).then_some(h)
 }
 
 #[cfg(test)]
 mod hatch_pick_tests {
-    use cadcraft_engine::Session;
-    use cadcraft_geom::Vec2;
+    use forja_engine::Session;
+    use forja_geom::Vec2;
     use serde_json::json;
 
     use crate::{CadApp, Services};

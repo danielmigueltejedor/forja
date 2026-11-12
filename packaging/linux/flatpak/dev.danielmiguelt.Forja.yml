@@ -4,13 +4,13 @@
 #
 #   curl -fsSLO https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/cargo/flatpak-cargo-generator.py
 #   python3 flatpak-cargo-generator.py Cargo.lock -o packaging/linux/flatpak/cargo-sources.json
-#   flatpak-builder --user --install --force-clean build-flatpak packaging/linux/flatpak/ai.storyteller.forja.yml
-#   flatpak run ai.storyteller.forja
+#   flatpak-builder --user --install --force-clean build-flatpak packaging/linux/flatpak/dev.danielmiguelt.Forja.yml
+#   flatpak run dev.danielmiguelt.Forja
 #
 # For Flathub, replace the `dir` source with a `git` source pinned to a release tag and commit.
-# The single-file .flatpak attached to each release comes from ai.storyteller.forja.bundle.yml,
+# The single-file .flatpak attached to each release comes from dev.danielmiguelt.Forja.bundle.yml,
 # which repackages the prebuilt release binaries. Keep runtime-version and finish-args identical.
-id: ai.storyteller.forja
+id: dev.danielmiguelt.Forja
 runtime: org.freedesktop.Platform
 runtime-version: '26.08'
 sdk: org.freedesktop.Sdk
@@ -49,8 +49,8 @@ modules:
       - install -Dm755 target/release/forja /app/bin/forja
       - install -Dm644 NOTICE /app/share/doc/forja/NOTICE
       - install -Dm755 target/release/forja-cli /app/bin/forja-cli
-      - install -Dm644 packaging/linux/ai.storyteller.forja.desktop /app/share/applications/ai.storyteller.forja.desktop
-      - install -Dm644 packaging/linux/ai.storyteller.forja.mime.xml /app/share/mime/packages/ai.storyteller.forja.xml
+      - install -Dm644 packaging/linux/dev.danielmiguelt.Forja.desktop /app/share/applications/dev.danielmiguelt.Forja.desktop
+      - install -Dm644 packaging/linux/dev.danielmiguelt.Forja.mime.xml /app/share/mime/packages/dev.danielmiguelt.Forja.xml
       - mkdir -p /app/share/icons && cp -R assets/app-icon/hicolor /app/share/icons/
       - install -Dm644 NOTICE /app/share/doc/forja/NOTICE
       - install -Dm644 ATTRIBUTION.md /app/share/doc/forja/ATTRIBUTION.md
@@ -58,7 +58,7 @@ modules:
         version=$(awk '/^\[/{p=($0=="[workspace.package]");next} p&&$1=="version"{gsub(/[" ]/,"",$3);print $3;exit}' Cargo.toml);
         install -d /app/share/metainfo;
         sed -e "s/@VERSION@/$version/" -e "s/@DATE@/$(date -u +%Y-%m-%d)/"
-        packaging/linux/ai.storyteller.forja.metainfo.xml.in > /app/share/metainfo/ai.storyteller.forja.metainfo.xml
+        packaging/linux/dev.danielmiguelt.Forja.metainfo.xml.in > /app/share/metainfo/dev.danielmiguelt.Forja.metainfo.xml
     sources:
       - type: dir
         path: ../../..

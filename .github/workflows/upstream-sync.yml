@@ -1,0 +1,176 @@
+name: Weekly upstream sync
+
+# Every Monday: merge what upstream published during the week into a branch and open a pull
+# request, so engine fixes reach this project. Upstream's tree is first renamed to this app's
+# names by scripts/rebrand.py (rules in .github/rebrand.toml), so the merge speaks one language.
+# Nothing is merged into the default branch here:
+# the pull request is the review step. Files listed in .github/upstream-keep stay as they are
+# in this repository even when upstream changes them.
+
+on:
+  schedule:
+    - cron: "17 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: upstream-sync
+  cancel-in-progress: false
+
+env:
+  UPSTREAM_REPO: storytold/cadcraft
+  UPSTREAM_BRANCH: main
+  # Upstream's commits with this app's names, which is what gets merged (docs/upstream.md).
+  MIRROR_BRANCH: upstream-forja
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out with history
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          # A token with the "workflows" permission lets the branch include upstream changes to
+          # workflow files and lets the pull request run CI. Without it the job still reports.
+          token: ${{ secrets.UPSTREAM_SYNC_TOKEN || github.token }}
+
+      - name: Merge upstream into a branch and open a pull request
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.UPSTREAM_SYNC_TOKEN || github.token }}
+          HAS_SYNC_TOKEN: ${{ secrets.UPSTREAM_SYNC_TOKEN != '' }}
+        run: |
+          set -euo pipefail
+          base="${GITHUB_REF_NAME}"
+          today="$(date -u +%Y-%m-%d)"
+          branch="sync/upstream-${today}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote add upstream "https://github.com/${UPSTREAM_REPO}.git"
+          git fetch --no-tags upstream "refs/heads/${UPSTREAM_BRANCH}:refs/remotes/upstream/${UPSTREAM_BRANCH}"
+          up="upstream/${UPSTREAM_BRANCH}"
+
+          new="$(git rev-parse "$up")"
+          ours="$(git rev-parse HEAD)"
+
+          # Upstream arrives through a mirror branch holding its tree with this app's names
+          # (scripts/rebrand.py, rules in .github/rebrand.toml). Each mirror commit has the previous
+          # mirror commit and the upstream commit it renames as parents, and names that commit in
+          # an "Upstream-Commit:" trailer.
+          prev=""
+          if git fetch --no-tags origin "refs/heads/${MIRROR_BRANCH}:refs/remotes/origin/${MIRROR_BRANCH}" 2>/dev/null; then
+            prev="$(git rev-parse "origin/${MIRROR_BRANCH}")"
+          fi
+          if [ -z "$prev" ]; then
+            echo "::error::No ${MIRROR_BRANCH} branch: see docs/upstream.md for how it starts."
+            exit 1
+          fi
+          last="$(git log -1 --format=%B "$prev" | sed -n 's/^Upstream-Commit: //p' | tail -1)"
+          if [ "$last" = "$new" ] || git merge-base --is-ancestor "$up" "$last"; then
+            echo "Already up to date with ${UPSTREAM_REPO}." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          open="$(gh pr list --state open --json headRefName --jq '[.[] | select(.headRefName | startswith("sync/upstream-"))] | length')"
+          if [ "$open" != "0" ]; then
+            echo "An upstream sync pull request is already open; not opening another." | tee -a "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          count="$(git rev-list --count "${last}..${up}")"
+
+          # Rename upstream's tree with this app's own rules, then record it on the mirror.
+          tree_dir="${RUNNER_TEMP}/upstream-tree"
+          git worktree add -q --detach "$tree_dir" "$up"
+          python3 scripts/rebrand.py apply --root "$tree_dir" --pin-from .
+          git -C "$tree_dir" add -A
+          tree="$(git -C "$tree_dir" write-tree)"
+          git worktree remove --force "$tree_dir"
+          mirror="$(printf 'Upstream %s with this app'"'"'s names\n\nUpstream-Commit: %s\n' "${new:0:8}" "$new" | git commit-tree "$tree" -p "$prev" -p "$new")"
+          up="$mirror"
+
+          # Files this project owns: on a conflict our version wins without a manual step.
+          git config merge.ours.driver true
+          if [ -f .github/upstream-keep ]; then
+            grep -vE '^\s*(#|$)' .github/upstream-keep | sed 's/$/ merge=ours/' > .git/info/attributes
+          fi
+
+          git checkout -q -b "$branch"
+          status="clean"
+          conflicts=""
+          if ! git merge --no-ff --no-edit "$up" >/tmp/merge.log 2>&1; then
+            # AGENTS.md: upstream's text plus this project's own section at the end.
+            if git diff --name-only --diff-filter=U | grep -qx 'AGENTS.md'; then
+              block="$(git show "HEAD:AGENTS.md" | awk '/^## Repository-specific deterministic quality contract/{f=1} f')"
+              git show "${up}:AGENTS.md" > AGENTS.md
+              [ -n "$block" ] && printf '\n%s\n' "$block" >> AGENTS.md
+              git add AGENTS.md
+            fi
+            conflicts="$(git diff --name-only --diff-filter=U || true)"
+            if [ -n "$conflicts" ]; then
+              status="conflict"
+              git merge --abort
+            else
+              git commit -q --no-edit
+            fi
+          fi
+
+          if [ "$status" = "clean" ]; then
+            if [ -f docs/upstream.md ]; then
+              sed -i -E "s/^(\| Last observed \| )\`[0-9a-f]+\`/\1\`${new}\`/; s/^(\| Last evaluated \| )\`[0-9a-f]+\`/\1\`${new}\`/; s/^(\| Last integrated \| )\`[0-9a-f]+\`[^|]*/\1\`${new}\` merged by the weekly sync of ${today} /" docs/upstream.md
+              git add docs/upstream.md
+              git commit -q -m "docs: record upstream ${new:0:8} as integrated" || true
+            fi
+            kept=""
+            if [ -f .github/upstream-keep ]; then
+              # shellcheck disable=SC2016 # the backticks are Markdown, printed as they are
+              kept="$(git diff --name-only "${ours}...${up}" 2>/dev/null | git check-attr --stdin merge | awk -F': ' '$3=="ours"{print "- `"$1"`"}' | head -40 || true)"
+            fi
+            kept_text=""
+            if [ -n "$kept" ]; then
+              kept_text="Upstream also changed these files that this project owns. Where both sides changed them, this project's version was kept (see \`.github/upstream-keep\`):
+
+          ${kept}
+
+          "
+            fi
+            body="Brings **${count} commits** from \`${UPSTREAM_REPO}\` (up to \`${new:0:8}\`).
+
+          **Result: merged cleanly.** No file needed a manual decision.
+
+          ${kept_text}Review the CI result before merging. \`docs/upstream.md\` is updated in this pull request."
+          else
+            # The merge needs a person. Offer upstream's commits (already renamed) as they are, so
+            # the pull request shows the conflicts and they can be resolved on the branch.
+            git checkout -q -B "$branch" "$up"
+            body="Brings **${count} commits** from \`${UPSTREAM_REPO}\` (up to \`${new:0:8}\`).
+
+          **Result: conflicts.** The automatic merge stopped and changed nothing in \`${base}\`. These files need a decision:
+
+          $(printf '%s\n' "$conflicts" | sed 's/^/- `/; s/$/`/')
+
+          This branch holds upstream's commits, renamed to this app's names but otherwise unchanged. Resolve the conflicts on it (keeping this project's changes) and merge."
+          fi
+
+          if ! git push -q -f origin "$branch" "${mirror}:refs/heads/${MIRROR_BRANCH}" 2>/tmp/push.log; then
+            cat /tmp/push.log
+            note="The weekly sync found ${count} new commits in \`${UPSTREAM_REPO}\` (up to \`${new:0:8}\`, merge result: ${status}) but could not push the branch."
+            if grep -qi 'workflow' /tmp/push.log; then
+              note="${note} Upstream changed workflow files, and the default token may not push those. Add a repository secret \`UPSTREAM_SYNC_TOKEN\` (a token with contents, pull requests and workflows permissions) and run the workflow again."
+            fi
+            gh issue create --title "Upstream sync ${today}: branch could not be pushed" --body "$note" || true
+            echo "::error::Could not push ${branch}."
+            exit 1
+          fi
+
+          title="Weekly upstream sync: ${count} commits from ${UPSTREAM_REPO}"
+          [ "$status" = "conflict" ] && title="${title} (conflicts)"
+          url="$(gh pr create --base "$base" --head "$branch" --title "$title" --body "$body")"
+          echo "Opened ${url} (${status})." | tee -a "$GITHUB_STEP_SUMMARY"
+          if [ "$HAS_SYNC_TOKEN" != "true" ]; then
+            gh pr comment "$url" --body "Opened with the default workflow token, so CI does not start by itself on this pull request. Close and reopen it to run the checks, or add the \`UPSTREAM_SYNC_TOKEN\` secret so future syncs run them automatically." || true
+          fi
