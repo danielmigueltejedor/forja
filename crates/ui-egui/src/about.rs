@@ -2,7 +2,7 @@
 //! it, the version as a pill and one line on what it is, then a card of rows (website,
 //! contributors, models, licence). Contributors and Models open as pages of the same window.
 
-use egui::{Align, Color32, Layout, RichText, Sense, TextureHandle, Ui, vec2};
+use egui::{Color32, RichText, Sense, TextureHandle, Ui, vec2};
 
 use crate::icons::Icon;
 use crate::ndl_window;
@@ -41,21 +41,35 @@ pub fn show(ctx: &egui::Context, open: &mut bool) {
                 about_page(ui, &mut page);
             }
             Page::Contributors | Page::Models => {
+                // A fixed page: the credit lists fill the room they are given (their scroll areas
+                // don't shrink), so an auto-sized window grew past the screen and left them empty.
+                let size = credits_size(ui.ctx());
+                ui.set_width(size.x);
                 if back_row(ui) {
                     page = Page::About;
                 }
                 ui.add_space(6.0);
-                if page == Page::Contributors {
-                    crate::credits::contributors_ui(ui);
-                } else {
-                    crate::credits::models_ui(ui);
-                }
+                let contributors = page == Page::Contributors;
+                ui.allocate_ui(size, |ui| {
+                    ui.set_min_size(size);
+                    if contributors {
+                        crate::credits::contributors_ui(ui);
+                    } else {
+                        crate::credits::models_ui(ui);
+                    }
+                });
             }
         });
     if !*open {
         page = Page::About;
     }
     ctx.data_mut(|d| d.insert_temp(page_id, page));
+}
+
+/// The size of the Contributors and Models pages: 640 x 440, smaller on a small screen.
+fn credits_size(ctx: &egui::Context) -> egui::Vec2 {
+    let screen = ctx.content_rect().size();
+    egui::vec2(640.0_f32.min(screen.x - 80.0), 440.0_f32.min(screen.y - 160.0)).max(egui::vec2(WIDTH, 200.0))
 }
 
 fn about_page(ui: &mut Ui, page: &mut Page) {
@@ -177,7 +191,9 @@ fn chevron(ui: &Ui, right_center: egui::Pos2, color: Color32) {
 /// The way back to the About page from Contributors or Models. True when clicked.
 fn back_row(ui: &mut Ui) -> bool {
     let t = Tokens::get();
-    ui.with_layout(Layout::left_to_right(Align::Center), |ui| {
+    // One row high: a left-to-right layout would take the page's whole height and centre the
+    // button in it.
+    ui.horizontal(|ui| {
         let text = format!("‹  {}", crate::tl!("About"));
         ui.add(egui::Button::new(RichText::new(text).color(t.text)).fill(ndl_window::raised(ui, 0)).corner_radius(f32::from(u8::MAX))).clicked()
     })
