@@ -1,0 +1,114 @@
+name: macOS
+
+# Forja.app and its DMG on a standard macOS runner. The shared release workflow builds macOS on a
+# larger runner, which a Free organisation never gets, so this is where the macOS build comes
+# from: an artifact on every run, and the release asset when a release is published.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - "apps/**"
+      - "crates/**"
+      - "assets/**"
+      - "packaging/macos/**"
+      - "packaging/env.sh"
+      - "Cargo.lock"
+      - ".github/workflows/macos.yml"
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  dmg:
+    runs-on: macos-15
+    timeout-minutes: 120
+    permissions:
+      contents: write
+    env:
+      CRAFT_FONTS_DIR: ${{ github.workspace }}/craft-fonts
+      DIST: ${{ github.workspace }}/dist
+      # Releases ship one DMG for both architectures; everything else builds Apple Silicon only.
+      ARCH: ${{ github.event_name == 'release' && 'universal' || 'aarch64' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Check out craft-fonts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: storytold/craft-fonts
+          # Same commit as release.yml and ci.yml.
+          ref: b076417b5880bd4154bd22f00695b1d28c6bea83
+          path: craft-fonts
+          persist-credentials: false
+
+      - name: Link against the macOS 26 SDK
+        # AppKit draws the traffic lights in the style of the SDK the app was linked against:
+        # linked against 15, macOS 26 keeps the old flat ones instead of Liquid Glass. The macOS 15
+        # runners carry Xcode 26 beside their default; MACOSX_DEPLOYMENT_TARGET keeps the floor.
+        run: |
+          xcode=$(
+            for candidate in /Applications/Xcode_[0-9]*.app; do
+              if [[ -d "$candidate/Contents/Developer" ]]; then
+                printf '%s\n' "$candidate"
+              fi
+            done | awk -F/ '{version=$NF; sub(/^Xcode_/, "", version); if (version+0 >= 26) print}' | sort -V | tail -n 1
+          )
+          test -n "$xcode" || { echo "no Xcode 26 on this runner" >&2; exit 1; }
+          echo "DEVELOPER_DIR=$xcode/Contents/Developer" >> "$GITHUB_ENV"
+          DEVELOPER_DIR="$xcode/Contents/Developer" xcrun --sdk macosx --show-sdk-version
+
+      - name: Rust
+        run: |
+          rustup default stable
+          rustup target add aarch64-apple-darwin x86_64-apple-darwin
+          rustc --version
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          key: macos-${{ env.ARCH }}
+
+      - name: Build Forja.app and the DMG
+        # Signed ad hoc: there is no Developer ID, so the DMG is opened with right click > Open.
+        run: packaging/macos/package.sh --arch "$ARCH"
+
+      - name: Check the DMG
+        run: |
+          set -euo pipefail
+          dmgs=("$DIST"/forja-*-macos-"$ARCH".dmg)
+          if [[ ${#dmgs[@]} -ne 1 || ! -f "${dmgs[0]}" ]]; then
+            echo "expected exactly one macOS DMG" >&2
+            exit 1
+          fi
+          dmg=${dmgs[0]}
+          hdiutil attach "$dmg" -nobrowse -readonly -mountpoint /Volumes/Forja
+          bin=/Volumes/Forja/Forja.app/Contents/MacOS/Forja
+          lipo -archs "$bin"
+          sdk=$(otool -l "$bin" | awk '$1 == "sdk" {print $2; exit}')
+          echo "linked against SDK $sdk"
+          test "${sdk%%.*}" -ge 26
+          hdiutil detach /Volumes/Forja
+          (cd "$DIST" && shasum -a 256 forja-*-macos-* > SHA256SUMS-macos && cat SHA256SUMS-macos)
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: forja-macos-${{ env.ARCH }}
+          path: dist/forja-*-macos-*
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Attach to the release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: gh release upload "$TAG" "$DIST"/forja-*-macos-* --clobber --repo "$GITHUB_REPOSITORY"
