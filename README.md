@@ -6,90 +6,131 @@
     </picture>
   </a>
   <br><br>
-  <img src="https://raw.githubusercontent.com/danielmigueltejedor/forja/main/assets/app-icon/hicolor/512x512/apps/dev.danielmiguelt.Forja.png" width="160" alt="Forja">
+  <img src="assets/app-icon/hicolor/512x512/apps/dev.danielmiguelt.Forja.png" width="160" alt="Forja">
   <h1>Forja</h1>
-  <p><strong>A CAD application for 2D drafting and DWG/DXF work for the Nodalia suite, built on the Forja engine.</strong></p>
+  <p><strong>A native CAD application for 2D drafting and DWG/DXF drawings, part of the Nodalia suite.</strong></p>
 
   <p>
+    <img src="https://img.shields.io/badge/version-0.1.0-96501F" alt="Version 0.1.0">
     <img src="https://img.shields.io/badge/status-early%20stage-orange" alt="Early stage">
-    <img src="https://img.shields.io/badge/engine-CadCraft-96501F" alt="Forja engine">
     <img src="https://img.shields.io/badge/Rust-native-dea584?logo=rust&logoColor=black" alt="Native Rust">
     <img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-2ea44f" alt="MIT OR Apache-2.0">
   </p>
 
   <p>
-    <a href="#overview">Overview</a> ·
-    <a href="#what-you-get-today">Today</a> ·
+    <a href="#screenshots">Screenshots</a> ·
+    <a href="#what-it-does">What it does</a> ·
     <a href="#build-and-run">Build</a> ·
+    <a href="#agents-and-the-command-line">Agents</a> ·
     <a href="#project-status">Status</a> ·
-    <a href="#keeping-up-with-upstream">Upstream</a> ·
     <a href="#the-nodalia-suite">Suite</a> ·
     <a href="#license">License</a>
   </p>
 </div>
 
+<p align="center">
+  <img src="docs/images/ui-apartment.png" width="100%" alt="Forja with an apartment floor plan open: grey walls, blue windows, green door swings, furniture outlines, yellow room names and a room schedule table, cyan dimensions; Tool Sets on the left, Layers and Properties on the right, the command line at the bottom">
+  <br><sub><b>Apartment plan</b> (<a href="examples/apartment.dxf">examples/apartment.dxf</a>): hatched walls, room labels, a table, a multileader and dimensions, all drawn with Forja's own commands.</sub>
+</p>
+
 ---
 
 ## Overview
 
-**Forja** is the CAD application for 2D drafting and DWG/DXF work of [Nodalia](https://getnodalia.com). It is built on the engine of
-[Forja](https://github.com/danielmigueltejedor/forja), which lives in this repository and is kept up to
-date with upstream.
+**Forja** is the CAD application of [Nodalia](https://getnodalia.com). You draft the way decades of
+habit expect: type `L`, click two points, type `@5<45`, press Enter. It opens and saves DXF and DWG,
+lays drawings out on paper, and plots them to PDF. It is written in Rust, with no Electron and no web
+view, and it wears Nodalia Design: rounded islands, bold icons and the suite's own window controls on
+Linux.
 
 > [!IMPORTANT]
-> **Forja is at an early stage.** What runs today is the upstream application.
-> Nodalia's own interface is not wired in yet and there are no published builds.
+> **Forja is at an early stage.** The first release, 0.1.0, targets Linux. Expect rough edges, and
+> keep a copy of drawings that matter.
 
-## What you get today
+## Screenshots
 
-- The Forja engine.
-- The upstream desktop application. Crate and binary names are still upstream's.
-- The engine's own feature description, kept as [`docs/upstream-readme.md`](docs/upstream-readme.md).
+<table>
+  <tr>
+    <td width="50%"><img src="docs/images/ui-layout.png" alt="A paper-space layout in Forja: a white sheet with a viewport showing the apartment plan at scale, the status bar showing the Layout1 tab and the PAPER toggle"></td>
+    <td width="50%"><img src="docs/images/ui-bracket.png" alt="Forja in its light theme with a mounting bracket part drawing: front view with bolt holes, centre lines and dimensions, a hatched section view, notes and a title block"></td>
+  </tr>
+  <tr>
+    <td><sub><b>Layouts</b>: paper space with viewports, page setups and plotting to PDF.</sub></td>
+    <td><sub><b>Light theme</b>: a two-view part drawing with centre lines, a section hatch and a title block.</sub></td>
+  </tr>
+</table>
+
+## What it does
+
+- **The command line you know.** Prompts with clickable keywords, AutoComplete, aliases, relative
+  and polar input (`@dx,dy`, `@d<a`), direct distance entry, object snaps, polar tracking, ortho,
+  window and crossing selection, grips, and Enter or right-click to repeat.
+- **Drafting and editing.** Lines, polylines, circles, arcs, rectangles, polygons, ellipses,
+  splines, text and multiline text; move, copy, rotate, scale, mirror, stretch, offset, trim,
+  extend, fillet, chamfer, arrays and more.
+- **Annotation.** Dimensions with full dimension styles that follow the geometry, multileaders,
+  tables, hatches and gradients, blocks with attributes, TrueType fonts and a single-stroke
+  drafting font of its own.
+- **Layers and properties.** A layers palette and manager, layer tools, and a properties palette
+  that edits any selection.
+- **Open files.** DXF read and write, DWG open and save, PDF plotting, SVG and PNG export.
+- **Layouts and plotting.** Paper-space layouts, scaled and locked viewports, page setups.
+- **Parametric drawing.** Geometric and dimensional constraints that re-solve after every edit.
+- **Many languages.** English, Spanish and seventeen more interface languages, switched live
+  ([details](docs/localization.md)).
+
+The full, honest list of what works and what does not yet is in [ROADMAP.md](ROADMAP.md) and
+[docs/gaps.md](docs/gaps.md).
 
 ## Build and run
 
-You need a recent stable Rust toolchain.
+You need Rust 1.95 or later.
 
 ```bash
 git clone https://github.com/danielmigueltejedor/forja.git
 cd forja
-cargo run --release -p forja
+cargo run --release -p forja -- --sample      # opens the sample drawing
 ```
 
-The crate is still called `forja`; it will be renamed with the product.
+Then type at the command line:
+
+```text
+line 0,0 @10,0 @0,5 c          a closed triangle
+circle 5,2 1                    a circle
+zoom e                          zoom to the drawing
+```
+
+Forja keeps its settings and its log in `~/.config/forja/` on Linux.
+
+## Agents and the command line
+
+Every menu item, tool and prompt is a command, so scripts and agents can do anything a person can:
+
+```bash
+forja-cli mcp                                    # MCP server on stdio
+forja-cli info drawing.dxf                       # what is in a drawing
+forja-cli convert drawing.dwg drawing.svg        # convert or export
+forja-cli run --sample --script 'CIRCLE 22,3 1\n' --save out.dxf --export out.png
+```
+
+The desktop app also takes a JSON control channel (`--control PORT`). See [docs/cli.md](docs/cli.md),
+[docs/mcp.md](docs/mcp.md) and [docs/control-protocol.md](docs/control-protocol.md).
 
 ## Project status
 
 | Area | State |
 |---|---|
-| Engine | Imported from `danielmigueltejedor/forja` and tracked in [`docs/upstream.md`](docs/upstream.md) |
-| Product name | Pending: crates and binary still carry upstream's name (`forja`) |
-| App icon | Done: portrait of Leonardo da Vinci |
-| Nodalia interface | Not started |
-| Shared interface resources | Planned: the Nodalia apps will share interface components and styles |
-| Installable packages | None published |
-
-## Changes on top of upstream
-
-Forja already carries fixes that are not in Forja's `main`:
-
-- **DWG/DXF layouts, MTEXT and native open.** The work of upstream pull request
-  [#1086](https://github.com/danielmigueltejedor/forja/pull/1086): deferred layouts and native viewport
-  references are preserved, first-line MTEXT units are resolved, and dense polyline grips are cached.
-- **GNOME Wayland window controls.** Upstream pull request
-  [#1368](https://github.com/danielmigueltejedor/forja/pull/1368), still open: window controls without
-  bundled fonts.
-
-## Keeping up with upstream
-
-[`docs/upstream.md`](docs/upstream.md) records which upstream commit is integrated. A weekly job
-renames upstream's new commits to Forja's names and opens a pull request with them, so Forja's own
-changes are kept and conflicts are resolved in the open.
+| Drafting, editing, annotation | Working; see [ROADMAP.md](ROADMAP.md) |
+| DXF and DWG | Open and save; some entities are not kept yet ([file-format-parity.md](docs/file-format-parity.md)) |
+| Nodalia Design interface | Done: islands, NDL icons and dialogs, Linux window controls |
+| Native window controls | macOS and Windows keep the system's own |
+| Installable packages | 0.1.0 for Linux, about to be published |
 
 ## App icon
 
 Nodalia app icons are black-and-white portraits of historical figures over the app colour.
-Forja's is Leonardo da Vinci, engineer and master of technical drawing. Provenance and licence are in [`assets/app-icon/`](assets/app-icon/).
+Forja's is Leonardo da Vinci, engineer and master of technical drawing. Provenance and licence are
+in [`assets/app-icon/`](assets/app-icon/).
 
 ## The Nodalia suite
 
@@ -98,9 +139,5 @@ project developed in public by [Daniel Miguel Tejedor](https://danielmigueltejed
 
 ## License
 
-`MIT OR Apache-2.0`, as upstream. The licence files and `NOTICE` of Forja are kept.
-See [`LICENSE-MIT`](LICENSE-MIT) and [`LICENSE-APACHE`](LICENSE-APACHE).
-
-## Credits
-
-Forja would not exist without [Forja](https://github.com/danielmigueltejedor/forja) and its contributors.
+`MIT OR Apache-2.0`. See [`LICENSE-MIT`](LICENSE-MIT), [`LICENSE-APACHE`](LICENSE-APACHE) and
+[`NOTICE`](NOTICE). Every asset and its source is listed in [`ATTRIBUTION.md`](ATTRIBUTION.md).
