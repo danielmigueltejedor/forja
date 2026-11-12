@@ -56,7 +56,13 @@ jobs:
         # linked against 15, macOS 26 keeps the old flat ones instead of Liquid Glass. The macOS 15
         # runners carry Xcode 26 beside their default; MACOSX_DEPLOYMENT_TARGET keeps the floor.
         run: |
-          xcode=$(ls -d /Applications/Xcode_[0-9]*.app | awk -F'[_.]' '$2 >= 26' | sort -V | tail -n 1)
+          xcode=$(
+            for candidate in /Applications/Xcode_[0-9]*.app; do
+              if [[ -d "$candidate/Contents/Developer" ]]; then
+                printf '%s\n' "$candidate"
+              fi
+            done | awk -F'[_.]' '$2 >= 26' | sort -V | tail -n 1
+          )
           test -n "$xcode" || { echo "no Xcode 26 on this runner" >&2; exit 1; }
           echo "DEVELOPER_DIR=$xcode/Contents/Developer" >> "$GITHUB_ENV"
           DEVELOPER_DIR="$xcode/Contents/Developer" xcrun --sdk macosx --show-sdk-version
@@ -78,7 +84,12 @@ jobs:
       - name: Check the DMG
         run: |
           set -euo pipefail
-          dmg=$(ls "$DIST"/forja-*-macos-"$ARCH".dmg)
+          dmgs=("$DIST"/forja-*-macos-"$ARCH".dmg)
+          if [[ ${#dmgs[@]} -ne 1 || ! -f "${dmgs[0]}" ]]; then
+            echo "expected exactly one macOS DMG" >&2
+            exit 1
+          fi
+          dmg=${dmgs[0]}
           hdiutil attach "$dmg" -nobrowse -readonly -mountpoint /Volumes/Forja
           bin=/Volumes/Forja/Forja.app/Contents/MacOS/Forja
           lipo -archs "$bin"
