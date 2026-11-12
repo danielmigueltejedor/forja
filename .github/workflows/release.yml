@@ -9,6 +9,10 @@ on:
         description: "Version override for a test run, e.g. 0.2.0-rc.1 (empty: Cargo.toml)"
         type: string
         default: ""
+      skip-macos:
+        description: "Draft the release without the macOS build when only that job failed (its larger runner is paid for)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -94,3 +98,49 @@ jobs:
       AZURE_SIGNING_ACCOUNT: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
       AZURE_CERT_PROFILE: ${{ secrets.AZURE_CERT_PROFILE }}
       LINUX_SIGNING_KEY: ${{ secrets.LINUX_SIGNING_KEY }}
+
+  # The shared release workflow only drafts when every platform built. When the macOS job alone
+  # failed (its larger runner needs paid Actions minutes) and the run asked for it, draft from the
+  # other platforms' artifacts in this run. Any other failed job still stops the draft.
+  draft-without-macos:
+    name: Draft GitHub Release without macOS
+    needs: [release]
+    if: ${{ !cancelled() && inputs.skip-macos && needs.release.result == 'failure' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: release
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Only the macOS build failed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          failed="$(gh api --paginate "repos/$GH_REPO/actions/runs/$RUN_ID/jobs?filter=latest" \
+            --jq '.jobs[] | select(.name | startswith("release / "))
+                  | select(.conclusion == "failure" or .conclusion == "cancelled" or .conclusion == "timed_out")
+                  | .name')"
+          echo "Failed release jobs:"
+          echo "${failed:-  (none)}"
+          if [ "$failed" != "release / macOS universal" ]; then
+            echo "::error::Only the macOS build may fail for a draft without it."
+            exit 1
+          fi
+      - id: v
+        uses: storytold/craft-common-actions/actions/resolve-version@main
+        with:
+          input-version: ${{ inputs.version }}
+          app-title: Forja
+      - uses: storytold/craft-common-actions/actions/draft-release@main
+        with:
+          version: ${{ steps.v.outputs.version }}
+          app-title: Forja
+          prerelease: ${{ steps.v.outputs.prerelease }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
