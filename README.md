@@ -6,7 +6,7 @@
     </picture>
   </a>
   <br><br>
-  <img src="assets/app-icon/hicolor/512x512/apps/dev.danielmiguelt.Forja.png" width="160" alt="Forja">
+  <img src="assets/app-icon/hicolor/512x512/apps/dev.danielmiguelt.Forja.png" width="192" alt="Forja">
   <h1>Forja</h1>
   <p><strong>A native CAD application for 2D drafting and DWG/DXF drawings, part of the Nodalia suite.</strong></p>
 
