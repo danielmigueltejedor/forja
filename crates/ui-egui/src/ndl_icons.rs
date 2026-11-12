@@ -188,9 +188,16 @@ pub fn paint(p: &Painter, rect: Rect, icon: Icon, ink: Color32, accent: Color32)
     };
     let style = match kind {
         Kind::Interface => Style::bold(ink),
-        Kind::Cad => Style { ink, accent: Some(accent), bold: false },
+        Kind::Cad => Style { ink, accent: Some(accent), bold: false, stroke: Some(cad_stroke(rect.width())) },
     };
     ndl::paint(p, rect, def, style)
+}
+
+/// The stroke of a CAD tool icon `size` points wide: fine at every size (1–1.4 pt). NDL's regular
+/// stroke grows with the icon, so the 28–32 pt Tool Sets buttons drew at 2 pt and more, which
+/// reads as bold and clogs the geometry.
+fn cad_stroke(size: f32) -> f32 {
+    (size * 1.25 / 24.0).clamp(1.0, 1.4)
 }
 
 /// Paint `icon` into `rect` entirely in `color` (window controls, rows of a card).
@@ -216,5 +223,9 @@ mod tests {
         assert_eq!(name(Icon::Line), ("line", Kind::Cad));
         assert_eq!(name(Icon::Save), ("save", Kind::Interface));
         assert!(ndl::get("trim").is_some_and(|d| !d.accent.is_empty()));
+        // The large Tool Sets buttons stay fine, unlike NDL's regular 1.75 stroke on the 24 grid.
+        assert_eq!(cad_stroke(32.0), 1.4);
+        assert!(cad_stroke(32.0) < nodalia_theme::icons::STROKE * 32.0 / 24.0);
+        assert_eq!(cad_stroke(12.0), 1.0);
     }
 }
