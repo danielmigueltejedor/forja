@@ -47,6 +47,7 @@ jobs:
           HAS_SYNC_TOKEN: ${{ secrets.UPSTREAM_SYNC_TOKEN != '' }}
         run: |
           set -euo pipefail
+          tick="$(printf '\140')"  # a backtick, for the Markdown list below
           base="${GITHUB_REF_NAME}"
           today="$(date -u +%Y-%m-%d)"
           branch="sync/upstream-${today}"
@@ -152,7 +153,7 @@ jobs:
 
           **Result: conflicts.** The automatic merge stopped and changed nothing in \`${base}\`. These files need a decision:
 
-          $(printf '%s\n' "$conflicts" | sed 's/^/- `/; s/$/`/')
+          $(printf '%s\n' "$conflicts" | sed "s/^/- ${tick}/; s/\$/${tick}/")
 
           This branch holds upstream's commits, renamed to this app's names but otherwise unchanged. Resolve the conflicts on it (keeping this project's changes) and merge."
           fi
