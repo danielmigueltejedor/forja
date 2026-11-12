@@ -2,7 +2,7 @@
 
 ## Reporting a vulnerability
 
-Please report it privately through [GitHub's private reporting](https://github.com/storytold/cadcraft/security/advisories/new), not in a public issue or pull request. Say which version you ran, on which platform, and how to reproduce it. A small sample file helps, as long as it holds nothing private.
+Report Forja vulnerabilities to the **Nodalia maintainers**, not to another project's maintainers. When GitHub private vulnerability reporting is available for this repository, use **Security → Advisories → Report a vulnerability** on [getnodalia/forja](https://github.com/getnodalia/forja). Otherwise, contact the repository maintainers with a minimal, non-exploitable summary and request a private channel before sharing reproduction steps or malicious samples. Do not post a working exploit, secrets, or sensitive files in a public issue or pull request. Include the affected version and platform.
 
 Maintainers read reports as they arrive, but there is no fixed response time yet.
 
