@@ -61,7 +61,7 @@ jobs:
               if [[ -d "$candidate/Contents/Developer" ]]; then
                 printf '%s\n' "$candidate"
               fi
-            done | awk -F'[_.]' '$2 >= 26' | sort -V | tail -n 1
+            done | awk -F/ '{version=$NF; sub(/^Xcode_/, "", version); if (version+0 >= 26) print}' | sort -V | tail -n 1
           )
           test -n "$xcode" || { echo "no Xcode 26 on this runner" >&2; exit 1; }
           echo "DEVELOPER_DIR=$xcode/Contents/Developer" >> "$GITHUB_ENV"
