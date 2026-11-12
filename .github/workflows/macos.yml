@@ -28,7 +28,9 @@ concurrency:
 
 jobs:
   dmg:
-    runs-on: macos-15
+    # Preserve free GitHub runners for PRs/pushes; opt in to Blacksmith on published releases.
+    # Verify account credit and disable billable overages before enabling the repo variable.
+    runs-on: ${{ vars.NODALIA_USE_BLACKSMITH_MACOS == 'true' && github.event_name == 'release' && 'blacksmith-6vcpu-macos-15' || 'macos-15' }}
     timeout-minutes: 120
     permissions:
       contents: write
