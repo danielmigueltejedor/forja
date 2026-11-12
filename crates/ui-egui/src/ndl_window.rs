@@ -277,19 +277,14 @@ mod tests {
             for _ in 0..2 {
                 let mut out = ctx.run_ui(egui::RawInput::default(), |ui| {
                     let ctx = ui.ctx().clone();
-                    Window::new("Test").id(egui::Id::new("t")).open(&mut open).show(&ctx, |ui| ui.label("body"));
+                    Window::new("Test").id(egui::Id::unique("t")).open(&mut open).show(&ctx, |ui| ui.label("body"));
                 });
                 out.textures_delta.clear();
                 output = Some(out);
             }
             let update = output.and_then(|o| o.platform_output.accesskit_update).expect("accesskit tree");
             let x = |name: &str| {
-                update
-                    .nodes
-                    .iter()
-                    .find(|(_, n)| n.label().as_deref() == Some(name) || n.value().as_deref() == Some(name))
-                    .and_then(|(_, n)| n.bounds())
-                    .map(|b| b.x0)
+                update.nodes.iter().find(|(_, n)| n.label() == Some(name) || n.value() == Some(name)).and_then(|(_, n)| n.bounds()).map(|b| b.x0)
             };
             let (close, title) = (x("Close").expect("close control"), x("Test").expect("title"));
             assert_eq!(close < title, left, "{os:?}");

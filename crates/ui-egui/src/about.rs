@@ -1,8 +1,7 @@
 //! The About window, laid out like every Nodalia app's About: the app icon, its name, who makes
-//! it, the version as a pill and one line on what it is, then a card of rows (website,
-//! contributors, models, licence). Contributors and Models open as pages of the same window.
+//! it, the version as a pill and one line on what it is, then a card of rows (website, licence).
 
-use egui::{Align, Color32, Layout, RichText, Sense, TextureHandle, Ui, vec2};
+use egui::{Color32, RichText, Sense, TextureHandle, Ui, vec2};
 
 use crate::icons::Icon;
 use crate::ndl_window;
@@ -13,62 +12,20 @@ const ICON_PNG: &[u8] = include_bytes!("../../../assets/app-icon/hicolor/128x128
 /// The width of the About page: NDL's dialog width.
 const WIDTH: f32 = 380.0;
 
-#[derive(Clone, Copy, Default, PartialEq, Eq)]
-enum Page {
-    #[default]
-    About,
-    Contributors,
-    Models,
-}
-
-/// The Contributors and Models pages' size.
-const CREDITS_SIZE: egui::Vec2 = egui::vec2(560.0, 440.0);
-
 pub fn show(ctx: &egui::Context, open: &mut bool) {
-    let page_id = egui::Id::unique("about_page");
-    let mut page = ctx.data_mut(|d| d.get_temp::<Page>(page_id)).unwrap_or_default();
-    let title = match page {
-        Page::About => String::new(),
-        Page::Contributors => crate::tl!("Contributors").to_string(),
-        Page::Models => crate::tl!("Models").to_string(),
-    };
-    ndl_window::Window::new(title)
+    ndl_window::Window::new("")
         .id(egui::Id::unique("About Forja"))
         .open(open)
         .resizable(false)
         .pivot(egui::Align2::CENTER_CENTER)
         .default_pos(ctx.content_rect().center())
-        .show(ctx, |ui| match page {
-            Page::About => {
-                ui.set_width(WIDTH);
-                about_page(ui, &mut page);
-            }
-            Page::Contributors | Page::Models => {
-                // A fixed page: the lists scroll inside it instead of growing the window to the
-                // height of the screen.
-                let size = vec2(CREDITS_SIZE.x, CREDITS_SIZE.y.min(ui.ctx().content_rect().height() - 120.0).max(200.0));
-                ui.allocate_ui_with_layout(size, Layout::top_down(Align::Min), |ui| {
-                    ui.set_min_size(size);
-                    ui.set_max_size(size);
-                    if back_row(ui) {
-                        page = Page::About;
-                    }
-                    ui.add_space(6.0);
-                    if page == Page::Contributors {
-                        crate::credits::contributors_ui(ui);
-                    } else {
-                        crate::credits::models_ui(ui);
-                    }
-                });
-            }
+        .show(ctx, |ui| {
+            ui.set_width(WIDTH);
+            about_page(ui);
         });
-    if !*open {
-        page = Page::About;
-    }
-    ctx.data_mut(|d| d.insert_temp(page_id, page));
 }
 
-fn about_page(ui: &mut Ui, page: &mut Page) {
+fn about_page(ui: &mut Ui) {
     let t = Tokens::get();
     ui.vertical_centered(|ui| {
         if let Some(icon) = icon(ui.ctx()) {
@@ -89,14 +46,6 @@ fn about_page(ui: &mut Ui, page: &mut Page) {
     card(ui, |ui| {
         if row(ui, Some(Icon::Share), crate::tl!("Website"), None, true) {
             ui.ctx().open_url(egui::OpenUrl::new_tab(WEBSITE));
-        }
-        separator(ui);
-        if row(ui, None, crate::tl!("Contributors"), None, true) {
-            *page = Page::Contributors;
-        }
-        separator(ui);
-        if row(ui, None, crate::tl!("Models"), None, true) {
-            *page = Page::Models;
         }
         separator(ui);
         row(ui, None, crate::tl!("Licence"), Some("MIT OR Apache-2.0"), false);
@@ -182,70 +131,4 @@ fn chevron(ui: &Ui, right_center: egui::Pos2, color: Color32) {
     let s = egui::Stroke::new(1.75, color);
     ui.painter().line_segment([c + vec2(-3.0, -5.0), c + vec2(2.0, 0.0)], s);
     ui.painter().line_segment([c + vec2(2.0, 0.0), c + vec2(-3.0, 5.0)], s);
-}
-
-/// The way back to the About page from Contributors or Models. True when clicked.
-fn back_row(ui: &mut Ui) -> bool {
-    let t = Tokens::get();
-    // A row as tall as the button: a left-to-right layout would take the page's whole height and
-    // centre the button in it.
-    ui.horizontal(|ui| {
-        let text = format!("‹  {}", crate::tl!("About"));
-        ui.add(egui::Button::new(RichText::new(text).color(t.text)).fill(ndl_window::raised(ui, 0)).corner_radius(f32::from(u8::MAX))).clicked()
-    })
-    .inner
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{CREDITS_SIZE, Page};
-
-    /// Frames of the About window at 1600 × 1000 with `events` in the last one; returns the page
-    /// shown and the window's outer size.
-    fn run(page: Page, events: impl Fn(egui::Rect) -> Vec<egui::Event>) -> (Page, egui::Vec2) {
-        let ctx = egui::Context::default();
-        ctx.enable_accesskit();
-        ctx.data_mut(|d| d.insert_temp(egui::Id::unique("about_page"), page));
-        let screen = egui::Rect::from_min_size(egui::Pos2::ZERO, egui::vec2(1600.0, 1000.0));
-        let mut open = true;
-        let mut back = egui::Rect::NOTHING;
-        let mut size = egui::Vec2::ZERO;
-        for frame in 0..6 {
-            let input =
-                egui::RawInput { screen_rect: Some(screen), events: if frame == 5 { events(back) } else { Vec::new() }, ..Default::default() };
-            let mut out = ctx.run_ui(input, |ui| super::show(ui.ctx(), &mut open));
-            out.textures_delta.clear();
-            if let Some(update) = out.platform_output.accesskit_update {
-                for (_, node) in &update.nodes {
-                    let Some(b) = node.bounds() else { continue };
-                    let r = egui::Rect::from_min_max(egui::pos2(b.x0 as f32, b.y0 as f32), egui::pos2(b.x1 as f32, b.y1 as f32));
-                    if node.label().is_some_and(|l| l.contains("About")) && node.role() == egui::accesskit::Role::Button {
-                        back = r;
-                    }
-                    if node.role() == egui::accesskit::Role::Window {
-                        size = r.size();
-                    }
-                }
-            }
-        }
-        (ctx.data(|d| d.get_temp::<Page>(egui::Id::unique("about_page"))).unwrap_or_default(), size)
-    }
-
-    #[test]
-    fn credits_pages_keep_their_size_and_go_back_to_about() {
-        for page in [Page::Contributors, Page::Models] {
-            let (_, size) = run(page, |_| Vec::new());
-            assert!(size.y < CREDITS_SIZE.y + 120.0, "{size:?}");
-            let click = |r: egui::Rect| {
-                let pos = r.center();
-                vec![
-                    egui::Event::PointerMoved(pos),
-                    egui::Event::PointerButton { pos, button: egui::PointerButton::Primary, pressed: true, modifiers: Default::default() },
-                    egui::Event::PointerButton { pos, button: egui::PointerButton::Primary, pressed: false, modifiers: Default::default() },
-                ]
-            };
-            let (now, _) = run(page, click);
-            assert!(now == Page::About);
-        }
-    }
 }
