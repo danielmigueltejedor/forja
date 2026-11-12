@@ -351,7 +351,7 @@ pub fn show(app: &mut crate::CadApp, ui: &mut egui::Ui) {
     let mut bodies = Vec::new();
     let under = ui.painter().add(egui::Shape::Noop);
     let mut output = area.show_content(ui, &workspace.layout, &style, &mut Panels { app, bodies: &mut bodies });
-    ui.painter().set(under, islands(ui, &bodies, style.tab_height, t.panel));
+    ui.painter().set(under, islands(ui, &bodies, style.tab_height, style.column_bar_height, t.panel));
     round_canvas(ui, &bodies, t.chrome);
     underline_active_tabs(ui, &bodies, t.accent);
     // Keys typed in a floating panel's own OS window run the main window's shortcuts and
@@ -403,21 +403,42 @@ pub struct Panels<'a> {
 }
 
 /// The docked islands: one rounded panel-coloured surface per group, its body plus, except for
-/// the drawing, the tab strip above it. Painted under the dock, whose own fills are clear.
-/// Floating windows (other layers) keep their own frames.
-fn islands(ui: &egui::Ui, bodies: &[(Panel, egui::LayerId, egui::Rect)], tab_height: f32, fill: egui::Color32) -> egui::Shape {
+/// the drawing, the tab strip above it. The top group of a dock column also takes the column bar
+/// above its strip (the bar that moves and collapses the column), so the side islands start
+/// level with the drawing instead of a bar's height below it. Painted under the dock, whose own
+/// fills are clear. Floating windows (other layers) keep their own frames.
+fn islands(ui: &egui::Ui, bodies: &[(Panel, egui::LayerId, egui::Rect)], tab_height: f32, column_bar: f32, fill: egui::Color32) -> egui::Shape {
     let radius = nodalia_theme::component::PANEL_RADIUS;
-    let shapes = bodies
+    let groups: Vec<(Panel, egui::Rect)> = bodies
         .iter()
         .filter(|(panel, layer, _)| *layer == ui.layer_id() && *panel != Panel::Canvas)
-        .map(|(_, _, body)| {
-            let mut island = *body;
-            island.min.y -= tab_height;
+        .map(|(panel, _, body)| (*panel, egui::Rect::from_min_max(egui::pos2(body.min.x, body.min.y - tab_height), body.max)))
+        .collect();
+    let shapes = groups
+        .iter()
+        .map(|(panel, island)| {
+            let mut island = *island;
+            if column_top(&groups, *panel, island, column_bar) {
+                island.min.y -= column_bar;
+            }
             let r = radius.min(island.width() / 2.0).min(island.height() / 2.0).max(0.0);
             egui::Shape::rect_filled(island, r, fill)
         })
         .collect();
     egui::Shape::Vec(shapes)
+}
+
+/// Whether `island` is the top group of its dock column: no other docked group sits above it in
+/// the same column (within a column bar and a gap of its top).
+fn column_top(groups: &[(Panel, egui::Rect)], panel: Panel, island: egui::Rect, column_bar: f32) -> bool {
+    let reach = column_bar + nodalia_theme::component::WINDOW_GAP + 1.0;
+    !groups.iter().any(|(other, r)| {
+        *other != panel
+            && r.max.y <= island.min.y + 0.5
+            && r.max.y >= island.min.y - reach
+            && r.min.x < island.max.x - 1.0
+            && r.max.x > island.min.x + 1.0
+    })
 }
 
 /// Rounds the drawing's corners by painting the window frame's colour over them: the drawing
@@ -532,4 +553,25 @@ fn panel_limits(panel: &Panel) -> PanelLimits {
         Panel::Layers | Panel::Properties | Panel::ExternalRefs => (egui::vec2(220.0, 100.0), 720.0),
     };
     PanelLimits { min, max: egui::vec2(max_width, 1_000_000.0) }
+}
+
+#[cfg(test)]
+mod island_tests {
+    use super::{Panel, column_top};
+    use egui::{Rect, pos2};
+
+    /// Layers above Properties in the right-hand column, Tool Sets alone on the left: the top
+    /// group of each column takes the column bar (so it starts level with the drawing), the one
+    /// below it does not.
+    #[test]
+    fn only_the_top_group_of_a_column_takes_its_bar() {
+        let bar = 14.0;
+        let layers = Rect::from_min_max(pos2(900.0, 114.0), pos2(1200.0, 400.0));
+        let properties = Rect::from_min_max(pos2(900.0, 408.0), pos2(1200.0, 900.0));
+        let tool_sets = Rect::from_min_max(pos2(0.0, 114.0), pos2(300.0, 900.0));
+        let groups = [(Panel::Layers, layers), (Panel::Properties, properties), (Panel::ToolSets, tool_sets)];
+        assert!(column_top(&groups, Panel::Layers, layers, bar));
+        assert!(column_top(&groups, Panel::ToolSets, tool_sets, bar));
+        assert!(!column_top(&groups, Panel::Properties, properties, bar));
+    }
 }
