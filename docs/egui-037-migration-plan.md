@@ -567,7 +567,7 @@ and request/session binding, and replies with `save_screenshot(&image, path)`. B
   web deadline.
 
 Forja adopts the shared craft-ui CL-2 completion-slot API (the eleven existing craft-ui creative consumers'
-approach; DeckCraft, FigCraft and ArtCraft Native keep local adapters).
+approach; Lámina, FigCraft and ArtCraft Native keep local adapters).
 Request records, paths, PNG serialization, timeouts and the reply schema stay in
 Forja. If the provisional CL-2 API is unavailable, S3 is blocked rather than
 growing a second divergent helper.
@@ -805,8 +805,8 @@ licences enter the evidence manifest; no script may silently skip for a missing 
   persistence output. Forja has no custom `IMEOutput` producer (all editors use
   built-in `TextEdit`; the MTEXT editor and rename fields inherit it), so no app
   model adapter is required unless one is added later. The suite inventory's custom
-  producers (DesignCraft/FigCraft/WordCraft/VectorCraft/EffectCraft/FilmCraft/
-  DeckCraft/PhotoCraft) do not apply here: Forja's custom-painted command line
+  producers (Pliego/FigCraft/Letra/Pluma/Pulso/Toma/
+  Lámina/Lienzo) do not apply here: Forja's custom-painted command line
   receives IME commits as `Event::Text` and produces no `IMEOutput`. If a custom
   producer is added,
   it must supply logical model text and convert its own cursor coordinates to UTF-8
@@ -1406,7 +1406,7 @@ The user clarified that reviewed plans remain local and implementation proceeds 
 
 Canonical `storytold/cadcraft` `main` now resolves to `f043540d13dac03ce895a96c78a8349f3e40bd5b`. The owned checkout was fast-forwarded to this revision. Earlier baseline SHAs and line anchors above are retained as historical review evidence; use this new revision and its exact lockfile for current-main integration and paired measurements. The original refs remain reachable.
 
-Preserve browser page zoom; test canvas pinch routing because this page does not add DesignCraft touch-action:none.
+Preserve browser page zoom; test canvas pinch routing because this page does not add Pliego touch-action:none.
 
 The complete static delta review and exact old/new object identities are retained in the task evidence: `canonical-diffs-refresh-20261023.json` and `overnight-consumer-review-20261023.md`. This amendment claims no new build, native GUI or performance acceptance.
 

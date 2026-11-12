@@ -151,7 +151,7 @@ try {
 }
 ```
 
-The messages and both transports are the shared contract of [`craft-web-host`](https://github.com/storytold/craft-libs/tree/main/crates/web-host) (storytold/craft-libs#420), the same for every Craft app: its README lists every message, including `saved`, with the compatibility notes. In `forja:ready`, `version` is the contract's (`"1"`) and `appVersion` is this app's release. Forja reads bytes, so a host sends `bytes`, not a `File`.
+The messages and both transports are the shared contract of [`craft-web-host`](https://github.com/storytold/craft-libs/tree/main/crates/web-host) (storytold/craft-libs#420), the same for every Nodalia app: its README lists every message, including `saved`, with the compatibility notes. In `forja:ready`, `version` is the contract's (`"1"`) and `appVersion` is this app's release. Forja reads bytes, so a host sends `bytes`, not a `File`.
 
 ### Trust and limits
 
@@ -161,7 +161,7 @@ The messages and both transports are the shared contract of [`craft-web-host`](h
 
 ### Driving it from the page (`window.forja`)
 
-Every Forja web build puts `window.forja` on the page, from [`craft-web-api`](https://github.com/storytold/craft-libs/tree/main/crates/web-api) (storytold/craft-libs#413), the same shape in every Craft app. `forja.request(method, params)` calls any method of the control channel the desktop app serves (`docs/control-protocol.md`), and `execute(command, params)`, `commands()`, `docInspect(params)`, `uiInspect(params)` and `screenshot(params)` are shortcuts for the common ones. Each returns a Promise that resolves with the method's result and rejects with an `Error`; a call the app does not answer within 30 seconds rejects, and the app drops it unrun if it had not started it.
+Every Forja web build puts `window.forja` on the page, from [`craft-web-api`](https://github.com/storytold/craft-libs/tree/main/crates/web-api) (storytold/craft-libs#413), the same shape in every Nodalia app. `forja.request(method, params)` calls any method of the control channel the desktop app serves (`docs/control-protocol.md`), and `execute(command, params)`, `commands()`, `docInspect(params)`, `uiInspect(params)` and `screenshot(params)` are shortcuts for the common ones. Each returns a Promise that resolves with the method's result and rejects with an `Error`; a call the app does not answer within 30 seconds rejects, and the app drops it unrun if it had not started it.
 
 ```js
 const drawing = await forja.docInspect();             // counts, extents, layers, styles, selection
