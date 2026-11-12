@@ -147,6 +147,7 @@ jobs:
             # The merge needs a person. Offer upstream's commits (already renamed) as they are, so
             # the pull request shows the conflicts and they can be resolved on the branch.
             git checkout -q -B "$branch" "$up"
+            # shellcheck disable=SC2016 # the backticks are Markdown, printed as they are
             body="Brings **${count} commits** from \`${UPSTREAM_REPO}\` (up to \`${new:0:8}\`).
 
           **Result: conflicts.** The automatic merge stopped and changed nothing in \`${base}\`. These files need a decision:
