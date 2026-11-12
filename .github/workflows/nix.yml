@@ -23,12 +23,13 @@ jobs:
     uses: storytold/craft-common-actions/.github/workflows/nix.yml@main
 
   git-sources:
+    # The check keeps its old name: branch protection may require it. Sources now come from getnodalia.
     name: Git dependencies come from storytold
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Git dependencies come from storytold
+      - name: Git dependencies come from Nodalia
         run: |
           set -euo pipefail
           test -f Cargo.lock || { echo "Cargo.lock is missing"; exit 1; }
@@ -54,9 +55,9 @@ jobs:
           lock = tomllib.load(open("Cargo.lock", "rb"))
           bad = sorted({p["source"] for p in lock.get("package", [])
                         if p.get("source", "").startswith("git+")
-                        and not p["source"].startswith(("git+https://github.com/storytold/",
+                        and not p["source"].startswith(("git+https://github.com/getnodalia/",
                                                          "git+https://github.com/danielmigueltejedor/nodalia-design"))})
           if bad:
-              print("Git dependencies outside github.com/storytold and nodalia-design:", *bad, sep="\n")
+              print("Git dependencies outside getnodalia and nodalia-design:", *bad, sep="\n")
               sys.exit(1)
           PY
