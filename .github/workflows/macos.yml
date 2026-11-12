@@ -45,7 +45,7 @@ jobs:
       - name: Check out craft-fonts
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repository: storytold/craft-fonts
+          repository: getnodalia/foundation # craft-fonts, kept at vendor/craft-fonts/main
           # Same commit as release.yml and ci.yml.
           ref: b076417b5880bd4154bd22f00695b1d28c6bea83
           path: craft-fonts
