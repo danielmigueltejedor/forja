@@ -6,7 +6,7 @@ exclude = ["vendor/nodalia-theme"]
 # default-members
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 rust-version = "1.95"
@@ -76,8 +76,8 @@ eframe = { version = "0.37", default-features = false }
 egui-wgpu = "0.37"
 # Monotonic time on native and web (performance.now on wasm).
 web-time = "1.1"
-# craft-update: app-specific pretend versions apply to startup and manual checks.
-craft-update = { git = "https://github.com/getnodalia/foundation", version = "=0.1.0", rev = "1b34eba41e62138fc2438d2734523b302840b45d", features = ["egui"] }
+# The in-app updater every Nodalia app shares (check, verified download, install, restart).
+nodalia-update = { git = "https://github.com/getnodalia/nodalia-design", rev = "ed8c8829a3dad688e17ce00ca1e15416bc7ba16e", features = ["egui"] }
 rfd = "0.17"
 arboard = { version = "3.6", default-features = false }
 

@@ -274,15 +274,6 @@ fn main() -> eframe::Result {
     forja_io::dwg_worker::use_own_worker();
     // First, so every start-up record is captured; see `logging`.
     let logger = logging::install();
-    // The update helper relaunches this binary after a self-update; it runs and exits here.
-    #[cfg(not(target_arch = "wasm32"))]
-    if let Some(done) = craft_update::self_update::finish(&forja_ui_egui::UPDATE_APP, &std::env::args_os().skip(1).collect::<Vec<_>>()) {
-        if let Err(e) = done {
-            eprintln!("Forja update helper failed: {e}");
-            std::process::exit(1);
-        }
-        return Ok(());
-    }
     // `--help` and `--version` print to standard output and exit 0. A usage error (an unknown or
     // repeated flag, a missing or bad value, a bad FORJA_CONTROL_PORT) names the argument on
     // standard error and exits 2 before the window opens.
