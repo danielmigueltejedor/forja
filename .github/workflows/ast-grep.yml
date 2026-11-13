@@ -19,8 +19,7 @@ concurrency:
 
 jobs:
   scan:
-    # Tracked at @main like the other shared workflows.
-    uses: storytold/craft-common-actions/.github/workflows/ast-grep.yml@main
+    uses: getnodalia/foundation/.github/workflows/ast-grep.yml@d6efe3bb22fa5abe72352082f2e11ca2e037f970 # foundation main
     with:
       config: lint/ast-grep/sgconfig.yml
       paths: apps/forja-cli/src apps/forja/src/launch_args.rs apps/forja/src/main.rs

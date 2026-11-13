@@ -4,3 +4,8 @@ README.md
 assets/app-icon/**
 docs/upstream.md
 docs/upstream-readme.md
+AGENTS.md
+CLAUDE.md
+SECURITY.md
+NODALIA_MIGRATION.md
+.github/workflows/**

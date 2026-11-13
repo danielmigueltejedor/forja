@@ -1,0 +1,27 @@
+name: AGENTS.md
+
+# AGENTS.md follows Nodalia's template (getnodalia/foundation, standards/agents.md).
+on:
+  push:
+    branches: [main]
+    paths:
+      - AGENTS.md
+      - CLAUDE.md
+      - .github/workflows/agents.yml
+  pull_request:
+    paths:
+      - AGENTS.md
+      - CLAUDE.md
+      - .github/workflows/agents.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agents-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  agents:
+    uses: getnodalia/foundation/.github/workflows/agents-check.yml@d6efe3bb22fa5abe72352082f2e11ca2e037f970 # foundation main
