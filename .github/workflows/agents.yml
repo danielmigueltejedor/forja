@@ -24,4 +24,4 @@ concurrency:
 
 jobs:
   agents:
-    uses: getnodalia/foundation/.github/workflows/agents-check.yml@9178a270c5e577a822c5523d21b56efdd89fc1e1 # foundation main
+    uses: getnodalia/foundation/.github/workflows/agents-check.yml@ec62c63fd3206e4ed729fccf18a57170f8fa5dd6 # foundation main
