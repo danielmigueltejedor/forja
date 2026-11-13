@@ -51,6 +51,19 @@ pub(crate) fn can_resize(ctx: &egui::Context) -> bool {
     ctx.input(|i| !i.viewport().maximized.unwrap_or(false) && !i.viewport().fullscreen.unwrap_or(false))
 }
 
+/// Leave the edges out of the app's layout while keeping the root UI scope and panel IDs.
+pub(crate) fn reserve_resize_bands(ui: &mut Ui, fill: egui::Color32) {
+    let frame = egui::Frame::NONE.fill(fill);
+    for panel in [
+        egui::Panel::top("ndl_resize_top"),
+        egui::Panel::bottom("ndl_resize_bottom"),
+        egui::Panel::left("ndl_resize_left"),
+        egui::Panel::right("ndl_resize_right"),
+    ] {
+        panel.exact_size(f32::from(RESIZE_INSET)).resizable(false).show_separator_line(false).frame(frame).show(ui, |_| {});
+    }
+}
+
 pub(crate) fn resize_edges(ui: &Ui, full: Rect) {
     for (index, (direction, cursor, rect)) in resize_bands(full).into_iter().enumerate() {
         if !rect.is_positive() {
@@ -108,9 +121,14 @@ mod tests {
             root.maximized = Some(maximized);
         }
         let mut output = ctx.run_ui(input, |ui| {
-            let row = rect.shrink(f32::from(RESIZE_INSET)).with_max_y(TITLE_HEIGHT + f32::from(RESIZE_INSET));
-            title_row(ui, row, String::new());
-            if can_resize(ctx) {
+            let resize = can_resize(ctx);
+            if resize {
+                reserve_resize_bands(ui, egui::Color32::GRAY);
+            }
+            let available = ui.available_rect_before_wrap();
+            assert_eq!(available, rect.shrink(if resize { f32::from(RESIZE_INSET) } else { 0.0 }));
+            title_row(ui, available.with_max_y(available.top() + TITLE_HEIGHT), String::new());
+            if resize {
                 resize_edges(ui, rect);
             }
         });

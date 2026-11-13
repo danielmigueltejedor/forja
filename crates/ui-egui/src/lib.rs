@@ -910,21 +910,14 @@ impl CadApp {
     fn draw(&mut self, ui: &mut egui::Ui) {
         let t0 = now_ms();
         control::begin_frame(ui.ctx());
-        if self.ndl_window_chrome {
-            let full = ui.max_rect();
-            let can_resize = ndl_window_chrome::can_resize(ui.ctx());
-            egui::Frame::NONE.fill(theme::Tokens::get().chrome).inner_margin(if can_resize { ndl_window_chrome::RESIZE_INSET } else { 0 }).show(
-                ui,
-                |ui| {
-                    ui.set_min_size(ui.max_rect().size());
-                    self.draw_content(ui);
-                },
-            );
-            if can_resize {
-                ndl_window_chrome::resize_edges(ui, full);
-            }
-        } else {
-            self.draw_content(ui);
+        let full = ui.max_rect();
+        let resize = self.ndl_window_chrome && ndl_window_chrome::can_resize(ui.ctx());
+        if resize {
+            ndl_window_chrome::reserve_resize_bands(ui, theme::Tokens::get().chrome);
+        }
+        self.draw_content(ui);
+        if resize {
+            ndl_window_chrome::resize_edges(ui, full);
         }
         self.frame_ms = now_ms() - t0;
     }
