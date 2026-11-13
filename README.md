@@ -1,9 +1,6 @@
 <div align="center">
   <a href="https://getnodalia.com">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/danielmigueltejedor/nodalia-web/main/assets/brand/nodalia-wordmark-white.svg">
-      <img src="https://raw.githubusercontent.com/danielmigueltejedor/nodalia-web/main/assets/brand/nodalia-wordmark-black.svg" width="150" alt="Nodalia">
-    </picture>
+    <img src="https://raw.githubusercontent.com/danielmigueltejedor/nodalia-web/main/assets/brand/nodalia-wordmark-badge.svg" width="150" alt="Nodalia">
   </a>
   <br><br>
   <img src="assets/app-icon/hicolor/512x512/apps/dev.danielmiguelt.Forja.png" width="192" alt="Forja">
