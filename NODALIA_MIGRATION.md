@@ -39,8 +39,8 @@ getnodalia/foundation (vendored crates, fonts, reusable workflows); getnodalia/n
 ## NDL work pending
 
 Check every panel and dialog against Foundation's `standards/ndl.md`: hamburger menu with About,
-Preferences and Keyboard shortcuts; theme selector only in Preferences; NDL window controls on
-Linux only.
+Preferences and Keyboard shortcuts; theme selector only in Preferences. The Linux main window
+uses the shared NDL controls. macOS and Windows use native controls.
 
 ## Risks and priorities
 

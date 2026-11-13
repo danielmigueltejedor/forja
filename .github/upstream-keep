@@ -9,3 +9,4 @@ CLAUDE.md
 SECURITY.md
 NODALIA_MIGRATION.md
 .github/workflows/**
+crates/ui-egui/src/ndl_window_chrome.rs

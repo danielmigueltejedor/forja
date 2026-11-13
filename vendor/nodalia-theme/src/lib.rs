@@ -21,6 +21,8 @@ pub use tokens::*;
 #[cfg(feature = "egui")]
 pub mod for_egui;
 pub mod icons;
+#[cfg(feature = "egui")]
+pub mod window_controls;
 
 impl Density {
     pub const ALL: [Density; 3] = [Density::COMPACT, Density::REGULAR, Density::COMFORTABLE];
