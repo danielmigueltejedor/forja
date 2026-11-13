@@ -31,7 +31,11 @@ pub(crate) fn title_row(ui: &mut Ui, row: Rect, title: String) {
         restore: crate::tl!("Restore"),
         close: crate::tl!("Close"),
     };
-    if let Some(action) = window_controls::show(ui, buttons, &theme::ndl_palette(), focused, maximized, labels) {
+    let mode = match theme::active() {
+        egui::Theme::Light => nodalia_theme::Mode::Light,
+        egui::Theme::Dark => nodalia_theme::Mode::Dark,
+    };
+    if let Some(action) = window_controls::show(ui, buttons, &theme::ndl_palette(), mode, focused, maximized, labels) {
         ui.ctx().send_viewport_cmd(viewport_command(action));
     }
 }

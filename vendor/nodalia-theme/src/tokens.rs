@@ -66,7 +66,7 @@ impl Mode {
     }
 }
 
-/// Semantic colours, elevations, and window-control colours of one mode.
+/// Every semantic colour and elevation of one mode.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Palette {
     pub surface_window: Rgba,
@@ -108,12 +108,6 @@ pub struct Palette {
     pub status_info_fg: Rgba,
     pub status_info_bg: Rgba,
     pub scrim_default: Rgba,
-    pub window_close: Rgba,
-    pub window_close_icon: Rgba,
-    pub window_minimize: Rgba,
-    pub window_minimize_tint: Rgba,
-    pub window_maximize: Rgba,
-    pub window_maximize_tint: Rgba,
     pub elevation_raised: Shadow,
     pub elevation_overlay: Shadow,
 }
@@ -158,12 +152,6 @@ pub const LIGHT: Palette = Palette {
     status_info_fg: Rgba::new(31, 95, 168, 255),
     status_info_bg: Rgba::new(222, 235, 251, 255),
     scrim_default: Rgba::new(13, 15, 21, 102),
-    window_close: Rgba::new(255, 92, 77, 255),
-    window_close_icon: Rgba::new(11, 12, 16, 255),
-    window_minimize: Rgba::new(122, 79, 0, 255),
-    window_minimize_tint: Rgba::new(251, 239, 208, 255),
-    window_maximize: Rgba::new(8, 103, 112, 255),
-    window_maximize_tint: Rgba::new(216, 246, 247, 255),
     elevation_raised: Shadow { color: Rgba::new(13, 15, 21, 31), offset_x: 0.0, offset_y: 1.0, blur: 3.0, spread: 0.0 },
     elevation_overlay: Shadow { color: Rgba::new(13, 15, 21, 51), offset_x: 0.0, offset_y: 8.0, blur: 24.0, spread: 0.0 },
 };
@@ -208,12 +196,6 @@ pub const DARK: Palette = Palette {
     status_info_fg: Rgba::new(141, 187, 245, 255),
     status_info_bg: Rgba::new(15, 38, 64, 255),
     scrim_default: Rgba::new(7, 8, 12, 153),
-    window_close: Rgba::new(255, 92, 77, 255),
-    window_close_icon: Rgba::new(11, 12, 16, 255),
-    window_minimize: Rgba::new(242, 193, 78, 255),
-    window_minimize_tint: Rgba::new(51, 36, 10, 255),
-    window_maximize: Rgba::new(44, 197, 211, 255),
-    window_maximize_tint: Rgba::new(8, 58, 64, 255),
     elevation_raised: Shadow { color: Rgba::new(0, 0, 0, 102), offset_x: 0.0, offset_y: 1.0, blur: 3.0, spread: 0.0 },
     elevation_overlay: Shadow { color: Rgba::new(0, 0, 0, 166), offset_x: 0.0, offset_y: 8.0, blur: 24.0, spread: 0.0 },
 };
@@ -258,12 +240,6 @@ pub const LIGHT_HC: Palette = Palette {
     status_info_fg: Rgba::new(15, 38, 64, 255),
     status_info_bg: Rgba::new(222, 235, 251, 255),
     scrim_default: Rgba::new(13, 15, 21, 102),
-    window_close: Rgba::new(255, 92, 77, 255),
-    window_close_icon: Rgba::new(11, 12, 16, 255),
-    window_minimize: Rgba::new(51, 36, 10, 255),
-    window_minimize_tint: Rgba::new(251, 239, 208, 255),
-    window_maximize: Rgba::new(6, 83, 91, 255),
-    window_maximize_tint: Rgba::new(216, 246, 247, 255),
     elevation_raised: Shadow { color: Rgba::new(13, 15, 21, 31), offset_x: 0.0, offset_y: 1.0, blur: 3.0, spread: 0.0 },
     elevation_overlay: Shadow { color: Rgba::new(13, 15, 21, 51), offset_x: 0.0, offset_y: 8.0, blur: 24.0, spread: 0.0 },
 };
@@ -308,12 +284,6 @@ pub const DARK_HC: Palette = Palette {
     status_info_fg: Rgba::new(141, 187, 245, 255),
     status_info_bg: Rgba::new(15, 38, 64, 255),
     scrim_default: Rgba::new(7, 8, 12, 153),
-    window_close: Rgba::new(255, 92, 77, 255),
-    window_close_icon: Rgba::new(11, 12, 16, 255),
-    window_minimize: Rgba::new(242, 193, 78, 255),
-    window_minimize_tint: Rgba::new(51, 36, 10, 255),
-    window_maximize: Rgba::new(109, 217, 227, 255),
-    window_maximize_tint: Rgba::new(8, 58, 64, 255),
     elevation_raised: Shadow { color: Rgba::new(0, 0, 0, 102), offset_x: 0.0, offset_y: 1.0, blur: 3.0, spread: 0.0 },
     elevation_overlay: Shadow { color: Rgba::new(0, 0, 0, 166), offset_x: 0.0, offset_y: 8.0, blur: 24.0, spread: 0.0 },
 };
@@ -1186,6 +1156,25 @@ pub mod component {
     pub const WINDOW_CONTROL_SIZE: f32 = 28.0;
     pub const WINDOW_CONTROL_ICON: f32 = 24.0;
     pub const SPLITTER_HIT: f32 = 8.0;
+}
+
+/// Window-control colours from the shared component tokens.
+pub mod window_color {
+    use super::{Mode, Rgba};
+    pub const CLOSE: Rgba = Rgba::new(255, 92, 77, 255);
+    pub const CLOSE_ICON: Rgba = Rgba::new(11, 12, 16, 255);
+    pub const fn minimize(mode: Mode) -> Rgba {
+        mode.palette().status_warning_fg
+    }
+    pub const fn minimize_tint(mode: Mode) -> Rgba {
+        mode.palette().status_warning_bg
+    }
+    pub const fn maximize(mode: Mode) -> Rgba {
+        mode.palette().accent_text
+    }
+    pub const fn maximize_tint(mode: Mode) -> Rgba {
+        mode.palette().accent_subtle
+    }
 }
 
 /// Font weights.

@@ -2,7 +2,7 @@
 
 use egui::{vec2, CursorIcon, Rect, Response, Role, Sense, Stroke, StrokeKind, Ui, WidgetInfo};
 
-use crate::{border_width, component, for_egui::color, icons, space, Palette};
+use crate::{border_width, component, for_egui::color, icons, space, window_color, Mode, Palette};
 
 /// The space occupied by the three window controls, in logical points.
 pub const WIDTH: f32 = 3.0 * component::WINDOW_CONTROL_SIZE + 2.0 * space::XS;
@@ -42,6 +42,7 @@ pub fn show(
     ui: &Ui,
     rect: Rect,
     palette: &Palette,
+    mode: Mode,
     focused: bool,
     maximized: bool,
     labels: Labels<'_>,
@@ -76,7 +77,7 @@ pub fn show(
             )
             .on_hover_cursor(CursorIcon::PointingHand);
         response.widget_info(|| WidgetInfo::labeled(Role::Button, ui.is_enabled(), label));
-        paint(ui, &response, action, palette, focused);
+        paint(ui, &response, action, palette, mode, focused);
         if response.clicked() {
             clicked = Some(action);
         }
@@ -84,18 +85,29 @@ pub fn show(
     clicked
 }
 
-fn paint(ui: &Ui, response: &Response, action: Action, palette: &Palette, focused: bool) {
+fn paint(
+    ui: &Ui,
+    response: &Response,
+    action: Action,
+    palette: &Palette,
+    mode: Mode,
+    focused: bool,
+) {
     let (fill, ink) = if !response.enabled() {
         (palette.control_bg_disabled, palette.text_disabled)
     } else if response.is_pointer_button_down_on() {
         (palette.control_bg_pressed, palette.text_primary)
     } else if response.hovered() {
         match action {
-            Action::Minimize => (palette.window_minimize_tint, palette.window_minimize),
-            Action::Maximize | Action::Restore => {
-                (palette.window_maximize_tint, palette.window_maximize)
-            }
-            Action::Close => (palette.window_close, palette.window_close_icon),
+            Action::Minimize => (
+                window_color::minimize_tint(mode),
+                window_color::minimize(mode),
+            ),
+            Action::Maximize | Action::Restore => (
+                window_color::maximize_tint(mode),
+                window_color::maximize(mode),
+            ),
+            Action::Close => (window_color::CLOSE, window_color::CLOSE_ICON),
         }
     } else if focused {
         (palette.control_bg, palette.text_primary)
@@ -143,7 +155,8 @@ mod tests {
                 clicked = show(
                     ui,
                     rect,
-                    crate::Mode::Light.palette(),
+                    Mode::Light.palette(),
+                    Mode::Light,
                     true,
                     maximized,
                     Labels {
