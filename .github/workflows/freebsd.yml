@@ -28,5 +28,8 @@ jobs:
   freebsd:
     uses: getnodalia/foundation/.github/workflows/freebsd.yml@d6efe3bb22fa5abe72352082f2e11ca2e037f970 # foundation main
     with:
+      # FreeBSD 15.0's package repository now contains binaries requiring a newer libc than the
+      # VM image. 15.1 keeps the base system and packages on the same ABI.
+      release: "15.1"
       fonts-repository: getnodalia/foundation
       fonts-ref: b076417b5880bd4154bd22f00695b1d28c6bea83
