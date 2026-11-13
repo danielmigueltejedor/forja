@@ -2,7 +2,8 @@ name: macOS
 
 # Forja.app and its DMG on a standard macOS runner. The shared release workflow builds macOS on a
 # larger runner, which a Free organisation never gets, so this is where the macOS build comes
-# from: an artifact on every run, and the release asset when a release is published.
+# from: an artifact on every run, and the release asset when release-auto.yml calls it with a tag
+# (or when a release is published by hand).
 on:
   push:
     branches: [main]
@@ -18,6 +19,13 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+  # release-auto.yml, once a version with its notes lands on main.
+  workflow_call:
+    inputs:
+      tag:
+        description: "Release tag to attach the DMG to"
+        type: string
+        required: true
 
 permissions:
   contents: read
@@ -35,8 +43,10 @@ jobs:
     env:
       CRAFT_FONTS_DIR: ${{ github.workspace }}/craft-fonts
       DIST: ${{ github.workspace }}/dist
+      # The release this run attaches to, if any.
+      RELEASE_TAG: ${{ inputs.tag || github.event.release.tag_name || '' }}
       # Releases ship one DMG for both architectures; everything else builds Apple Silicon only.
-      ARCH: ${{ github.event_name == 'release' && 'universal' || 'aarch64' }}
+      ARCH: ${{ (inputs.tag || github.event.release.tag_name) && 'universal' || 'aarch64' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -107,8 +117,7 @@ jobs:
           retention-days: 14
 
       - name: Attach to the release
-        if: github.event_name == 'release'
+        if: env.RELEASE_TAG != ''
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: ${{ github.event.release.tag_name }}
-        run: gh release upload "$TAG" "$DIST"/forja-*-macos-* --clobber --repo "$GITHUB_REPOSITORY"
+        run: gh release upload "$RELEASE_TAG" "$DIST"/forja-*-macos-* --clobber --repo "$GITHUB_REPOSITORY"

@@ -1,0 +1,225 @@
+name: Release Windows
+
+# Builds Forja's Windows x64 packages (the MSI installer and the portable zip),
+# starts the portable build's CLI and installs and removes the MSI on a clean runner, and only
+# then attaches the files to a GitHub release.
+#
+# The files are not signed (no code-signing certificate): Windows SmartScreen warns the first time
+# they run ("More info" > "Run anyway"). Set the WINDOWS_CERTIFICATE or AZURE_* secrets that
+# packaging/windows/sign.ps1 reads to sign them.
+#
+# "Release from main" (release-auto.yml) runs this with the tag when a version and its notes
+# land on main, and publishes the release once every platform is attached. Run it by hand with
+# tag=vX.Y.Z to rebuild a release's files; without a tag it only uploads workflow artifacts.
+
+on:
+  # A change to this workflow builds and checks the packages (artifacts only, no release).
+  pull_request:
+    paths:
+      - ".github/workflows/release-windows.yml"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to attach the packages to, e.g. v0.1.0 (empty: artifacts only)"
+        required: false
+        default: ""
+  # release-auto.yml, once a version with its notes lands on main.
+  workflow_call:
+    inputs:
+      tag:
+        description: "Release tag to attach the packages to"
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-windows-${{ inputs.tag || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: windows-2025
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+    env:
+      CRAFT_FONTS_DIR: ${{ github.workspace }}\craft-fonts
+      CRAFT_FONTS_REQUIRED: "1"
+      DIST: ${{ github.workspace }}\dist
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Version
+        id: ver
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          version="$(awk '/^\[/ { p = ($0 == "[workspace.package]"); next } p && $1 == "version" { gsub(/[" \r]/, "", $3); print $3; exit }' Cargo.toml)"
+          test -n "$version"
+          # A tag must describe the code it is built from.
+          if [[ -n "$TAG" && "${TAG#v}" != "$version" ]]; then
+            echo "Tag $TAG does not match Cargo.toml's version $version" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Release notes are written
+        if: inputs.tag != ''
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          test -s "docs/release-notes/$TAG.md" || { echo "::error::docs/release-notes/$TAG.md is missing or empty"; exit 1; }
+
+      - name: Check out craft-fonts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: getnodalia/foundation # craft-fonts, kept at vendor/craft-fonts/main
+          ref: b076417b5880bd4154bd22f00695b1d28c6bea83
+          path: craft-fonts
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          key: release-windows
+
+      - name: WiX
+        shell: pwsh
+        run: |
+          dotnet tool install --global wix --version 5.0.2
+          wix extension add -g WixToolset.UI.wixext/5.0.2 WixToolset.Util.wixext/5.0.2
+
+      - name: Build and package
+        shell: pwsh
+        env:
+          # Optional: without them the packages are left unsigned.
+          WINDOWS_CERTIFICATE: ${{ secrets.WINDOWS_CERTIFICATE }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          AZURE_SIGNING_ENDPOINT: ${{ secrets.AZURE_SIGNING_ENDPOINT }}
+          AZURE_SIGNING_ACCOUNT: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
+          AZURE_CERT_PROFILE: ${{ secrets.AZURE_CERT_PROFILE }}
+        run: pwsh packaging/windows/package.ps1 -Arch x64
+
+      - name: Checksums
+        shell: pwsh
+        working-directory: dist
+        run: |
+          Get-ChildItem | Format-Table Name, Length
+          $lines = Get-ChildItem -File forja-* | ForEach-Object { "$((Get-FileHash -Algorithm SHA256 $_.FullName).Hash.ToLower())  $($_.Name)" }
+          $lines | Set-Content -Encoding ascii SHA256SUMS-windows
+          Get-Content SHA256SUMS-windows
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: forja-windows
+          path: dist/
+          if-no-files-found: error
+
+  smoke:
+    # The files as a user gets them: start the portable build's CLI, then install the MSI and
+    # remove it again.
+    needs: build
+    runs-on: windows-2025
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: forja-windows
+          path: dist
+      - name: Start the portable CLI, install and remove the MSI
+        shell: pwsh
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          Set-Location dist
+          foreach ($line in Get-Content SHA256SUMS-windows) {
+            $hash, $name = $line -split '\s+', 2
+            if ((Get-FileHash -Algorithm SHA256 $name).Hash.ToLower() -ne $hash) { throw "checksum mismatch: $name" }
+          }
+          Expand-Archive "forja-$env:VERSION-windows-x64-portable.zip" -DestinationPath portable
+          $cli = Get-ChildItem -Recurse portable -Filter forja-cli.exe | Select-Object -First 1
+          $out = & $cli.FullName --version
+          Write-Output $out
+          if (-not ($out -match [regex]::Escape($env:VERSION))) { throw "forja-cli --version does not say $env:VERSION" }
+          $msi = (Resolve-Path "forja-$env:VERSION-windows-x64.msi").Path
+          $p = Start-Process msiexec.exe -ArgumentList '/i', "`"$msi`"", '/qn', '/l*v', 'install.log' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Get-Content install.log -Tail 60; throw "install failed: $($p.ExitCode)" }
+          $p = Start-Process msiexec.exe -ArgumentList '/x', "`"$msi`"", '/qn', '/l*v', 'uninstall.log' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Get-Content uninstall.log -Tail 60; throw "uninstall failed: $($p.ExitCode)" }
+
+  attach:
+    # Nothing reaches a release unless the checks above passed.
+    needs: [build, smoke]
+    if: inputs.tag != ''
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: docs/release-notes
+      - name: Release notes are written
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          test -s "docs/release-notes/$TAG.md" || { echo "::error::docs/release-notes/$TAG.md is missing or empty"; exit 1; }
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: forja-windows
+          path: dist
+      - name: Attach to the release (a draft, created if missing)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          # A tag that already exists must point at the commit this run built. Only a confirmed
+          # "not found" lets the run go on; any other lookup failure stops it before an upload.
+          # The status comes from the response's own status line (gh api --include), never from
+          # message text that could mention another code.
+          status="$(gh api --include "repos/$REPO/git/ref/tags/$TAG" 2>/dev/null | head -n 1 | awk '{print $2}' || true)"
+          case "$status" in
+            200)
+              tagged="$(gh api "repos/$REPO/commits/$TAG" --jq .sha)"
+              if [[ "$tagged" != "$SHA" ]]; then
+                echo "Tag $TAG points at $tagged, not at $SHA (the commit built here)" >&2
+                exit 1
+              fi
+              ;;
+            404) ;;
+            *)
+              echo "Could not look up tag $TAG (HTTP status: ${status:-none})" >&2
+              exit 1
+              ;;
+          esac
+          if ! gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
+            gh release create "$TAG" --repo "$REPO" --draft --target "$SHA" \
+              --title "Forja ${TAG#v}" --notes-file "docs/release-notes/$TAG.md"
+          fi
+          # Only a draft takes files: --clobber on a published release would swap what people downloaded.
+          if [[ "$(gh release view "$TAG" --repo "$REPO" --json isDraft --jq .isDraft)" != "true" ]]; then
+            echo "Release $TAG is already published; not touching its files" >&2
+            exit 1
+          fi
+          # Publishing an untagged draft creates the tag at the draft's target, so the target must be
+          # the commit these files were built from.
+          target="$(gh release view "$TAG" --repo "$REPO" --json targetCommitish --jq .targetCommitish)"
+          if [[ "$target" != "$SHA" ]]; then
+            echo "Draft $TAG targets $target; moving it to $SHA, the commit built here"
+            gh release edit "$TAG" --repo "$REPO" --target "$SHA"
+            echo "::warning::Draft $TAG was targeting $target. Files in it that this run does not replace were built elsewhere: rerun the other platform workflows from $SHA before publishing."
+          fi
+          gh release upload "$TAG" dist/* --repo "$REPO" --clobber
