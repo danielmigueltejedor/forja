@@ -11,7 +11,7 @@
   <p><strong>A native CAD application for 2D drafting and DWG/DXF drawings, part of the Nodalia suite.</strong></p>
 
   <p>
-    <img src="https://img.shields.io/badge/version-0.1.0-96501F" alt="Version 0.1.0">
+    <img src="https://img.shields.io/badge/version-0.1.1-96501F" alt="Version 0.1.1">
     <img src="https://img.shields.io/badge/status-early%20stage-orange" alt="Early stage">
     <img src="https://img.shields.io/badge/Rust-native-dea584?logo=rust&logoColor=black" alt="Native Rust">
     <img src="https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-2ea44f" alt="MIT OR Apache-2.0">
