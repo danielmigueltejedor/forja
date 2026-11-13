@@ -2,13 +2,20 @@
 
 ## Reporting a vulnerability
 
-Report Forja vulnerabilities to the **Nodalia maintainers**, not to another project's maintainers. When GitHub private vulnerability reporting is available for this repository, use **Security → Advisories → Report a vulnerability** on [getnodalia/forja](https://github.com/getnodalia/forja). Otherwise, contact the repository maintainers with a minimal, non-exploitable summary and request a private channel before sharing reproduction steps or malicious samples. Do not post a working exploit, secrets, or sensitive files in a public issue or pull request. Include the affected version and platform.
+Please report vulnerabilities to the **Nodalia maintainers**, not in a public issue or pull request.
+Use [GitHub private vulnerability reporting](https://github.com/getnodalia/forja/security/advisories/new)
+when available. Include the affected version and platform, and a minimal description of how to
+reproduce the problem. A small sample drawing helps, as long as it holds nothing private. Do not
+share a working exploit, secrets, or sensitive files publicly. If private vulnerability reporting
+is unavailable, contact the repository maintainers with a non-exploitable summary and request a
+private channel before sharing reproduction steps or samples.
 
 Maintainers read reports as they arrive, but there is no fixed response time yet.
 
 ## Supported versions
 
-Only the latest release gets security fixes. Forja is pre-alpha and moves quickly, so please check that a problem still exists there before reporting it.
+Only the latest release gets security fixes. Forja is pre-alpha and moves quickly, so please check
+that a problem still exists there before reporting it.
 
 ## What counts
 
@@ -31,4 +38,6 @@ These are known and being worked on, so they don't need a report:
 
 ## What stays on your machine
 
-Crash reports are written to the `crash-reports` folder in the settings folder and are never uploaded. They hold the version, the platform, the panic message and a stack trace, and a message can include a file path, so read a report before you attach it anywhere.
+Crash reports are written to the `crash-reports` folder in the settings folder and are never
+uploaded. They hold the version, the platform, the panic message and a stack trace, and a message
+can include a file path, so read a report before you attach it anywhere.

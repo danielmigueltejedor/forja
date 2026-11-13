@@ -1,7 +1,7 @@
 name: CI
 
-# Quality gates for every push to main and every pull request (`cargo xtask ci`), through the
-# suite's shared gate workflow in craft-common-actions.
+# Quality gates for every push to main and every pull request (`cargo xtask ci`), through
+# Nodalia's reusable Rust gate in getnodalia/foundation, pinned by commit.
 on:
   push:
     branches: [main]
@@ -18,11 +18,11 @@ concurrency:
 
 jobs:
   gate:
-    # Tracks @main so suite-wide CI fixes reach every app without a PR in each repository.
-    uses: storytold/craft-common-actions/.github/workflows/gate.yml@main
+    uses: getnodalia/foundation/.github/workflows/rust-gate.yml@ec62c63fd3206e4ed729fccf18a57170f8fa5dd6 # foundation main
     with:
-      # Same craft-fonts commit as release.yml.
-      craft-fonts-ref: b076417b5880bd4154bd22f00695b1d28c6bea83
+      # The fonts build input: Foundation's vendor/craft-fonts branch, same commit as release.yml.
+      fonts-repository: getnodalia/foundation
+      fonts-ref: b076417b5880bd4154bd22f00695b1d28c6bea83
       timeout-minutes: 90
       packages: >-
         pkg-config libxkbcommon-dev libwayland-dev libx11-dev libxcb1-dev libxcursor-dev

@@ -19,8 +19,7 @@ concurrency:
 
 jobs:
   lint:
-    # Intentionally tracked at @main (not SHA-pinned) so org-wide CI improvements, security fixes, and build optimizations propagate without PR churn across all craftapp repos.
-    uses: storytold/craft-common-actions/.github/workflows/packaging-lint.yml@main
+    uses: getnodalia/foundation/.github/workflows/packaging-lint.yml@ec62c63fd3206e4ed729fccf18a57170f8fa5dd6 # foundation main
 
   windows-install-policy:
     timeout-minutes: 10
