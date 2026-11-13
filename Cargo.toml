@@ -77,7 +77,7 @@ egui-wgpu = "0.37"
 # Monotonic time on native and web (performance.now on wasm).
 web-time = "1.1"
 # The in-app updater every Nodalia app shares (check, verified download, install, restart).
-nodalia-update = { git = "https://github.com/getnodalia/nodalia-design", rev = "ed8c8829a3dad688e17ce00ca1e15416bc7ba16e", features = ["egui"] }
+nodalia-update = { git = "https://github.com/getnodalia/nodalia-design", rev = "d066d5d351f18f704bdfd8aad6f04b9e96a155e4", features = ["egui"] }
 rfd = "0.17"
 arboard = { version = "3.6", default-features = false }
 
