@@ -31,5 +31,8 @@ jobs:
       # FreeBSD 15.0's package repository now contains binaries requiring a newer libc than the
       # VM image. 15.1 keeps the base system and packages on the same ABI.
       release: "15.1"
+      # Foundation's default list plus gtk3 and mesa-dri, as the inherited workflow installed:
+      # mesa-dri carries the software Vulkan driver the GPU tests render with in the VM.
+      packages: "libxkbcommon wayland libX11 libXcursor libXrandr libXi libxcb mesa-libs mesa-dri vulkan-loader gtk3 fontconfig freetype2 alsa-lib dejavu"
       fonts-repository: getnodalia/foundation
       fonts-ref: b076417b5880bd4154bd22f00695b1d28c6bea83
