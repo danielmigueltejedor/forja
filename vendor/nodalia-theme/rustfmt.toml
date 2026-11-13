@@ -1,2 +1,0 @@
-# nodalia-design formats with rustfmt defaults; this keeps the vendored copy unchanged
-# instead of reformatting it with Forja's own settings.

@@ -356,14 +356,15 @@ fn mix(a: Color32, b: Color32, f: f32) -> Color32 {
     Color32::from_rgb(m(a.r(), b.r()), m(a.g(), b.g()), m(a.b(), b.b()))
 }
 
+/// The engineering suite's type scale (Torno, Vortia and Forja share it: `nodalia_theme::engineering`).
 pub fn small() -> FontId {
-    FontId::new(11.5, FontFamily::Proportional)
+    nodalia_theme::engineering::caption()
 }
 pub fn body() -> FontId {
-    FontId::new(12.5, FontFamily::Proportional)
+    nodalia_theme::engineering::body()
 }
 pub fn mono() -> FontId {
-    FontId::new(12.0, FontFamily::Monospace)
+    nodalia_theme::engineering::value_font()
 }
 
 /// Load a system UI font at run time when one is installed (not bundled), else keep egui's
@@ -458,6 +459,9 @@ pub fn install_fonts(ctx: &egui::Context, language: &str) {
     {
         f.push("Hack".into());
     }
+    // The engineering suite's faces (IBM Plex Sans and Mono) lead; everything above stays behind
+    // them as fallbacks for the scripts Plex doesn't cover.
+    nodalia_theme::engineering::add_fonts(&mut fonts);
     ctx.set_fonts(fonts);
 }
 
@@ -970,6 +974,29 @@ mod tests {
         // ქართული rides on the embedded Georgian face alone.
         assert_eq!(super::can_show("ka"), super::embedded_script("Geor"));
         assert!(super::can_show("en") && super::can_show("uk"));
+    }
+
+    /// The engineering suite's IBM Plex faces lead the interface fonts in every language, and the
+    /// faces Forja found before them stay behind as fallbacks.
+    #[test]
+    fn the_suite_faces_lead_and_keep_the_fallbacks() {
+        for language in ["en", "zh-Hans", "ja", "ar"] {
+            let ctx = egui::Context::default();
+            super::install_fonts(&ctx, language);
+            let mut output = ctx.run_ui(Default::default(), |_| {});
+            output.textures_delta.clear();
+            ctx.fonts_mut(|view| {
+                let defs = view.definitions();
+                let regular = &defs.families[&egui::FontFamily::Proportional];
+                assert_eq!(regular.first().map(String::as_str), Some("ndl-plex-sans-400"), "{language}");
+                assert!(regular.len() > 1, "{language}: fallbacks kept");
+                let mono = &defs.families[&egui::FontFamily::Monospace];
+                assert_eq!(mono.first().map(String::as_str), Some("ndl-plex-mono-400"), "{language}");
+                let bold = egui::FontFamily::Name(nodalia_theme::engineering::SEMIBOLD.into());
+                assert!(view.has_glyph(&egui::FontId::new(12.0, bold), 'A'), "{language}: semibold family bound");
+            });
+        }
+        assert_eq!(super::body(), nodalia_theme::engineering::body());
     }
 
     /// With the craft-fonts Georgian face (release and web builds), every Mkhedruli letter and the
