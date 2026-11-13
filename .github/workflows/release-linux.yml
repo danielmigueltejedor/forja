@@ -1,0 +1,174 @@
+name: Release Linux
+
+# Builds Forja's Linux packages (AppImage, .deb, .rpm, .tar.gz), starts the AppImage on clean
+# distributions, and only then attaches the files to a GitHub release.
+#
+# "Release from main" (release-auto.yml) runs this with the tag when a version and its notes
+# land on main, and publishes the release once every platform is attached. Run it by hand with
+# tag=vX.Y.Z to rebuild a release's files; without a tag it only uploads workflow artifacts.
+
+on:
+  # A change to this workflow builds and checks the packages (artifacts only, no release).
+  pull_request:
+    paths:
+      - ".github/workflows/release-linux.yml"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to attach the packages to, e.g. v0.1.0 (empty: artifacts only)"
+        required: false
+        default: ""
+  # release-auto.yml, once a version with its notes lands on main.
+  workflow_call:
+    inputs:
+      tag:
+        description: "Release tag to attach the packages to"
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-linux-${{ inputs.tag || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    # The oldest glibc we build on is the oldest one the packages run on.
+    runs-on: ubuntu-22.04
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+    env:
+      CRAFT_FONTS_DIR: ${{ github.workspace }}/craft-fonts
+      CRAFT_FONTS_REQUIRED: "1"
+      DIST: ${{ github.workspace }}/dist
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Version
+        id: ver
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          version="$(awk '/^\[/ { p = ($0 == "[workspace.package]"); next } p && $1 == "version" { gsub(/[" ]/, "", $3); print $3; exit }' Cargo.toml)"
+          test -n "$version"
+          # A tag must describe the code it is built from.
+          if [[ -n "$TAG" && "${TAG#v}" != "$version" ]]; then
+            echo "Tag $TAG does not match Cargo.toml's version $version" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Release notes are written
+        if: inputs.tag != ''
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          test -s "docs/release-notes/$TAG.md" || { echo "::error::docs/release-notes/$TAG.md is missing or empty"; exit 1; }
+
+      - name: Check out craft-fonts
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: getnodalia/foundation # craft-fonts, kept at vendor/craft-fonts/main
+          ref: b076417b5880bd4154bd22f00695b1d28c6bea83
+          path: craft-fonts
+          persist-credentials: false
+
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          key: release-linux
+
+      - name: Build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxkbcommon-dev libwayland-dev libx11-dev libxrandr-dev \
+            libxi-dev libgl1-mesa-dev libgtk-3-dev desktop-file-utils appstream zsync
+          # nfpm builds the .deb and .rpm; pinned by checksum.
+          curl -fsSL --proto '=https' -o nfpm.deb \
+            https://github.com/goreleaser/nfpm/releases/download/v2.43.0/nfpm_2.43.0_amd64.deb
+          echo "4a4402f8f9ea87c669d6a62b333f8e268439974754dd886a01731ecaf9fa6d66  nfpm.deb" | sha256sum -c -
+          sudo apt-get install -y ./nfpm.deb
+          rm nfpm.deb
+
+      - name: Build and package
+        run: packaging/linux/package.sh
+
+      - name: Checksums
+        working-directory: dist
+        run: |
+          ls -lh
+          sha256sum forja-* > SHA256SUMS
+          cat SHA256SUMS
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: forja-linux
+          path: dist/
+          if-no-files-found: error
+
+  smoke:
+    # Bare distribution images: the AppImage must start with nothing installed but glibc.
+    needs: build
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        image: ["ubuntu:22.04", "ubuntu:24.04", "debian:12", "fedora:latest", "archlinux:latest"]
+    container: ${{ matrix.image }}
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: forja-linux
+          path: dist
+      - name: Start the AppImage
+        env:
+          VERSION: ${{ needs.build.outputs.version }}
+        run: |
+          cd dist
+          sha256sum -c SHA256SUMS
+          app="forja-$VERSION-linux-x86_64.AppImage"
+          chmod +x "$app"
+          # No FUSE in a container: run the extracted image, as `--appimage-extract-and-run` does.
+          APPIMAGE_EXTRACT_AND_RUN=1 "./$app" --version | tee version.txt
+          grep -q "$VERSION" version.txt
+
+  attach:
+    # Nothing reaches a release unless every start-up check above passed.
+    needs: [build, smoke]
+    if: inputs.tag != ''
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          sparse-checkout: docs/release-notes
+      - name: Release notes are written
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          test -s "docs/release-notes/$TAG.md" || { echo "::error::docs/release-notes/$TAG.md is missing or empty"; exit 1; }
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: forja-linux
+          path: dist
+      - name: Attach to the release (a draft, created if missing)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ inputs.tag }}
+          REPO: ${{ github.repository }}
+          SHA: ${{ github.sha }}
+        run: |
+          if ! gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1; then
+            gh release create "$TAG" --repo "$REPO" --draft --target "$SHA" \
+              --title "Forja ${TAG#v}" --notes-file "docs/release-notes/$TAG.md"
+          fi
+          gh release upload "$TAG" dist/* --repo "$REPO" --clobber

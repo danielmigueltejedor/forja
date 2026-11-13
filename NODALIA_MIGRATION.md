@@ -21,7 +21,7 @@ the interface uses Nodalia Design throughout.
 
 | Dependency | Where | Replacement | Blocked on |
 |---|---|---|---|
-| craft-common-actions `release.yml`, `refresh-contributors.yml`, `resolve-version`, `draft-release` | `.github/workflows/release.yml` | Forja's own release workflow | writing and testing it on a `release` push |
+| craft-common-actions `release.yml`, `refresh-contributors.yml`, `resolve-version`, `draft-release` | `.github/workflows/release.yml` (a push to `release`) | `release-auto.yml`: Foundation's `release-tag`, Forja's `release-linux`, `macos` and `release-windows`, then `release-publish` | its first release; then remove `release.yml` |
 | craft-common-actions `windows-arm64.yml` | `.github/workflows/windows-arm64.yml` | a Foundation workflow | writing it |
 | Weekly sync from the upstream project | `.github/workflows/upstream-sync.yml` | none: intended, renames upstream names | — |
 
@@ -44,12 +44,13 @@ Linux only.
 
 ## Risks and priorities
 
-1. Release: the next release still runs the inherited workflow.
+1. Release: `release-auto.yml` replaces the inherited workflow, but has not shipped a release yet.
+   The inherited one also refreshed the contributor credits, which nothing does now.
 2. Windows ARM64 packaging still runs the inherited workflow.
 
 ## Recommended order
 
-1. Forja's own release workflow, tested with a dry run.
+1. Ship one release through `release-auto.yml`, then delete `release.yml`.
 2. Windows ARM64 workflow in Foundation.
 3. NDL review of the interface.
 
