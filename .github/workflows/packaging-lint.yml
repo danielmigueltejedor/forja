@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   lint:
-    uses: getnodalia/foundation/.github/workflows/packaging-lint.yml@d6efe3bb22fa5abe72352082f2e11ca2e037f970 # foundation main
+    uses: getnodalia/foundation/.github/workflows/packaging-lint.yml@9178a270c5e577a822c5523d21b56efdd89fc1e1 # foundation main
 
   windows-install-policy:
     timeout-minutes: 10
