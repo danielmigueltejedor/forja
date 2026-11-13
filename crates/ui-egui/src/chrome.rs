@@ -64,22 +64,31 @@ fn title_left(left: f32, width: f32, text_w: f32) -> f32 {
 /// Title row (with the integrated macOS title bar) and the Tool Bar.
 pub fn title_and_toolbar(app: &mut CadApp, ui: &mut egui::Ui) {
     let t = Tokens::get();
-    let title_h = if app.integrated_titlebar { MAC_TITLE_BAR } else { 0.0 };
+    let title_h = if app.integrated_titlebar {
+        MAC_TITLE_BAR
+    } else if app.ndl_window_chrome {
+        crate::ndl_window_chrome::TITLE_HEIGHT
+    } else {
+        0.0
+    };
     let tb_h = if app.ui.show_toolbar { 34.0 } else { 0.0 };
     egui::Panel::top("cc_title_toolbar").exact_size(title_h + tb_h).frame(egui::Frame::NONE.fill(t.chrome)).show(ui, |ui| {
         let r = ui.max_rect();
         if title_h > 0.0 {
-            // The empty row moves the window; it goes first so later widgets take their own clicks.
-            craft_window::title_bar::empty_area(ui, Rect::from_min_size(r.min, vec2(r.width(), title_h)));
+            let title_row = Rect::from_min_size(r.min, vec2(r.width(), title_h));
             let title = match app.session.state() {
                 Ok(st) if !app.ui.start_tab => format!("Forja      {}{}", st.title, if st.title.contains('.') { "" } else { ".dwg" }),
                 _ => format!("Forja      {}", crate::tl!("Start")),
             };
-            // Centred on the traffic lights' centre line (the row's middle): with the system font
-            // the capitals' middle is the text box's middle, so no optical nudge.
-            let galley = ui.painter().layout_no_wrap(title, egui::FontId::proportional(13.0), t.text_dim);
-            let x = title_left(r.left(), r.width(), galley.size().x);
-            ui.painter().galley(pos2(x, r.top() + (title_h - galley.size().y) / 2.0), galley, t.text_dim);
+            if app.ndl_window_chrome {
+                crate::ndl_window_chrome::title_row(ui, title_row, title);
+            } else {
+                craft_window::title_bar::empty_area(ui, title_row);
+                // Centre the title on the native AppKit controls.
+                let galley = ui.painter().layout_no_wrap(title, egui::FontId::proportional(13.0), t.text_dim);
+                let x = title_left(r.left(), r.width(), galley.size().x);
+                ui.painter().galley(pos2(x, r.top() + (title_h - galley.size().y) / 2.0), galley, t.text_dim);
+            }
         }
         if tb_h > 0.0 {
             let row = Rect::from_min_size(pos2(r.left(), r.top() + title_h), vec2(r.width(), tb_h));

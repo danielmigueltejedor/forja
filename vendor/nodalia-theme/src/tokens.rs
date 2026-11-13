@@ -1153,7 +1153,28 @@ pub mod component {
     pub const CONTROL_RADIUS: f32 = 10.0;
     pub const WINDOW_RADIUS: f32 = 20.0;
     pub const WINDOW_GAP: f32 = 8.0;
+    pub const WINDOW_CONTROL_SIZE: f32 = 28.0;
+    pub const WINDOW_CONTROL_ICON: f32 = 24.0;
     pub const SPLITTER_HIT: f32 = 8.0;
+}
+
+/// Window-control colours from the shared component tokens.
+pub mod window_color {
+    use super::{Mode, Rgba};
+    pub const CLOSE: Rgba = Rgba::new(255, 92, 77, 255);
+    pub const CLOSE_ICON: Rgba = Rgba::new(11, 12, 16, 255);
+    pub const fn minimize(mode: Mode) -> Rgba {
+        mode.palette().status_warning_fg
+    }
+    pub const fn minimize_tint(mode: Mode) -> Rgba {
+        mode.palette().status_warning_bg
+    }
+    pub const fn maximize(mode: Mode) -> Rgba {
+        mode.palette().accent_text
+    }
+    pub const fn maximize_tint(mode: Mode) -> Rgba {
+        mode.palette().accent_subtle
+    }
 }
 
 /// Font weights.

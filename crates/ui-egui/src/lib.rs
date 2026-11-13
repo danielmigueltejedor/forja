@@ -57,6 +57,7 @@ pub mod modal;
 mod ndl_icons;
 pub mod ndl_widgets;
 pub mod ndl_window;
+mod ndl_window_chrome;
 pub mod opening;
 pub mod options;
 pub mod palettes;
@@ -261,6 +262,8 @@ pub struct CadApp {
     /// Drawings being read on worker threads ([`opening`]).
     pub opening: opening::Opening,
     pub integrated_titlebar: bool,
+    /// The native host disabled decorations on the root viewport and needs NDL window chrome.
+    pub ndl_window_chrome: bool,
     control_rx: Option<Receiver<ControlRequest>>,
     /// Fresh surface and identity snapshot (see [`capture`]).
     pub(crate) capture_geometry: Option<capture::CaptureGeometry>,
@@ -353,6 +356,7 @@ impl CadApp {
             status: None,
             opening: opening::Opening::default(),
             integrated_titlebar: false,
+            ndl_window_chrome: false,
             control_rx: None,
             capture_geometry: None,
             capture_epoch: 0,
@@ -908,6 +912,19 @@ impl CadApp {
     fn draw(&mut self, ui: &mut egui::Ui) {
         let t0 = now_ms();
         control::begin_frame(ui.ctx());
+        let full = ui.max_rect();
+        let resize = self.ndl_window_chrome && ndl_window_chrome::can_resize(ui.ctx());
+        if resize {
+            ndl_window_chrome::reserve_resize_bands(ui, theme::Tokens::get().chrome);
+        }
+        self.draw_content(ui);
+        if resize {
+            ndl_window_chrome::resize_edges(ui, full);
+        }
+        self.frame_ms = now_ms() - t0;
+    }
+
+    fn draw_content(&mut self, ui: &mut egui::Ui) {
         let t = theme::Tokens::get();
         chrome::title_and_toolbar(self, ui);
         if self.ui.in_window_menu {
@@ -944,7 +961,6 @@ impl CadApp {
         autosave::show(self, ui.ctx());
         autosave::gpu_notice(self, ui.ctx());
         autosave::failure_notice(self, ui.ctx());
-        self.frame_ms = now_ms() - t0;
     }
 
     /// Drain each queued control request at most once (timed-out requests are skipped), dispatch it to `control::handle` or `capture::admit`, note the resulting capture identity and request a repaint.

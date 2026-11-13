@@ -139,6 +139,8 @@
 	Clip Viewport	Delimitar ventana gráfica
 	Clipboard	Portapapeles
 	Close	Cerrar
+	Maximize	Maximizar
+	Minimize	Minimizar
 	Close All	Cerrar todo
 	Close All Other Drawings	Cerrar todos los demás dibujos
 	Close Array Editing	Cerrar la edición de matriz

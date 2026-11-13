@@ -215,6 +215,9 @@ fn restores_window() -> bool {
     eframe::storage_dir(APP_ID).and_then(|dir| std::fs::read_to_string(dir.join("app.ron")).ok()).is_some_and(|ron| saved_window(&ron))
 }
 
+/// On Linux the root viewport draws its own window controls.
+const NDL_WINDOW_CHROME: bool = cfg!(target_os = "linux");
+
 /// The main window: its size, title bar, placement and rendering needs. `restoring`: a window state
 /// saved by the last session is restored instead of opening centred.
 fn window_options(restoring: bool) -> eframe::NativeOptions {
@@ -224,6 +227,7 @@ fn window_options(restoring: bool) -> eframe::NativeOptions {
             .with_inner_size([1600.0, 1000.0])
             .with_min_inner_size([900.0, 560.0])
             .with_drag_and_drop(true)
+            .with_decorations(!NDL_WINDOW_CHROME)
             .with_fullsize_content_view(true)
             .with_titlebar_shown(false)
             .with_title_shown(false)
@@ -385,6 +389,7 @@ fn main() -> eframe::Result {
                 app.session.set_lisp_support_dir(Some(support));
             }
             app.integrated_titlebar = cfg!(target_os = "macos");
+            app.ndl_window_chrome = NDL_WINDOW_CHROME;
             if surface.present_mode == eframe::wgpu::PresentMode::AutoNoVsync {
                 app.frame_cap = Some(forja_ui_egui::gpu::FrameCap::new(240));
             }
@@ -446,6 +451,11 @@ mod tests {
             let exts: Vec<_> = filters_for_save(name).iter().map(|(_, e)| *e).collect();
             assert!(exts.contains(&"dwg") && exts.contains(&"dxf"), "{name}");
         }
+    }
+
+    #[test]
+    fn only_linux_disables_the_root_viewports_native_decorations() {
+        assert_eq!(window_options(false).viewport.decorations, Some(!cfg!(target_os = "linux")));
     }
 
     /// #1129: the first launch opens centred, not cascaded from the top-left corner.
