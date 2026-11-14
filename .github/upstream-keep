@@ -10,6 +10,7 @@ SECURITY.md
 NODALIA_MIGRATION.md
 .github/workflows/**
 crates/ui-egui/src/ndl_window_chrome.rs
+.github/ISSUE_TEMPLATE/**
 .github/CODEOWNERS
 .github/PULL_REQUEST_TEMPLATE.md
 CONTRIBUTING.md
