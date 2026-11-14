@@ -189,6 +189,7 @@ fn title_bar(app: &mut CadApp, ui: &mut egui::Ui, row: Rect) {
             search: crate::tl!("Type a command"),
             menu: crate::tl!("Menu"),
         },
+        quick_access: &[TitleAction::Save, TitleAction::Undo, TitleAction::Redo],
         controls_width,
         leading_width: if app.integrated_titlebar { MAC_CONTENT_LEFT - 8.0 } else { 0.0 },
     };
