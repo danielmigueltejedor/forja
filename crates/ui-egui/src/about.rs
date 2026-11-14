@@ -57,7 +57,7 @@ fn about_page(ui: &mut Ui) {
 }
 
 /// The app icon as a texture, decoded once.
-fn icon(ctx: &egui::Context) -> Option<TextureHandle> {
+pub(crate) fn icon(ctx: &egui::Context) -> Option<TextureHandle> {
     let id = egui::Id::unique("about_icon_texture");
     if let Some(t) = ctx.data(|d| d.get_temp::<TextureHandle>(id)) {
         return Some(t);
@@ -65,7 +65,9 @@ fn icon(ctx: &egui::Context) -> Option<TextureHandle> {
     let rgba = image::load_from_memory(ICON_PNG).ok()?.to_rgba8();
     let size = [rgba.width() as usize, rgba.height() as usize];
     let image = egui::ColorImage::from_rgba_unmultiplied(size, rgba.as_raw());
-    let texture = ctx.load_texture("about_icon", image, egui::TextureOptions::LINEAR);
+    // Mipmaps: the title bar draws it at 24 points, far below its 128 pixels.
+    let options = egui::TextureOptions { mipmap_mode: Some(egui::TextureFilter::Linear), ..egui::TextureOptions::LINEAR };
+    let texture = ctx.load_texture("about_icon", image, options);
     ctx.data_mut(|d| d.insert_temp(id, texture.clone()));
     Some(texture)
 }

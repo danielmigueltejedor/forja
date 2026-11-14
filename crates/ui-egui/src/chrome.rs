@@ -172,8 +172,10 @@ fn title_bar(app: &mut CadApp, ui: &mut egui::Ui, row: Rect) {
     let documents: Vec<Document> = docs.iter().map(|(name, modified)| Document { name, modified: *modified }).collect();
     let active = (!app.ui.start_tab && !documents.is_empty()).then_some(app.session.active);
     let controls_width = if app.ndl_window_chrome { crate::ndl_window_chrome::CONTROLS_WIDTH } else { 0.0 };
+    let app_icon = crate::about::icon(ui.ctx());
     let bar = TitleBar {
         app: "Forja",
+        icon: app_icon.as_ref().map(egui::TextureHandle::id),
         documents: &documents,
         active,
         labels: TitleLabels {
