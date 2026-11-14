@@ -1,4 +1,4 @@
-//! Window chrome: title and tool bar, file tabs, status bar and the Start page.
+//! Window chrome: the title bar (with the drawing tabs), tool bar, status bar and the Start page.
 
 use egui::{Rect, Sense, Stroke, pos2, vec2};
 use serde_json::json;
@@ -55,44 +55,21 @@ const MAC_LIGHTS_LEFT: f32 = 10.0;
 /// lights plus the same gap the lights keep from the top of the window.
 const MAC_CONTENT_LEFT: f32 = MAC_LIGHTS_LEFT + 2.0 * MAC_LIGHT_PITCH + MAC_LIGHT + (MAC_TITLE_BAR - MAC_LIGHT) / 2.0;
 
-/// Left edge of the window title in a title row starting at `left`, `width` wide: centred, but
-/// never under the traffic lights (a long drawing name in a narrow window slides right instead).
-fn title_left(left: f32, width: f32, text_w: f32) -> f32 {
-    (left + (width - text_w) / 2.0).max(left + MAC_CONTENT_LEFT)
-}
-
-/// Title row (with the integrated macOS title bar) and the Tool Bar.
+/// The engineering suite's title bar (`nodalia_theme::engineering::title_bar`) and, under it, the
+/// Tool Bar. The title bar holds what Torno and Vortia hold in the same places: Home (the Start
+/// page), the File menu, save/undo/redo, the drawing tabs, the command search (Forja's command
+/// line), the menu with Preferences, Keyboard Shortcuts and About, and the window controls.
 pub fn title_and_toolbar(app: &mut CadApp, ui: &mut egui::Ui) {
     let t = Tokens::get();
-    let title_h = if app.integrated_titlebar {
-        MAC_TITLE_BAR
-    } else if app.ndl_window_chrome {
-        crate::ndl_window_chrome::TITLE_HEIGHT
-    } else {
-        0.0
-    };
+    let title_h = nodalia_theme::engineering::layout::TITLE_BAR;
     let tb_h = if app.ui.show_toolbar { 34.0 } else { 0.0 };
     egui::Panel::top("cc_title_toolbar").exact_size(title_h + tb_h).frame(egui::Frame::NONE.fill(t.chrome)).show(ui, |ui| {
         let r = ui.max_rect();
-        if title_h > 0.0 {
-            let title_row = Rect::from_min_size(r.min, vec2(r.width(), title_h));
-            let title = match app.session.state() {
-                Ok(st) if !app.ui.start_tab => format!("Forja      {}{}", st.title, if st.title.contains('.') { "" } else { ".dwg" }),
-                _ => format!("Forja      {}", crate::tl!("Start")),
-            };
-            if app.ndl_window_chrome {
-                crate::ndl_window_chrome::title_row(ui, title_row, title);
-            } else {
-                craft_window::title_bar::empty_area(ui, title_row);
-                // Centre the title on the native AppKit controls.
-                let galley = ui.painter().layout_no_wrap(title, egui::FontId::proportional(13.0), t.text_dim);
-                let x = title_left(r.left(), r.width(), galley.size().x);
-                ui.painter().galley(pos2(x, r.top() + (title_h - galley.size().y) / 2.0), galley, t.text_dim);
-            }
-        }
+        let title_row = Rect::from_min_size(r.min, vec2(r.width(), title_h));
+        title_bar(app, ui, title_row);
         if tb_h > 0.0 {
             let row = Rect::from_min_size(pos2(r.left(), r.top() + title_h), vec2(r.width(), tb_h));
-            let mut x = r.left() + if app.integrated_titlebar { 120.0 } else { 12.0 };
+            let mut x = r.left() + 12.0;
             let size = 26.0;
             let mut clicked = None;
             let mac = ui.ctx().os().is_mac();
@@ -175,89 +152,117 @@ pub fn title_and_toolbar(app: &mut CadApp, ui: &mut egui::Ui) {
     });
 }
 
-/// File tabs: switcher, "+", Start, open drawings.
-pub fn file_tabs(app: &mut CadApp, ui: &mut egui::Ui) {
-    let t = Tokens::get();
-    egui::Panel::top("cc_file_tabs").exact_size(26.0).frame(egui::Frame::NONE.fill(t.chrome_dark)).show(ui, |ui| {
-        let r = ui.max_rect();
-        let mut x = r.left() + 4.0;
-        let ib = Rect::from_min_size(pos2(x, r.top() + 4.0), vec2(18.0, 18.0));
-        icons::paint(ui.painter(), ib.shrink(1.0), Icon::Switcher, false);
-        x += 24.0;
-        let plus = Rect::from_min_size(pos2(x, r.top() + 4.0), vec2(18.0, 18.0));
-        let presp = ui.interact(plus, ui.scope_id().with("tab+"), Sense::click());
-        icons::paint(ui.painter(), plus.shrink(2.0), Icon::Plus, false);
-        icons::describe_control(ui, &presp, "New Drawing", None, false);
-        if presp.on_hover_text(crate::tl!("New Drawing")).clicked() {
+/// Ids of the two menus the title bar opens.
+fn file_menu_id() -> egui::Id {
+    egui::Id::unique("forja_title_file_menu")
+}
+fn app_menu_id() -> egui::Id {
+    egui::Id::unique("forja_title_app_menu")
+}
+
+/// The menu (hamburger) entries, in NDL's order: Preferences, Keyboard Shortcuts, About.
+pub(crate) const APP_MENU: &[(&str, &str)] =
+    &[("options", "Preferences"), ("ui.shortcuts", "Keyboard Shortcuts..."), ("ui.dialog.about", "About Forja")];
+
+fn title_bar(app: &mut CadApp, ui: &mut egui::Ui, row: Rect) {
+    use nodalia_theme::engineering::{self as eng, Document, TitleAction, TitleBar, TitleLabels};
+    let look = eng::Look::new(crate::theme::ndl_palette());
+    let docs: Vec<(String, bool)> =
+        if app.ui.show_file_tabs { app.session.docs.iter().map(|d| (d.title.clone(), d.is_dirty())).collect() } else { Vec::new() };
+    let documents: Vec<Document> = docs.iter().map(|(name, modified)| Document { name, modified: *modified }).collect();
+    let active = (!app.ui.start_tab && !documents.is_empty()).then_some(app.session.active);
+    let controls_width = if app.ndl_window_chrome { crate::ndl_window_chrome::CONTROLS_WIDTH } else { 0.0 };
+    let app_icon = crate::about::icon(ui.ctx());
+    let bar = TitleBar {
+        app: "Forja",
+        icon: app_icon.as_ref().map(egui::TextureHandle::id),
+        documents: &documents,
+        active,
+        labels: TitleLabels {
+            home: crate::tl!("Start"),
+            file: crate::tl!("File"),
+            save: crate::tl!("Save"),
+            undo: crate::tl!("Undo"),
+            redo: crate::tl!("Redo"),
+            new_document: crate::tl!("New Drawing"),
+            close_document: crate::tl!("Close"),
+            search: crate::tl!("Type a command"),
+            menu: crate::tl!("Menu"),
+        },
+        quick_access: &[TitleAction::Save, TitleAction::Undo, TitleAction::Redo],
+        controls_width,
+        leading_width: if app.integrated_titlebar { MAC_CONTENT_LEFT - 8.0 } else { 0.0 },
+    };
+    let out = ui
+        .scope_builder(egui::UiBuilder::new().max_rect(row), |ui| {
+            eng::title_bar_with(ui, &look, &bar, |ui, rect| {
+                // The platform's window move (AppKit's drag loop on macOS) and double-click action.
+                if app.integrated_titlebar || app.ndl_window_chrome {
+                    craft_window::title_bar::empty_area(ui, rect.with_max_x(rect.right() - controls_width))
+                } else {
+                    ui.interact(rect, ui.scope_id().with("title_empty"), Sense::hover())
+                }
+            })
+        })
+        .inner;
+    if app.ndl_window_chrome {
+        crate::ndl_window_chrome::controls(ui, out.controls);
+    }
+    let anchor = |x: f32| pos2(x, row.bottom() - 4.0);
+    match out.action {
+        Some(TitleAction::Home) => app.ui.start_tab = true,
+        Some(TitleAction::File) => {
+            let x = ui.ctx().pointer_interact_pos().map_or(row.left(), |p| p.x - 20.0);
+            ui.data_mut(|d| d.insert_temp(file_menu_id().with("at"), anchor(x)));
+            egui::Popup::toggle_id(ui.ctx(), file_menu_id());
+        }
+        Some(TitleAction::Menu) => {
+            let x = ui.ctx().pointer_interact_pos().map_or(row.right(), |p| p.x);
+            ui.data_mut(|d| d.insert_temp(app_menu_id().with("at"), anchor(x)));
+            egui::Popup::toggle_id(ui.ctx(), app_menu_id());
+        }
+        Some(TitleAction::Save) => app.start("qsave"),
+        Some(TitleAction::Undo) => app.start("u"),
+        Some(TitleAction::Redo) => app.start("redo"),
+        Some(TitleAction::NewDocument) => {
             app.start("new");
             app.ui.start_tab = false;
         }
-        x += 24.0;
-        // `label` is the drawing's name; `dirty` adds the unsaved-changes mark, kept visible when a
-        // long name is cut short.
-        let mut tab =
-            |ui: &mut egui::Ui, label: &str, dirty: bool, active: bool, closable: bool, w: f32, id: egui::Id| -> (bool, bool, egui::Response) {
-                let tr = Rect::from_min_size(pos2(x, r.top()), vec2(w, r.height()));
-                let resp = ui.interact(tr, id, Sense::click());
-                // The close button takes the tab's hover, so `resp.hovered()` would make the tab and
-                // its X flicker while the pointer is on the X.
-                let hovered = ui.rect_contains_pointer(tr);
-                // The name ends in "…" when it doesn't fit before the close button (#513).
-                let color = if active || hovered { t.text } else { t.text_dim };
-                let mark = if dirty { "*" } else { "" };
-                let text_w = (w - 8.0 - if closable { 24.0 } else { 8.0 }).max(0.0);
-                let mark_w = ui.painter().layout_no_wrap(mark.to_string(), crate::theme::body(), color).size().x;
-                let (galley, cut) = elided(ui.painter(), label, crate::theme::body(), color, text_w - mark_w);
-                let pos = pos2(tr.left() + 8.0, tr.center().y - galley.size().y / 2.0);
-                let name_w = galley.size().x;
-                tab_label(ui.painter(), pos, galley, color, active);
-                if dirty {
-                    ui.painter().text(pos2(pos.x + name_w, tr.center().y), egui::Align2::LEFT_CENTER, mark, crate::theme::body(), color);
-                }
-                let resp = if cut { resp.on_hover_text(format!("{label}{mark}")) } else { resp };
-                let mut close = false;
-                if closable && (active || hovered) {
-                    let cr = Rect::from_center_size(pos2(tr.right() - 11.0, tr.center().y), vec2(12.0, 12.0));
-                    let cresp = ui.interact(cr, id.with("x"), Sense::click());
-                    icons::paint(ui.painter(), cr, Icon::Close, false);
-                    icons::describe_control(ui, &cresp, &format!("Close {label}"), None, false);
-                    close = cresp.clicked();
-                }
-                icons::describe_control(ui, &resp, label, Some(active), true);
-                if active {
-                    let bar = Rect::from_min_max(pos2(tr.left() + 8.0, tr.bottom() - 2.0), pos2(tr.left() + 8.0 + name_w, tr.bottom()));
-                    ui.painter().rect_filled(bar, 1.0, t.accent);
-                }
-                x += w;
-                (resp.clicked(), close, resp)
-            };
-        let (c, _, _) =
-            tab(ui, crate::tl!("Start"), false, app.ui.start_tab || app.session.docs.is_empty(), false, 110.0, ui.scope_id().with("tab_start"));
-        if c {
-            app.ui.start_tab = true;
-        }
-        let mut switch_to = None;
-        let mut close = None;
-        let titles: Vec<(usize, String, bool, bool)> =
-            app.session.docs.iter().enumerate().map(|(i, d)| (i, d.title.clone(), d.is_dirty(), i == app.session.active)).collect();
-        for (i, title, dirty, active) in titles {
-            let (c, x, resp) = tab(ui, &title, dirty, active && !app.ui.start_tab, true, 170.0, ui.scope_id().with(("tab", i)));
-            crate::shortcut_menus::attach(app, &resp, |app| crate::shortcut_menus::drawing_tab_entries(app, i));
-            if c {
-                switch_to = Some(i);
-            }
-            if x {
-                close = Some(i);
-            }
-        }
-        if let Some(i) = switch_to {
+        Some(TitleAction::Document(i)) => {
             let _ = app.run("document.switch", json!({ "index": i }));
             app.ui.start_tab = false;
         }
-        if let Some(i) = close {
-            app.request_close(Some(i));
+        Some(TitleAction::CloseDocument(i)) => app.request_close(Some(i)),
+        Some(TitleAction::Search) => app.cmd.expanded = true,
+        None => {}
+    }
+    title_menus(app, ui);
+}
+
+/// The File menu (the menu bar's first menu) and the app menu, opened from the title bar.
+fn title_menus(app: &mut CadApp, ui: &mut egui::Ui) {
+    let mut clicked = None;
+    let ctx = ui.ctx().clone();
+    let at = |id: egui::Id| ctx.data(|d| d.get_temp::<egui::Pos2>(id.with("at"))).unwrap_or_default();
+    let file = crate::menus::tree(app).into_iter().find(|(name, _)| name == "File");
+    egui::Popup::new(file_menu_id(), ctx.clone(), at(file_menu_id()), ui.layer_id()).kind(egui::PopupKind::Menu).open_memory(None).show(|ui| {
+        for e in file.iter().flat_map(|(_, entries)| entries) {
+            crate::menus::entry_ui(ui, e, &mut clicked);
         }
     });
+    egui::Popup::new(app_menu_id(), ctx.clone(), at(app_menu_id()), ui.layer_id()).kind(egui::PopupKind::Menu).open_memory(None).show(|ui| {
+        for (id, label) in APP_MENU {
+            let response = ui.button(crate::i18n::t(label));
+            crate::control::record_widget(ui, &response, label, "button", None);
+            if response.clicked() {
+                clicked = Some((*id).to_string());
+                ui.close();
+            }
+        }
+    });
+    if let Some(id) = clicked {
+        crate::menus::activate(app, &id);
+    }
 }
 
 /// A tab's name as NDL draws it. The current tab's name is meant to be in a heavier weight, but
@@ -536,86 +541,78 @@ pub fn status_bar(app: &mut CadApp, ui: &mut egui::Ui) {
     });
 }
 
-/// The Start page (no drawing open, or the Start tab).
+/// The Start page (no drawing open, or the Start tab): the Engineering suite's Home, the same
+/// view Torno and Vortia show (`nodalia_theme::engineering::home_look`, nodalia-design's
+/// `docs/suites/engineering.md`).
 pub fn start_page(app: &mut CadApp, ui: &mut egui::Ui) {
-    let t = Tokens::get();
-    let r = ui.max_rect();
-    let p = ui.painter().clone();
-    let left = Rect::from_min_size(r.min, vec2(300.0, r.height()));
-    p.rect_filled(left, 0.0, t.chrome_dark);
-    p.rect_filled(Rect::from_min_max(pos2(left.right(), r.top()), r.max), 0.0, t.chrome);
-    p.text(pos2(left.left() + 34.0, left.top() + 70.0), egui::Align2::LEFT_CENTER, crate::tl!("Forja"), egui::FontId::proportional(28.0), t.text);
-    p.text(
-        pos2(left.left() + 34.0, left.top() + 98.0),
-        egui::Align2::LEFT_CENTER,
-        crate::tf!("Version {version}", version = env!("CARGO_PKG_VERSION")),
-        crate::theme::small(),
-        t.text_faint,
-    );
-    let mut y = left.top() + 140.0;
-    let mut action = None;
-    for (label, cmd) in [("Open...", "open"), ("New", "new"), ("New (metric)", "new.metric"), ("Open sample drawing", "sample")] {
-        let br = Rect::from_min_size(pos2(left.left() + 34.0, y), vec2(220.0, 34.0));
-        let resp = ui.interact(br, ui.scope_id().with(("start", cmd)), Sense::click());
-        p.rect_stroke(br, 2.0, Stroke::new(1.0, if resp.hovered() { t.text } else { t.text_dim }), egui::StrokeKind::Inside);
-        p.text(pos2(br.left() + 16.0, br.center().y), egui::Align2::LEFT_CENTER, crate::i18n::t(label), crate::theme::body(), t.text);
-        if resp.clicked() {
-            action = Some(cmd);
-        }
-        y += 44.0;
-    }
-    let main = Rect::from_min_max(pos2(left.right() + 36.0, r.top() + 40.0), r.max);
-    p.text(main.min, egui::Align2::LEFT_TOP, crate::tl!("Recent"), egui::FontId::proportional(22.0), t.text);
-    let mut recent = None;
-    let mut y = main.top() + 44.0;
-    for (i, path) in app.ui.recent_files.iter().enumerate() {
-        let row = Rect::from_min_size(pos2(main.left(), y), vec2((r.right() - main.left() - 36.0).clamp(0.0, 640.0), 42.0));
-        let resp = ui.interact(row, ui.scope_id().with(("recent", i)), Sense::click());
-        if resp.hovered() {
-            p.rect_filled(row, 2.0, t.control_hover.gamma_multiply(0.5));
-        }
-        let dir = std::path::Path::new(path).parent().map(|d| d.display().to_string()).unwrap_or_default();
-        let clip = p.with_clip_rect(row.shrink(2.0));
-        clip.text(pos2(row.left() + 10.0, row.top() + 13.0), egui::Align2::LEFT_CENTER, crate::menus::file_name(path), crate::theme::body(), t.text);
-        clip.text(pos2(row.left() + 10.0, row.top() + 30.0), egui::Align2::LEFT_CENTER, dir, crate::theme::small(), t.text_faint);
-        if resp.on_hover_text(path).clicked() {
-            recent = Some(path.clone());
-        }
-        y += 46.0;
-    }
-    if let Some(path) = recent {
+    use nodalia_theme::engineering::{self as eng, RecentDocument, StartCard};
+    use nodalia_theme::office::{self, Entry, Nav};
+    let look = eng::Look::new(crate::theme::ndl_palette());
+    let home = eng::home_look(&look);
+    let has_docs = !app.session.docs.is_empty();
+    let nav = Nav {
+        back: if has_docs { crate::tl!("Back to drawing") } else { "" },
+        top: vec![Entry::item("home", crate::tl!("Home"), "home"), Entry::item("open", crate::tl!("Open"), "folder")],
+        bottom: vec![Entry::item("options", crate::tl!("Preferences"), "settings")],
+        selected: Some("home"),
+    };
+    let cards = [
+        StartCard { icon: "line", name: crate::tl!("Drawing (inches)"), detail: crate::tl!("Imperial units") },
+        StartCard { icon: "dimension", name: crate::tl!("Drawing (mm)"), detail: crate::tl!("Metric units") },
+        StartCard { icon: "layout", name: crate::tl!("Sample drawing"), detail: crate::tl!("A bracket with its layouts") },
+    ];
+    let names: Vec<(String, String, String)> = app
+        .ui
+        .recent_files
+        .iter()
+        .map(|path| {
+            let dir = std::path::Path::new(path).parent().map(|d| d.display().to_string()).unwrap_or_default();
+            (crate::menus::file_name(path).to_string(), dir, modified(path))
+        })
+        .collect();
+    let recents: Vec<RecentDocument> =
+        names.iter().map(|(name, folder, when)| RecentDocument { name, folder, when, icon: "line", thumbnail: None }).collect();
+    let icon = crate::about::icon(ui.ctx());
+    let version = crate::tf!("Version {version}", version = env!("CARGO_PKG_VERSION"));
+    let (mut card, mut recent) = (None, None);
+    let picked = office::file_view(ui, &home, &nav, |ui| {
+        eng::home_header(ui, &look, icon.as_ref().map(egui::TextureHandle::id), "Forja", &version);
+        office::section(ui, &home, crate::tl!("New"), |ui| card = eng::start_cards(ui, &look, &cards));
+        office::section(ui, &home, crate::tl!("Recent"), |ui| {
+            recent = eng::recent_documents(ui, &look, &recents, crate::tl!("There is nothing here yet. To get started, create or open a drawing."));
+        });
+    });
+    if let Some(path) = recent.and_then(|i| app.ui.recent_files.get(i).cloned()) {
         app.open_path(std::path::Path::new(&path));
-    } else if app.ui.recent_files.is_empty() {
-        p.text(
-            pos2(main.center().x, main.center().y),
-            egui::Align2::CENTER_CENTER,
-            crate::tl!("There is nothing here yet."),
-            egui::FontId::proportional(18.0),
-            t.text,
-        );
-        p.text(
-            pos2(main.center().x, main.center().y + 26.0),
-            egui::Align2::CENTER_CENTER,
-            crate::tl!("To get started, create or open a drawing."),
-            crate::theme::body(),
-            t.text_dim,
-        );
     }
-    match action {
-        Some("open") => app.start("ui.open"),
-        Some("new") => {
+    match card {
+        Some(0) => {
             app.start("new");
             app.ui.start_tab = false;
         }
-        Some("new.metric") => {
+        Some(1) => {
             let _ = app.run("new", json!({ "metric": true }));
             app.ui.start_tab = false;
         }
-        Some("sample") => {
-            app.start("ui.sample");
-        }
+        Some(2) => app.start("ui.sample"),
         _ => {}
     }
+    match picked.as_deref() {
+        Some(office::BACK) => app.ui.start_tab = false,
+        Some("open") => app.start("ui.open"),
+        Some("options") => app.start("options"),
+        _ => {}
+    }
+}
+
+/// When a recent file last changed, in UTC like the recovery window ("" when it can't be read).
+fn modified(path: &str) -> String {
+    std::fs::metadata(path)
+        .and_then(|m| m.modified())
+        .ok()
+        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+        .map(|d| format!("{} UTC", crate::autosave::utc(d.as_secs())))
+        .unwrap_or_default()
 }
 
 #[cfg(test)]
@@ -623,14 +620,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn mac_title_row_centres_and_clears_the_traffic_lights() {
+    fn mac_title_content_clears_the_traffic_lights() {
         // The lights are centred in the row, and content keeps the same gap after them.
         let margin = (MAC_TITLE_BAR - MAC_LIGHT) / 2.0;
         let lights_end = MAC_LIGHTS_LEFT + 2.0 * MAC_LIGHT_PITCH + MAC_LIGHT;
         assert_eq!(MAC_CONTENT_LEFT - lights_end, margin);
-        // A short title is centred; one too wide for that starts after the lights.
-        assert_eq!(title_left(100.0, 1000.0, 200.0), 500.0);
-        assert_eq!(title_left(100.0, 900.0, 800.0), 100.0 + MAC_CONTENT_LEFT);
     }
 
     #[test]
