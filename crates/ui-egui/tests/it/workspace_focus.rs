@@ -36,9 +36,11 @@ fn tab_to(h: &mut Harness<'_, CadApp>, label: &str) {
 #[test]
 fn toolbar_tab_and_shift_tab_skip_title_drag_and_activate_once() {
     let mut h = harness();
+    // The title bar's Home button is the first control; its empty drag area is not one.
     h.key_press(Key::Tab);
     h.run_steps(2);
-    assert!(h.get_by_label("New Drawing (⌘N)").is_focused(), "the title drag region is not a keyboard control");
+    assert!(h.get_by_label("Start").is_focused(), "the title drag region is not a keyboard control");
+    tab_to(&mut h, "New Drawing (⌘N)");
     h.key_press(Key::Tab);
     h.run_steps(2);
     assert!(h.get_by_label("Open (⌘O)").is_focused());
@@ -86,7 +88,8 @@ fn document_tabs_have_distinct_keyboard_identity_and_activation() {
     h.state_mut().run("new", serde_json::json!({})).unwrap();
     h.run_steps(3);
     let title = h.state().session.docs[0].title.clone();
-    tab_to(&mut h, "Start");
+    // Home, File, save, undo and redo come before the document tabs.
+    tab_to(&mut h, "Redo");
     h.key_press(Key::Tab);
     h.run_steps(2);
     assert!(h.get_by_label(&title).is_focused());

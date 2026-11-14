@@ -1,30 +1,17 @@
 //! The undecorated Linux root viewport. Drawing and CAD input stay inside the resize bands.
 
 use egui::{CursorIcon, PointerButton, Rect, ResizeDirection, Sense, Ui, ViewportCommand, pos2};
-use nodalia_theme::{component, space, window_controls};
+use nodalia_theme::{space, window_controls};
 
 use crate::theme;
 
-pub(crate) const TITLE_HEIGHT: f32 = component::WINDOW_CONTROL_SIZE + 2.0 * space::XS;
 pub(crate) const RESIZE_INSET: i8 = space::XS as i8;
 
-pub(crate) fn title_row(ui: &mut Ui, row: Rect, title: String) {
+/// Draw the NDL window controls at the right of `row`, inset by the NDL margin, and act on them.
+pub(crate) fn controls(ui: &mut Ui, row: Rect) {
     let (focused, maximized) = ui.input(|i| (i.focused, i.viewport().maximized.unwrap_or(false)));
     let buttons_right = row.right() - space::SM;
-    let buttons_left = buttons_right - window_controls::WIDTH;
-    let buttons = Rect::from_min_max(pos2(buttons_left, row.top()), pos2(buttons_right, row.bottom()));
-    let drag_area = row.with_max_x(buttons_left);
-    // The controls and the empty title area have disjoint hit regions.
-    if drag_area.is_positive() {
-        craft_window::title_bar::empty_area(ui, drag_area);
-        let clip = drag_area.shrink2(egui::vec2(space::SM, 0.0));
-        let painter = ui.painter().with_clip_rect(clip);
-        let ink = theme::Tokens::get().text_dim;
-        let galley = painter.layout_no_wrap(title, theme::body(), ink);
-        let x = (row.center().x - galley.size().x / 2.0).clamp(clip.left(), (clip.right() - galley.size().x).max(clip.left()));
-        let y = row.center().y - galley.size().y / 2.0;
-        painter.galley(pos2(x, y), galley, ink);
-    }
+    let buttons = Rect::from_min_max(pos2(buttons_right - window_controls::WIDTH, row.top()), pos2(buttons_right, row.bottom()));
     let labels = window_controls::Labels {
         minimize: crate::tl!("Minimize"),
         maximize: crate::tl!("Maximize"),
@@ -39,6 +26,9 @@ pub(crate) fn title_row(ui: &mut Ui, row: Rect, title: String) {
         ui.ctx().send_viewport_cmd(viewport_command(action));
     }
 }
+
+/// Width the controls take at the right edge of the title bar, margin included.
+pub(crate) const CONTROLS_WIDTH: f32 = window_controls::WIDTH + 2.0 * space::SM;
 
 fn viewport_command(action: window_controls::Action) -> ViewportCommand {
     use window_controls::Action;
@@ -131,7 +121,9 @@ mod tests {
             }
             let available = ui.available_rect_before_wrap();
             assert_eq!(available, rect.shrink(if resize { f32::from(RESIZE_INSET) } else { 0.0 }));
-            title_row(ui, available.with_max_y(available.top() + TITLE_HEIGHT), String::new());
+            let row = available.with_max_y(available.top() + nodalia_theme::engineering::layout::TITLE_BAR);
+            craft_window::title_bar::empty_area(ui, row.with_max_x(row.right() - CONTROLS_WIDTH));
+            controls(ui, row);
             if resize {
                 resize_edges(ui, rect);
             }

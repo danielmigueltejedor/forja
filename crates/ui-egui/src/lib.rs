@@ -933,9 +933,6 @@ impl CadApp {
         if self.ui.show_status_bar {
             chrome::status_bar(self, ui);
         }
-        if self.ui.show_file_tabs {
-            chrome::file_tabs(self, ui);
-        }
         let has_doc = !self.session.docs.is_empty() && !self.ui.start_tab;
         if has_doc && !self.ui.show_toolsets {
             palettes::toolsets_strip(self, ui);

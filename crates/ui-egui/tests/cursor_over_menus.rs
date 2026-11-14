@@ -48,7 +48,8 @@ fn the_menu_bar_brings_the_os_cursor_back() {
 
     // Pointing at a menu title: the crosshair (and the hidden OS cursor) must not leak out of the
     // drawing area.
-    harness.get_by_role_and_label(Role::Button, "File").hover();
+    // "Edit": the title bar has a File button of its own.
+    harness.get_by_role_and_label(Role::Button, "Edit").hover();
     harness.run_steps(3);
     assert_ne!(cursor(&harness), egui::CursorIcon::None, "the menu bar keeps a visible OS cursor");
     assert_eq!(cursor(&harness), egui::CursorIcon::Default);
@@ -114,7 +115,8 @@ fn show_system_cursor_restores_the_arrow_off_the_canvas() {
     hover_canvas(&mut harness);
     assert_eq!(cursor(&harness), egui::CursorIcon::Crosshair);
 
-    harness.get_by_role_and_label(Role::Button, "File").hover();
+    // "Edit": the title bar has a File button of its own.
+    harness.get_by_role_and_label(Role::Button, "Edit").hover();
     harness.run_steps(3);
     assert_eq!(cursor(&harness), egui::CursorIcon::Default, "not the drafting crosshair over the menu bar");
 }
