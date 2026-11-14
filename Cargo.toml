@@ -65,7 +65,7 @@ craft-window = { version = "0.1.0", git = "https://github.com/getnodalia/foundat
 egui = { version = "0.37", default-features = false, features = ["default_fonts", "monochrome_emoji_fonts"] }
 # The Nodalia Design Language: tokens and the egui style built from them.
 # Nodalia Design Language: tokens, icons and the engineering suite's shared parts and IBM Plex faces.
-nodalia-theme = { git = "https://github.com/getnodalia/nodalia-design", rev = "0c4ce362cae45f1edb077cee2fd0949e073d1b02", features = ["engineering"] }
+nodalia-theme = { git = "https://github.com/getnodalia/nodalia-design", rev = "ff33a9d9ea5e07cd22f606af6beaab5dc6205be2", features = ["engineering"] }
 # Resizable table columns (About ▸ Contributors / Models); no image loaders.
 egui_extras = { version = "0.37", default-features = false }
 egui_kittest = "0.37"
