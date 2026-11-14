@@ -94,9 +94,11 @@ native ones on macOS and Windows). What is missing is tracked in `NODALIA_MIGRAT
 
 ## Release
 
-`release.yml` runs on a push to the `release` branch and drafts the release with the desktop
-packages; `macos.yml` builds the DMG on a standard macOS runner. A maintainer reviews the draft
-and publishes it. Versions are SemVer in `[workspace.package]`.
+Merging a version bump with its notes (`docs/release-notes/vX.Y.Z.md`, format in that folder's
+README) releases it: `release-auto.yml` tags the merge through Foundation's `release-tag`, builds
+the packages with `release-linux.yml`, `release-macos.yml` (DMG on a standard macOS runner) and
+`release-windows.yml`, and publishes the release. Nobody pushes a tag by hand. Versions are SemVer
+in `[workspace.package]`.
 
 ## Pull requests
 
