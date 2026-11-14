@@ -9,8 +9,9 @@ getnodalia/foundation) and this pull request (CI on Foundation's reusable workfl
 Pure-Rust CAD app (egui), MIT OR Apache-2.0. Cargo git dependencies all come from
 getnodalia/foundation; the "Git dependencies come from storytold" job (name kept for branch
 protection) rejects any other owner. The gate, ast-grep, FreeBSD, Nix, packaging lint and AGENTS.md
-checks call getnodalia/foundation workflows pinned by commit. The macOS DMG is built by
-`macos.yml` on a standard runner.
+checks call getnodalia/foundation workflows pinned by commit. Releases go through
+`release-auto.yml` (Foundation's `release-tag`/`release-publish`), and the macOS DMG is built by
+`release-macos.yml` on a standard runner.
 
 ## Desired state
 

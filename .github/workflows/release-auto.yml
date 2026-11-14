@@ -5,9 +5,19 @@ name: Release from main
 # Foundation's release-tag tags the merge and drafts the release with those notes, the three
 # packaging workflows attach their files, and release-publish publishes it once all of them pass.
 # A failed platform leaves the release a draft. Any other push does nothing.
+#
+# If a platform fails and its fix lands after the tag, run this by hand on main with
+# retag-draft: while the release is still a draft, its tag moves to the fixed commit and every
+# platform builds again.
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      retag-draft:
+        description: "Move an unpublished draft's tag to this commit and build it again"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -20,9 +30,11 @@ jobs:
   tag:
     permissions:
       contents: write
-    uses: getnodalia/foundation/.github/workflows/release-tag.yml@8ac8b1d9def48c9d33bf762d920afaf5cbfefd75 # foundation 2026-11-13
+    uses: getnodalia/foundation/.github/workflows/release-tag.yml@7964f20499fbbe78c855fee7e90d182aff4aae89 # foundation 2026-11-13 (retag-draft)
     with:
       name: Forja
+      notes-check: scripts/check-release-notes.sh
+      retag-draft: ${{ inputs.retag-draft == true }}
 
   linux:
     needs: tag
@@ -38,7 +50,7 @@ jobs:
     if: needs.tag.outputs.created == 'true'
     permissions:
       contents: write
-    uses: ./.github/workflows/macos.yml
+    uses: ./.github/workflows/release-macos.yml
     with:
       tag: ${{ needs.tag.outputs.tag }}
 
@@ -57,6 +69,6 @@ jobs:
     needs: [tag, linux, macos, windows]
     permissions:
       contents: write
-    uses: getnodalia/foundation/.github/workflows/release-publish.yml@8ac8b1d9def48c9d33bf762d920afaf5cbfefd75 # foundation 2026-11-13
+    uses: getnodalia/foundation/.github/workflows/release-publish.yml@7964f20499fbbe78c855fee7e90d182aff4aae89 # foundation 2026-11-13
     with:
       tag: ${{ needs.tag.outputs.tag }}
