@@ -77,7 +77,7 @@ jobs:
             tags=("$INPUT_TAG")
           else
             # First parent: what this merge brought into the branch.
-            mapfile -t tags < <(git diff --name-only --diff-filter=AM HEAD^ HEAD -- docs/release-notes \
+            mapfile -t tags < <(git diff --name-only -M --diff-filter=AM HEAD^ HEAD \
               | sed -n 's#^docs/release-notes/\(v[0-9][^/]*\)\.md$#\1#p')
           fi
           for tag in "${tags[@]}"; do
