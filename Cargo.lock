@@ -3026,7 +3026,7 @@ dependencies = [
 [[package]]
 name = "nodalia-theme"
 version = "0.1.0-alpha.1"
-source = "git+https://github.com/getnodalia/nodalia-design?rev=b33e5fe1a17a5d11198c6a33b956c973fd0f2f68#b33e5fe1a17a5d11198c6a33b956c973fd0f2f68"
+source = "git+https://github.com/getnodalia/nodalia-design?rev=0c4ce362cae45f1edb077cee2fd0949e073d1b02#0c4ce362cae45f1edb077cee2fd0949e073d1b02"
 dependencies = [
  "egui",
 ]

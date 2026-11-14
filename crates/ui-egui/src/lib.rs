@@ -941,7 +941,9 @@ impl CadApp {
         // gap on every side, so the islands stand clear of the file tabs above them too.
         let gap = nodalia_theme::component::WINDOW_GAP as i8;
         let frame = egui::Frame::NONE.fill(t.chrome).inner_margin(egui::Margin::same(gap));
-        egui::CentralPanel::default().frame(if has_doc { frame } else { egui::Frame::NONE.fill(t.canvas) }).show(ui, |ui| {
+        // Home's islands keep the gap above them; the view adds it on the other sides.
+        let home = egui::Frame::NONE.fill(t.chrome).inner_margin(egui::Margin { top: gap, ..egui::Margin::ZERO });
+        egui::CentralPanel::default().frame(if has_doc { frame } else { home }).show(ui, |ui| {
             if has_doc {
                 docking::show(self, ui);
             } else {

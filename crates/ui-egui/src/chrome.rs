@@ -540,86 +540,78 @@ pub fn status_bar(app: &mut CadApp, ui: &mut egui::Ui) {
     });
 }
 
-/// The Start page (no drawing open, or the Start tab).
+/// The Start page (no drawing open, or the Start tab): the Engineering suite's Home, the same
+/// view Torno and Vortia show (`nodalia_theme::engineering::home_look`, nodalia-design's
+/// `docs/suites/engineering.md`).
 pub fn start_page(app: &mut CadApp, ui: &mut egui::Ui) {
-    let t = Tokens::get();
-    let r = ui.max_rect();
-    let p = ui.painter().clone();
-    let left = Rect::from_min_size(r.min, vec2(300.0, r.height()));
-    p.rect_filled(left, 0.0, t.chrome_dark);
-    p.rect_filled(Rect::from_min_max(pos2(left.right(), r.top()), r.max), 0.0, t.chrome);
-    p.text(pos2(left.left() + 34.0, left.top() + 70.0), egui::Align2::LEFT_CENTER, crate::tl!("Forja"), egui::FontId::proportional(28.0), t.text);
-    p.text(
-        pos2(left.left() + 34.0, left.top() + 98.0),
-        egui::Align2::LEFT_CENTER,
-        crate::tf!("Version {version}", version = env!("CARGO_PKG_VERSION")),
-        crate::theme::small(),
-        t.text_faint,
-    );
-    let mut y = left.top() + 140.0;
-    let mut action = None;
-    for (label, cmd) in [("Open...", "open"), ("New", "new"), ("New (metric)", "new.metric"), ("Open sample drawing", "sample")] {
-        let br = Rect::from_min_size(pos2(left.left() + 34.0, y), vec2(220.0, 34.0));
-        let resp = ui.interact(br, ui.scope_id().with(("start", cmd)), Sense::click());
-        p.rect_stroke(br, 2.0, Stroke::new(1.0, if resp.hovered() { t.text } else { t.text_dim }), egui::StrokeKind::Inside);
-        p.text(pos2(br.left() + 16.0, br.center().y), egui::Align2::LEFT_CENTER, crate::i18n::t(label), crate::theme::body(), t.text);
-        if resp.clicked() {
-            action = Some(cmd);
-        }
-        y += 44.0;
-    }
-    let main = Rect::from_min_max(pos2(left.right() + 36.0, r.top() + 40.0), r.max);
-    p.text(main.min, egui::Align2::LEFT_TOP, crate::tl!("Recent"), egui::FontId::proportional(22.0), t.text);
-    let mut recent = None;
-    let mut y = main.top() + 44.0;
-    for (i, path) in app.ui.recent_files.iter().enumerate() {
-        let row = Rect::from_min_size(pos2(main.left(), y), vec2((r.right() - main.left() - 36.0).clamp(0.0, 640.0), 42.0));
-        let resp = ui.interact(row, ui.scope_id().with(("recent", i)), Sense::click());
-        if resp.hovered() {
-            p.rect_filled(row, 2.0, t.control_hover.gamma_multiply(0.5));
-        }
-        let dir = std::path::Path::new(path).parent().map(|d| d.display().to_string()).unwrap_or_default();
-        let clip = p.with_clip_rect(row.shrink(2.0));
-        clip.text(pos2(row.left() + 10.0, row.top() + 13.0), egui::Align2::LEFT_CENTER, crate::menus::file_name(path), crate::theme::body(), t.text);
-        clip.text(pos2(row.left() + 10.0, row.top() + 30.0), egui::Align2::LEFT_CENTER, dir, crate::theme::small(), t.text_faint);
-        if resp.on_hover_text(path).clicked() {
-            recent = Some(path.clone());
-        }
-        y += 46.0;
-    }
-    if let Some(path) = recent {
+    use nodalia_theme::engineering::{self as eng, RecentDocument, StartCard};
+    use nodalia_theme::office::{self, Entry, Nav};
+    let look = eng::Look::new(crate::theme::ndl_palette());
+    let home = eng::home_look(&look);
+    let has_docs = !app.session.docs.is_empty();
+    let nav = Nav {
+        back: if has_docs { crate::tl!("Back to drawing") } else { "" },
+        top: vec![Entry::item("home", crate::tl!("Home"), "home"), Entry::item("open", crate::tl!("Open"), "folder")],
+        bottom: vec![Entry::item("options", crate::tl!("Preferences"), "settings")],
+        selected: Some("home"),
+    };
+    let cards = [
+        StartCard { icon: "line", name: crate::tl!("Drawing (inches)"), detail: crate::tl!("Imperial units") },
+        StartCard { icon: "dimension", name: crate::tl!("Drawing (mm)"), detail: crate::tl!("Metric units") },
+        StartCard { icon: "layout", name: crate::tl!("Sample drawing"), detail: crate::tl!("A bracket with its layouts") },
+    ];
+    let names: Vec<(String, String, String)> = app
+        .ui
+        .recent_files
+        .iter()
+        .map(|path| {
+            let dir = std::path::Path::new(path).parent().map(|d| d.display().to_string()).unwrap_or_default();
+            (crate::menus::file_name(path).to_string(), dir, modified(path))
+        })
+        .collect();
+    let recents: Vec<RecentDocument> =
+        names.iter().map(|(name, folder, when)| RecentDocument { name, folder, when, icon: "line", thumbnail: None }).collect();
+    let icon = crate::about::icon(ui.ctx());
+    let version = crate::tf!("Version {version}", version = env!("CARGO_PKG_VERSION"));
+    let (mut card, mut recent) = (None, None);
+    let picked = office::file_view(ui, &home, &nav, |ui| {
+        eng::home_header(ui, &look, icon.as_ref().map(egui::TextureHandle::id), "Forja", &version);
+        office::section(ui, &home, crate::tl!("New"), |ui| card = eng::start_cards(ui, &look, &cards));
+        office::section(ui, &home, crate::tl!("Recent"), |ui| {
+            recent = eng::recent_documents(ui, &look, &recents, crate::tl!("There is nothing here yet. To get started, create or open a drawing."));
+        });
+    });
+    if let Some(path) = recent.and_then(|i| app.ui.recent_files.get(i).cloned()) {
         app.open_path(std::path::Path::new(&path));
-    } else if app.ui.recent_files.is_empty() {
-        p.text(
-            pos2(main.center().x, main.center().y),
-            egui::Align2::CENTER_CENTER,
-            crate::tl!("There is nothing here yet."),
-            egui::FontId::proportional(18.0),
-            t.text,
-        );
-        p.text(
-            pos2(main.center().x, main.center().y + 26.0),
-            egui::Align2::CENTER_CENTER,
-            crate::tl!("To get started, create or open a drawing."),
-            crate::theme::body(),
-            t.text_dim,
-        );
     }
-    match action {
-        Some("open") => app.start("ui.open"),
-        Some("new") => {
+    match card {
+        Some(0) => {
             app.start("new");
             app.ui.start_tab = false;
         }
-        Some("new.metric") => {
+        Some(1) => {
             let _ = app.run("new", json!({ "metric": true }));
             app.ui.start_tab = false;
         }
-        Some("sample") => {
-            app.start("ui.sample");
-        }
+        Some(2) => app.start("ui.sample"),
         _ => {}
     }
+    match picked.as_deref() {
+        Some(office::BACK) => app.ui.start_tab = false,
+        Some("open") => app.start("ui.open"),
+        Some("options") => app.start("options"),
+        _ => {}
+    }
+}
+
+/// When a recent file last changed, in UTC like the recovery window ("" when it can't be read).
+fn modified(path: &str) -> String {
+    std::fs::metadata(path)
+        .and_then(|m| m.modified())
+        .ok()
+        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
+        .map(|d| format!("{} UTC", crate::autosave::utc(d.as_secs())))
+        .unwrap_or_default()
 }
 
 #[cfg(test)]
